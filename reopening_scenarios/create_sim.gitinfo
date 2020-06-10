@@ -1,0 +1,14 @@
+{
+  "covasim": {
+    "version": "1.4.7",
+    "branch": "hospitals-and-schools",
+    "hash": "78c532f",
+    "date": "2020-06-05T18:30:50-04:00"
+  },
+  "called_by": {
+    "branch": "hospitals-and-schools",
+    "hash": "78c532f",
+    "date": "2020-06-05T18:30:50-04:00",
+    "filename": "/Users/jamiecohen/PycharmProjects/covasim_amath/schools_analysis/create_sim.py"
+  }
+}
