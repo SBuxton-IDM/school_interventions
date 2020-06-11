@@ -116,7 +116,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
               'pop_type'      : 'hybrid',
               'pop_infected'  : 400,
               'beta'          : p.beta,
-              'start_day'     : '2020-08-01',
+              'start_day'     : '2020-01-27',
               'end_day'       : p['end_day'],
               'rescale'       : True,
               'rescale_factor': 1.1,
@@ -150,28 +150,15 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     interventions = [tn1, tn2, tn3]
 
     # Define beta interventions (for calibration)
-    # b_ch = sc.objdict()
-    # b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25']
-    # b_ch.s = [1.00, 0.00, 0.00, 0.00]
-    # b_ch.h = [1.00, 1.10, 1.20, 1.20]
-    # b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
-    # b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
-
-    # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
-    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-08-30']
-    b_ch.s = [1.00, 0.00, 0.00, 0.00, 1]
-    b_ch.h = [1.00, 1.10, 1.20, 1.20, 1]
-    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, 1]
-    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, 1]
-
+    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25']
+    b_ch.s = [1.00, 0.00, 0.00, 0.00]
+    b_ch.h = [1.00, 1.10, 1.20, 1.20]
+    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
+    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
 
     for lkey,ch in b_ch.items():
         interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
-
-    # Define school closure interventions
-    if school_closure:
-        interventions += [cv.close_schools(start_day= '2020-08-30', num_pos=num_pos, condition=condition, ili_prev=iliprev, trace=True)]
 
     # SafeGraph intervention & tidy up
     interventions += make_safegraph(sim)

@@ -11,7 +11,7 @@ use_safegraph = 1
 name      = 'optimization_v12_safegraph_060920'
 storage   = f'sqlite:///{name}.db'
 n_trials  = 200
-n_workers = 4
+n_workers = 32
 
 
 def objective(trial, kind='default'):
