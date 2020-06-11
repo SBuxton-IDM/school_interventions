@@ -1,5 +1,5 @@
 '''
-Pre-generate the population including school types. Takes about 70 s.
+Pre-generate the population including school types.
 '''
 
 import psutil
@@ -9,7 +9,7 @@ import synthpops as sp
 sp.config.set_nbrackets(20) # Essential for getting the age distribution right
 
 def cache_populations(seed=0, popfile=None):
-    ''' Pre-generate the hyrbid population '''
+    ''' Pre-generate the hybrid population '''
 
     pars = sc.objdict(
         pop_size = 225e3,
