@@ -29,8 +29,7 @@ def make_safegraph(sim):
     fn = safegraph_file
     df = pd.read_csv(fn)
     week = df['week']
-    w = df['p.emp'].values
-    c = df['p.cust'].values
+    w = df['p.tot'].values
 
     # Do processing
     npts = len(week)
@@ -41,7 +40,7 @@ def make_safegraph(sim):
     # Create interventions
     interventions = [
         cv.clip_edges(days=sg_days, changes=w, layers='w', label='clip_w'),
-        cv.clip_edges(days=sg_days, changes=c, layers='c', label='clip_c'),
+        cv.clip_edges(days=sg_days, changes=w, layers='c', label='clip_c'),
         ]
     return interventions
 
