@@ -3,7 +3,6 @@
 Analyses for school reopening.
 
 ## To Do
-1. Add screening to close_school intervention, to screen individuals based on condition and then count screen positives.
-2. Allow user to set whether the intervention traces contacts of screen positive individuals.
-3. Integrate intervention with synthpops, when ready.
-4. Add school_closures to popdict, intervention, and default result_stocks
+1. Add school_opening to interventions, with arguments including a dictionary by type, date, cluster/random
+2. Add analyzer to print/plot summary statistics on school openings and closings
+3. Run and compare school opening and school closure scenarios
