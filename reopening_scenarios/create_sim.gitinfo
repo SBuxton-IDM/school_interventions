@@ -2,13 +2,13 @@
   "covasim": {
     "version": "1.4.7",
     "branch": "hospitals-and-schools",
-    "hash": "78c532f",
-    "date": "2020-06-05T18:30:50-04:00"
+    "hash": "18a5d15",
+    "date": "2020-06-15T12:05:16-04:00"
   },
   "called_by": {
-    "branch": "hospitals-and-schools",
-    "hash": "78c532f",
-    "date": "2020-06-05T18:30:50-04:00",
-    "filename": "/Users/jamiecohen/PycharmProjects/covasim_amath/schools_analysis/create_sim.py"
+    "branch": "master",
+    "hash": "4a78952",
+    "date": "2020-06-12T16:36:33-04:00",
+    "filename": "/Users/jamiecohen/PycharmProjects/covid-schools/reopening_scenarios/create_sim.py"
   }
 }

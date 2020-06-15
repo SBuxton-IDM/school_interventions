@@ -9,10 +9,11 @@ cv.check_save_version('1.4.7', die=True)
 
 if __name__ == "__main__":
 
-    rerun = True
+    rerun = False
     do_save = True
     do_plot = True
     n_reps = 20
+    date = '2020-06-12'
 
     if rerun:
         indices = range(n_reps)
@@ -36,4 +37,13 @@ if __name__ == "__main__":
         msim = cv.load('calibrated.msim')
 
     if do_plot:
+
+        for interv in msim.base_sim['interventions']:
+            interv.do_plot = False
+
+        sim_plots = cv.MultiSim.merge(msim, base=True)
+        fig1 = sim_plots.plot(to_plot=['new_infections', 'new_diagnoses'], do_show=False)
+        fig1.savefig(f'infectious_{date}.png')
+        # sim_plots.plot(do_show=True)
+
         pltcal.plot_calibration(msim.sims, 'jun11-optuna', do_save=True)

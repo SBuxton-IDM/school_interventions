@@ -85,22 +85,22 @@ def plotter(key, sims, ax, ys=None, calib=False, label='', ylabel='', low_q=0.1,
     return
 
 
-def plot_intervs(labels=False):
+def plot_intervs(sim, labels=False):
     yl = pl.ylim()
-    feb29 = 23
-    mar12 = 35
-    mar23 = 46
-    pl.plot([feb29]*2, yl, 'k', alpha=0.1, lw=3)
-    pl.plot([mar12]*2, yl, 'k', alpha=0.1, lw=3)
-    pl.plot([mar23]*2, yl, 'k', alpha=0.1, lw=3)
+    feb29 = sim.day('2020-02-29')
+    mar12 = sim.day('2020-03-12')
+    mar23 = sim.day('2020-03-23')
+    pl.plot([feb29] * 2, yl, 'k', alpha=0.1, lw=3)
+    pl.plot([mar12] * 2, yl, 'k', alpha=0.1, lw=3)
+    pl.plot([mar23] * 2, yl, 'k', alpha=0.1, lw=3)
 
     if labels:
-        labely = yl[1]*1.05
+        labely = yl[1] * 1.05
         off = 0
-        args = {'horizontalalignment': 'center', 'style':'italic'}
-        pl.text(feb29-off, labely, 'First death', **args)
-        pl.text(mar12-off, labely, 'Schools close', **args)
-        pl.text(mar23-off, labely, '    Stay-at-home', **args)
+        args = {'horizontalalignment': 'center', 'style': 'italic'}
+        pl.text(feb29 - off, labely, 'First death', **args)
+        pl.text(mar12 - off, labely, 'Schools close', **args)
+        pl.text(mar23 - off, labely, '    Stay-at-home', **args)
     return
 
 
@@ -226,14 +226,14 @@ def plot_calibration(sims, date, do_save=0):
     ax = pl.subplot(4,1,2)
     format_ax(ax, sim)
     plotter('n_infectious', sims, ax,calib=True, label='Number of active infections', ylabel='People')
-    plot_intervs(labels=True)
+    plot_intervs(sim, labels=True)
 
     #%% Figure 2, panel 3
     ax = pl.subplot(4,1,3)
     format_ax(ax, sim)
     plotter('new_infections', sims, ax,calib=True, label='Infections per day', ylabel='People')
     plotter('new_recoveries', sims, ax,calib=True, label='Recoveries per day', ylabel='People')
-    plot_intervs()
+    plot_intervs(sim)
 
     #%% Figure 2, panels 4
     ax = pl.subplot(4,1,4)
@@ -244,7 +244,7 @@ def plot_calibration(sims, date, do_save=0):
     pl.ylim(ylims)
     xlims = pl.xlim()
     pl.plot(xlims, [1, 1], 'k')
-    plot_intervs()
+    plot_intervs(sim)
 
     # Tidy up
     if do_save:

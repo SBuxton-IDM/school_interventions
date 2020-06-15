@@ -1,7 +1,7 @@
 import sciris as sc
 import covasim as cv
 import optuna as op
-from . import create_sim as cs
+from calibration import create_sim as cs
 
 cv.check_save_version('1.4.7', die=True)
 
@@ -11,7 +11,7 @@ use_safegraph = 1
 name      = 'optimization_v12_safegraph_061120'
 storage   = f'sqlite:///{name}.db'
 n_trials  = 200
-n_workers = 32
+n_workers = 3
 
 
 def objective(trial, kind='default'):

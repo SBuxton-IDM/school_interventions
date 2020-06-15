@@ -18,8 +18,8 @@ cv.check_save_version('1.4.7', die=True)
 inputs         = 'inputs'
 epi_data_file  = f'{inputs}/20200605chop5_KingCounty_Covasim.csv'
 age_data_file  = f'{inputs}/20200605chop5_KingCounty_AgeHist.csv'
-safegraph_file = f'{inputs}/KC_weeklyinteractions_060320.csv'
-popfile_stem   = f'{inputs}/kc_hybrid_seed'
+safegraph_file = f'{inputs}/KC_weeklyinteractions_061220.csv'
+popfile_stem   = f'{inputs}/kc_synthpops_with_ltcf_seed'
 
 
 def make_safegraph(sim):
@@ -29,8 +29,7 @@ def make_safegraph(sim):
     fn = safegraph_file
     df = pd.read_csv(fn)
     week = df['week']
-    w = df['p.emp'].values
-    c = df['p.cust'].values
+    w = df['p.tot'].values
 
     # Do processing
     npts = len(week)
@@ -41,7 +40,7 @@ def make_safegraph(sim):
     # Create interventions
     interventions = [
         cv.clip_edges(days=sg_days, changes=w, layers='w', label='clip_w'),
-        cv.clip_edges(days=sg_days, changes=c, layers='c', label='clip_c'),
+        cv.clip_edges(days=sg_days, changes=w, layers='c', label='clip_c'),
         ]
     return interventions
 
@@ -97,7 +96,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
     return output
 
 
-def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, school_closure=False, num_pos=None, iliprev=None, condition=None):
+def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, iliprev=0.1):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -113,10 +112,10 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     # Basic parameters and sim creation
     pars = {  'pop_size'      : 225e3,
               'pop_scale'     : 10,
-              'pop_type'      : 'hybrid',
+              'pop_type'      : 'synthpops',
               'pop_infected'  : 400,
               'beta'          : p.beta,
-              'start_day'     : '2020-08-01',
+              'start_day'     : '2020-01-27',
               'end_day'       : p['end_day'],
               'rescale'       : True,
               'rescale_factor': 1.1,
@@ -149,29 +148,24 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day=None,         **test_kwargs, label='tn3')
     interventions = [tn1, tn2, tn3]
 
-    # Define beta interventions (for calibration)
-    # b_ch = sc.objdict()
-    # b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25']
-    # b_ch.s = [1.00, 0.00, 0.00, 0.00]
-    # b_ch.h = [1.00, 1.10, 1.20, 1.20]
-    # b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
-    # b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
-
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
-    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-08-30']
-    b_ch.s = [1.00, 0.00, 0.00, 0.00, 1]
-    b_ch.h = [1.00, 1.10, 1.20, 1.20, 1]
-    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, 1]
-    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, 1]
+    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-05-15', '2020-08-30']
+    b_ch.s = [1.00, 0.00, 0.00, 0.00, 0.00, 1]
+    b_ch.h = [1.00, 1.10, 1.20, 1.20, 1.20, 1]
+    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8, 1]
+    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8, 1]
 
+    # LTCF intervention
+    b_days_l = np.arange(sim.day(b_days[0]), sim.day(b_days[2]) + 1)
+    b_ch_l = np.linspace(1.0, p.bc_lf, len(b_days_l))
+    interventions += [cv.change_beta(days=b_days_l, changes=b_ch_l, layers='l', label=f'beta_l')]
 
     for lkey,ch in b_ch.items():
         interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
 
     # Define school closure interventions
-    if school_closure:
-        interventions += [cv.close_schools(start_day= '2020-08-30', num_pos=num_pos, condition=condition, ili_prev=iliprev, trace=True)]
+    interventions += [cv.close_schools(start_day='2020-08-30', num_pos=num_pos, ili_prev=iliprev)]
 
     # SafeGraph intervention & tidy up
     interventions += make_safegraph(sim)
@@ -184,81 +178,6 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     # These are copied from parameters.py -- needed to get younger and 60-65 groups right
     sim['prognoses']['age_cutoffs'] = np.array([0,      15,      20,      30,      40,      50,      65,      70,      80,      90]) # Age cutoffs (upper limits)
-    sim['prognoses']['sus_ORs'] = np.array([0.34, 0.67, 1.00, 1.00, 1.00, 1.00, 1.24, 1.47, 1.47, 10])
-
-    return sim
-
-
-def create_sim_scenarios(pars=None, label=None, show_intervs=False, people=None, school_closure=False, num_pos=None, iliprev=None, condition=None):
-    ''' Create a single simulation for further use '''
-
-    p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=False), pars))
-    if 'rand_seed' not in p:
-        seed = 1
-        print(f'Note, could not find random seed in {pars}! Setting to {seed}')
-        p['rand_seed'] = seed # Ensure this exists
-
-    # Basic parameters and sim creation
-    pars = {  'pop_size'      : 225e3,
-              'pop_scale'     : 10,
-              'pop_type'      : 'hybrid',
-              'pop_infected'  : 400,
-              'beta'          : p.beta,
-              'start_day'     : '2020-08-01',
-              'end_day'       : '2020-11-27',
-              'rescale'       : True,
-              'rescale_factor': 1.1,
-              'verbose'       : 0.1,
-              'rand_seed'     : p.rand_seed,
-              'analyzers'     : cv.age_histogram(datafile=age_data_file),
-              'beta_layer'    : dict(h=p.bl_h, s=p.bl_s, w=p.bl_w, c=p.bl_c, l=p.bl_l),
-            }
-    pars.update({'n_days': cv.daydiff(pars['start_day'], pars['end_day'])})
-
-    # If supplied, use an existing people object
-    if people:
-        popfile = people
-    else:
-        # Generate the population filename
-        n_popfiles = 5
-        popfile = popfile_stem + str(pars['rand_seed']%n_popfiles) + '.ppl'
-
-        # Check that the population file exists
-        if not os.path.exists(popfile):
-            errormsg = f'WARNING: could not find population file {popfile}! Please regenerate first'
-            raise FileNotFoundError(errormsg)
-
-    # Create and initialize the sim
-    sim = cv.Sim(pars, label=label, popfile=popfile, load_pop=True, datafile=epi_data_file) # Create this here so can be used for test numbers etc.
-    # Define testing interventions
-    interventions = [cv.test_prob(start_day=0, symp_prob=0.06, asymp_prob=0.0006, symp_quar_prob=1.0, asymp_quar_prob=1.0, quar_policy='start', test_delay=2, ili_prev=0.1)]
-
-    # Define beta interventions (for school reopening)
-    b_ch = sc.objdict()
-    b_days = ['2020-08-01', '2020-08-30']
-    b_ch.s = [0.00, 1]
-    b_ch.h = [1.20, 1]
-    b_ch.w = [0.80, 1]
-    b_ch.c = [0.80, 1]
-
-
-    for lkey,ch in b_ch.items():
-        interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
-
-    # Define school closure interventions
-    if school_closure:
-        interventions += [cv.close_schools(start_day= '2020-08-30', num_pos=num_pos, condition=condition, ili_prev=iliprev, trace=True)]
-
-    sim['interventions'] = interventions
-
-    # Don't show interventions in plots, there are too many
-    if show_intervs == False:
-        for interv in sim['interventions']:
-            interv.do_plot = False
-
-    # These are copied from parameters.py -- needed to get younger and 60-65 groups right
-    sim['prognoses']['age_cutoffs'] = np.array([0,      15,      20,      30,      40,      50,      65,      70,      80,      90]) # Age cutoffs (upper limits)
-    sim['prognoses']['sus_ORs'] = np.array([0.34, 0.67, 1.00, 1.00, 1.00, 1.00, 1.24, 1.47, 1.47, 10])
 
     return sim
 

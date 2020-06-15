@@ -2,13 +2,13 @@
   "covasim": {
     "version": "1.4.7",
     "branch": "hospitals-and-schools",
-    "hash": "333f323",
-    "date": "2020-06-12T16:23:52-04:00"
+    "hash": "718d3da",
+    "date": "2020-06-12T16:56:31-04:00"
   },
   "called_by": {
     "branch": "master",
-    "hash": "621d4a7",
-    "date": "2020-06-12T16:23:55-04:00",
+    "hash": "4a78952",
+    "date": "2020-06-12T16:36:33-04:00",
     "filename": "/Users/jamiecohen/PycharmProjects/covid-schools/calibration/create_sim.py"
   }
 }

@@ -8,7 +8,7 @@ import covasim as cv
 from reopening_scenarios import create_sim as cs
 
 # Define parameters
-name    = 'optimization_v12_safegraph_060920'
+name    = 'optimization_v12_safegraph_061120'
 storage = f'sqlite:///{name}.db'
 
 
