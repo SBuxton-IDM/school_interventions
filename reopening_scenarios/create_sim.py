@@ -166,7 +166,6 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
         interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
 
     # Define school closure interventions
-    school_start_dict = {'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-10-01', 'uni': '2020-11-01'}
     interventions += [cv.reopen_schools(day_schools_closed='2020-03-12')]
     test_athome = None
     test_screenpos = None
