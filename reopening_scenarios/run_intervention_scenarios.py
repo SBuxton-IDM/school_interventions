@@ -71,6 +71,8 @@ if __name__ == "__main__":
                 school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary['cum_infections']
                 school_results[schools_closure_scenarios[i]]['total_schools'] = sub_sim.school_info['num_schools']
                 school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info['school_closures'] * 14
+                school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
+                school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
 
         csvfile = 'school_closure_output.csv'
         with open(csvfile, 'w') as f:
@@ -91,6 +93,8 @@ if __name__ == "__main__":
                 school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary['cum_infections']
                 school_results[schools_closure_scenarios[i]]['total_schools'] = sub_sim.school_info['num_schools']
                 school_results[schools_closure_scenarios[i]]['days_closed'] = sub_sim.school_info['num_schools']*14
+                school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
+                school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
 
         csvfile = 'school_closure_output.csv'
         with open(csvfile, 'w') as f:
@@ -99,8 +103,7 @@ if __name__ == "__main__":
 
 
         figname = 'school_closure'
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=True)
-        fig1.show()
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False)
         # for ax in fig1.axes:
         #     ax.set_xlim([200, 305])
         #     ax.set_ylim([0, 4000])
