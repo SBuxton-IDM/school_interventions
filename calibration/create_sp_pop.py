@@ -18,7 +18,7 @@ def cache_populations(seed=0, popfile=None):
     )
 
     with_school_types = True
-    school_mixing_type = 'clustered'
+    school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'clustered', 'uv': 'clustered'}
 
     if popfile is None:
         popfile = f'inputs/kc_synthpops_with_ltcf_seed{pars.rand_seed}.ppl'

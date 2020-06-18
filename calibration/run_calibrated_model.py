@@ -9,15 +9,15 @@ cv.check_save_version('1.4.7', die=True)
 
 if __name__ == "__main__":
 
-    rerun = False
+    rerun = True
     do_save = True
     do_plot = True
     n_reps = 20
-    date = '2020-06-12'
+    date = '2020-06-17'
 
     if rerun:
         indices = range(n_reps)
-        jsonfile = 'optimization_v12_safegraph_060920.json'
+        jsonfile = 'optimization_v12_safegraph_061720.json'
         json = sc.loadjson(jsonfile)
 
         all_sims = []
@@ -31,10 +31,7 @@ if __name__ == "__main__":
         msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
         msim.reduce()
         if do_save:
-            cv.save(filename='../calibration/calibrated.msim', obj=msim)
-
-    else:
-        msim = cv.load('calibrated.msim')
+            cv.save(filename='msims/calibrated.msim', obj=msim)
 
     if do_plot:
 
@@ -46,4 +43,4 @@ if __name__ == "__main__":
         fig1.savefig(f'infectious_{date}.png')
         # sim_plots.plot(do_show=True)
 
-        pltcal.plot_calibration(msim.sims, 'jun11-optuna', do_save=True)
+        pltcal.plot_calibration(msim.sims, 'jun17-optuna', do_save=True)

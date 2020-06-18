@@ -1,6 +1,6 @@
 '''
 Create the calibrated sim for the King County results. Note: this script relies
-on kc_hybrid.ppl, which is created by cache_population.py, as well as several
+on kc_synthpops_with_ltcf_seed, which is created by create_sp_pop.py, as well as several
 CSV files.
 '''
 
@@ -16,9 +16,9 @@ cv.check_save_version('1.4.7', die=True)
 
 # Define the input files
 inputs         = 'inputs'
-epi_data_file  = f'{inputs}/20200605chop5_KingCounty_Covasim.csv'
-age_data_file  = f'{inputs}/20200605chop5_KingCounty_AgeHist.csv'
-safegraph_file = f'{inputs}/KC_weeklyinteractions_061220.csv'
+epi_data_file  = f'{inputs}/20200614chop5_KingCounty_Covasim.csv'
+age_data_file  = f'{inputs}/20200614chop5_KingCounty_AgeHist.csv'
+safegraph_file = f'{inputs}/KC_weeklyinteractions_20200616.csv'
 popfile_stem   = f'{inputs}/kc_synthpops_with_ltcf_seed'
 
 
@@ -29,7 +29,8 @@ def make_safegraph(sim):
     fn = safegraph_file
     df = pd.read_csv(fn)
     week = df['week']
-    w = df['p.tot'].values
+    w = df['p.emp'].values
+    c = df['p.cust'].values
 
     # Do processing
     npts = len(week)
@@ -40,7 +41,7 @@ def make_safegraph(sim):
     # Create interventions
     interventions = [
         cv.clip_edges(days=sg_days, changes=w, layers='w', label='clip_w'),
-        cv.clip_edges(days=sg_days, changes=w, layers='c', label='clip_c'),
+        cv.clip_edges(days=sg_days, changes=c, layers='c', label='clip_c'),
         ]
     return interventions
 
@@ -96,7 +97,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
     return output
 
 
-def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, iliprev=0.1):
+def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -151,7 +152,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
     b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-05-15', '2020-08-30']
-    b_ch.s = [1.00, 0.00, 0.00, 0.00, 0.00, 1]
+    b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00, 1]
     b_ch.h = [1.00, 1.10, 1.20, 1.20, 1.20, 1]
     b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8, 1]
     b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8, 1]
@@ -165,7 +166,17 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
         interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
 
     # Define school closure interventions
-    interventions += [cv.close_schools(start_day='2020-08-30', num_pos=num_pos, ili_prev=iliprev)]
+    school_start_dict = {'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-10-01', 'uni': '2020-11-01'}
+    interventions += [cv.reopen_schools(day_schools_closed='2020-03-12')]
+    test_athome = None
+    test_screenpos = None
+    if test_prob is not None:
+        test_screenpos = test_prob[0]
+        test_athome = test_prob[1]
+
+
+    interventions += [cv.close_schools(start_day='2020-09-01', num_pos=num_pos, test_athome=test_athome,
+                                       test_screenpos=test_screenpos, ili_prev=0.1)]
 
     # SafeGraph intervention & tidy up
     interventions += make_safegraph(sim)
