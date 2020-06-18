@@ -13,14 +13,14 @@ if __name__ == "__main__":
     n_reps = 1
     date = '06172020'
 
-    # schools_closure_scenarios = ['closeon100_test75percSP_test50home', 'closeon100_test50percSP_test25home',
-    #                              'closeon5_test75percSP_test50home', 'closeon5_test50percSP_test25home']
-    # num_pos = [100, 100, 5, 5]
-    # test_prob = [[.75, .5], [.5, .25], [.75, .5], [.5, .25]] #screenpos, athome
+    schools_closure_scenarios = ['closeon100_test75percSP_test50home', 'closeon100_test50percSP_test25home', 'closeon100_test20percSP_test10home',
+                                 'closeon5_test75percSP_test50home', 'closeon5_test50percSP_test25home', 'closeon5_test20percSP_test10home']
+    num_pos = [100, 100, 100, 5, 5, 5]
+    test_prob = [[.75, .5], [.5, .25], [.2, .1], [.75, .5], [.5, .25], [.2, .1],] #screenpos, athome
 
-    schools_closure_scenarios = ['closeon100_test25percSP_test10home', 'closeon5_test25percSP_test10home',]
-    num_pos = [100, 5]
-    test_prob = [[.25, .1], [.25, .1]]  # screenpos, athome
+    # schools_closure_scenarios = ['closeon100_test25percSP_test10home']
+    # num_pos = [100]
+    # test_prob = [[.25, .1]]  # screenpos, athome
 
 
     if rerun:
@@ -99,7 +99,8 @@ if __name__ == "__main__":
 
 
         figname = 'school_closure'
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False)
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=True)
+        fig1.show()
         # for ax in fig1.axes:
         #     ax.set_xlim([200, 305])
         #     ax.set_ylim([0, 4000])
