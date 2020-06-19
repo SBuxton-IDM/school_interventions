@@ -97,7 +97,8 @@ def define_pars(which='best', kind='default', use_safegraph=True):
     return output
 
 
-def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None):
+def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None,
+               trace_prob=None):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -173,9 +174,16 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
         test_screenpos = test_prob[0]
         test_athome = test_prob[1]
 
+    trace_athome = None
+    trace_screenpos = None
+    if trace_prob is not None:
+        trace_athome = trace_prob[0]
+        trace_screenpos = trace_prob[1]
+
 
     interventions += [cv.close_schools(start_day='2020-09-01', num_pos=num_pos, test_athome=test_athome,
-                                       test_screenpos=test_screenpos, ili_prev=0.1)]
+                                       test_screenpos=test_screenpos, trace_athome=trace_athome,
+                                       trace_screenpos=trace_screenpos, ili_prev=0.1)]
 
     # SafeGraph intervention & tidy up
     interventions += make_safegraph(sim)
