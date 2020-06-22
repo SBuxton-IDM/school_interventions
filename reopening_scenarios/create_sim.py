@@ -98,7 +98,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
 
 
 def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None,
-               trace_prob=None, NPI_schools=None):
+               trace_prob=None, NPI_schools=None, test_freq=None):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -174,7 +174,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     if num_pos is not None:
         interventions += [cv.close_schools(start_day='2020-09-01', num_pos=num_pos, test=test_prob,
-                                       trace=trace_prob, ili_prev=0.1)]
+                                       trace=trace_prob, ili_prev=0.1, test_freq=test_freq)]
 
     # SafeGraph intervention
     interventions += make_safegraph(sim)

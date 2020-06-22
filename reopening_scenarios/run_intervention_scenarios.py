@@ -40,26 +40,28 @@ def process_schools(sub_sim):
 
 if __name__ == "__main__":
 
-    rerun = True
+    rerun = False
     do_save = True
     n_reps = 5
     date = '06222020'
 
     analysis_name = 'school_reopening_analysis'
-
-    # schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_NPI_screen_test_trace',
-    #                              'with_NPI_screen_test_trace_close']
-    # num_pos = [None, None, 10000, 10]
-    # test_prob = 1
-    # trace_prob = 1
-    # NPI_schools = [None, 0.5, 0.5, 0.5]
-
-    schools_closure_scenarios = ['schools_stay_closed']
-    num_pos = [None]
+    schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_NPI_screen_test_trace',
+                                 'with_NPI_screen_test_trace_close', 'with_NPI_screen_TTC_weeklytesting',
+                                 'with_NPI_screen_TTC_dailytesting']
+    num_pos = [None, None, 10000, 10, 10, 10]
     test_prob = 1
     trace_prob = 1
-    NPI_schools = [0]
+    NPI_schools = [None, 0.5, 0.5, 0.5, 0.5, 0.5]
+    test_freq = [None, None, None, None, 7, 1]
 
+    # analysis_name = 'school_reopening_analysis'
+    # schools_closure_scenarios = ['with_NPI_screen_TTC_dailytesting']
+    # num_pos = [10]
+    # test_prob = 1
+    # trace_prob = 1
+    # NPI_schools = [0.5]
+    # test_freq = [1]
 
     if rerun:
         indices = range(n_reps)
@@ -75,7 +77,8 @@ if __name__ == "__main__":
                 pars['end_day'] = '2020-10-02'
                 pars['rand_seed'] = int(entry['index'])
                 all_sims.append(cs.create_sim(pars=pars, num_pos=changes, test_prob=test_prob, trace_prob=trace_prob,
-                                              NPI_schools=NPI_schools[i], label=schools_closure_scenarios[i]))
+                                              NPI_schools=NPI_schools[i], label=schools_closure_scenarios[i],
+                                              test_freq=test_freq[i]))
 
             msim = cv.MultiSim(sims=all_sims)
             msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
@@ -200,7 +203,7 @@ if __name__ == "__main__":
         #         f.write("%s,%s\n"%(key,school_results[key]))
 
         figname = analysis_name
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False)
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=6)
         for ax in fig1.axes:
             ax.set_xlim([200, 249])
             ax.set_ylim([0, 10000])
