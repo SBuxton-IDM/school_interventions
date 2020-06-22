@@ -98,7 +98,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
 
 
 def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None,
-               trace_prob=None):
+               trace_prob=None, NPI_schools=None):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -123,7 +123,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
               'rescale_factor': 1.1,
               'verbose'       : 0.1,
               'rand_seed'     : p.rand_seed,
-              'analyzers'     : cv.age_histogram(datafile=age_data_file),
+              # 'analyzers'     : cv.age_histogram(datafile=age_data_file),
               'beta_layer'    : dict(h=p.bl_h, s=p.bl_s, w=p.bl_w, c=p.bl_c, l=p.bl_l),
             }
     pars.update({'n_days': cv.daydiff(pars['start_day'], pars['end_day'])})
@@ -153,11 +153,14 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
     b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-05-15', '2020-08-30']
-    b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00, 1]
+
     b_ch.h = [1.00, 1.10, 1.20, 1.20, 1.20, 1]
     b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8, 1]
     b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8, 1]
-
+    if NPI_schools is None:
+        b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00, 1]
+    else:
+        b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00, NPI_schools]
     # LTCF intervention
     b_days_l = np.arange(sim.day(b_days[0]), sim.day(b_days[2]) + 1)
     b_ch_l = np.linspace(1.0, p.bc_lf, len(b_days_l))
@@ -168,26 +171,19 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     # Define school closure interventions
     interventions += [cv.reopen_schools(day_schools_closed='2020-03-12')]
-    test_athome = None
-    test_screenpos = None
-    if test_prob is not None:
-        test_screenpos = test_prob[0]
-        test_athome = test_prob[1]
 
-    trace_athome = None
-    trace_screenpos = None
-    if trace_prob is not None:
-        trace_athome = trace_prob[0]
-        trace_screenpos = trace_prob[1]
+    if num_pos is not None:
+        interventions += [cv.close_schools(start_day='2020-09-01', num_pos=num_pos, test=test_prob,
+                                       trace=trace_prob, ili_prev=0.1)]
 
-
-    interventions += [cv.close_schools(start_day='2020-09-01', num_pos=num_pos, test_athome=test_athome,
-                                       test_screenpos=test_screenpos, trace_athome=trace_athome,
-                                       trace_screenpos=trace_screenpos, ili_prev=0.1)]
-
-    # SafeGraph intervention & tidy up
+    # SafeGraph intervention
     interventions += make_safegraph(sim)
     sim['interventions'] = interventions
+
+    analyzers = [cv.age_histogram(datafile=age_data_file)]
+    analyzers += [cv.snapshot('2020-09-01', '2020-09-15', '2020-10-01')]
+
+    sim['analyzers'] += analyzers
 
     # Don't show interventions in plots, there are too many
     if show_intervs == False:
