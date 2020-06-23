@@ -17,11 +17,18 @@ def cache_populations(seed=0, popfile=None):
         rand_seed = seed,
     )
 
+    cohorting_all = False
     with_school_types = True
-    school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'clustered', 'uv': 'clustered'}
+
+    if cohorting_all:
+        strategy = 'cohorting'
+        school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'clustered', 'uv': 'clustered'}
+    else:
+        strategy = 'normal'
+        school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'random', 'hs': 'random', 'uv': 'random'}
 
     if popfile is None:
-        popfile = f'inputs/kc_synthpops_with_ltcf_seed{pars.rand_seed}.ppl'
+        popfile = f'inputs/kc_synthpops_{strategy}_seed{pars.rand_seed}.ppl'
 
     T = sc.tic()
     print(f'Making "{popfile}"...')
