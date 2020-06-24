@@ -152,7 +152,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
-    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25','2020-08-30']
+    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-08-30']
 
     b_ch.h = [1.00, 1.10, 1.20, 1.20, 1]
     b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8]
@@ -175,7 +175,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     if num_pos is not None:
         interventions += [cv.close_schools(start_day='2020-09-01', num_pos=num_pos, test=test_prob,
-                                       trace=trace_prob, ili_prev=0.1, test_freq=test_freq)]
+                                       trace=trace_prob, ili_prev=0.0033, test_freq=test_freq)]
 
     # SafeGraph intervention
     interventions += make_safegraph(sim)
