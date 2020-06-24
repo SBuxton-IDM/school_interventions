@@ -36,30 +36,41 @@ def process_schools(sub_sim):
 
 if __name__ == "__main__":
 
-    rerun = True
+    rerun = False
     do_save = True
-    n_reps = 5
+    n_reps = 1
     date = '06232020'
 
-    analysis_name = 'school_reopening_analysis_NPI25'
+    analysis_name = 'school_reopening_analysis_until1201'
 
     schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_screening',
-                                 'with_test_trace',
-                                 'with_more_testing', 'with_more_tracing']
-    num_pos = [None, None, 10000, 10000, 10000, 10000]
-    test_prob = [.5, .5, 0, .5, 1, 1]
-    trace_prob = [.5, .5, 0, .5, .5, 1]
-    NPI_schools = [None, 0.25, 0.25, 0.25, 0.25, 0.25]
+                                 'with_test_trace', 'with_more_tracing']
+
+    schools_closure_scenarios_label = ['Cohorting', 'Cohorting + NPI', 'Cohorting, NPI, Screening',
+                                 'Cohorting, NPI, Screening, Testing, Tracing',
+                                       'Cohorting, NPI, Screening, More Testing, More Tracing']
+
+    num_pos = [None, None, 10000, 10000, 10000]
+    test_prob = [.5, .5, 0, .5,  1]
+    trace_prob = [.5, .5, 0, .5,  1]
+    NPI_schools = [None, 0.75, 0.75, 0.75, 0.75]
     test_freq = None
 
-    # analysis_name = 'redoing_labels'
+    # analysis_name = 'naive'
     #
-    # schools_closure_scenarios = ['with_screening',
-    #                              'with_test_trace']
-    # num_pos = [10000, 10000]
-    # test_prob = [0, .5]
-    # trace_prob = [0, .5]
-    # NPI_schools = [0.5, 0.5]
+    # schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_screening',
+    #                              'with_test_trace',
+    #                              'with_more_testing', 'with_more_tracing']
+    #
+    # schools_closure_scenarios_label = ['Cohorting', 'Cohorting + NPI', 'Cohorting, NPI, Screening',
+    #                                    'Cohorting, NPI, Screening, Testing, Tracing',
+    #                                    'Cohorting, NPI, Screening, More Testing, Tracing',
+    #                                    'Cohorting, NPI, Screening, More Testing, More Tracing']
+    #
+    # num_pos = [None, None, 10000, 10000, 10000, 10000]
+    # test_prob = [.5, .5, 0, .5, 1, 1]
+    # trace_prob = [.5, .5, 0, .5, .5, 1]
+    # NPI_schools = [None, 0.75, 0.75, 0.75, 0.75, 0.75]
     # test_freq = None
 
     if rerun:
@@ -74,11 +85,11 @@ if __name__ == "__main__":
             for index in indices:
                 entry = json[index]
                 pars = entry['pars']
-                pars['end_day'] = '2020-11-01'
+                pars['end_day'] = '2020-12-01'
                 pars['rand_seed'] = int(entry['index'])
                 all_sims.append(cs.create_sim(pars=pars, num_pos=changes, test_prob=test_prob[i],
                                               trace_prob=trace_prob[i], NPI_schools=NPI_schools[i],
-                                              label=schools_closure_scenarios[i], test_freq=test_freq))
+                                              label=schools_closure_scenarios_label[i], test_freq=test_freq))
 
             msim = cv.MultiSim(sims=all_sims)
             msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
@@ -213,14 +224,14 @@ if __name__ == "__main__":
         #         f.write("%s,%s\n" % (key, school_results[key]))
 
         figname = analysis_name
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=6, font_size=26)
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=6)
         for ax in fig1.axes:
-            ax.set_xlim([210, 279])
-            ax.set_ylim([0, 6000])
+            ax.set_xlim([210, 309])
+            ax.set_ylim([0, 8000])
         fig1.savefig(f'infectious_{figname}_{date}.png')
 
-        # fig2 = sim_plots.plot(to_plot=['r_eff'], do_show=False)
-        # fig2.savefig(f'reff_{figname}_{date}.png')
+        fig2 = sim_plots.plot(to_plot=['r_eff'], do_show=False)
+        fig2.savefig(f'reff_{figname}_{date}.png')
 
         # fig3 = sim_plots.plot(to_plot=['new_tests', 'new_quarantined'], do_show=False)
         # for ax in fig3.axes:
