@@ -36,42 +36,38 @@ def process_schools(sub_sim):
 
 if __name__ == "__main__":
 
-    rerun = False
+    rerun = True
     do_save = True
     n_reps = 1
     date = '06232020'
 
-    analysis_name = 'school_reopening_analysis_until1201'
-
-    schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_screening',
-                                 'with_test_trace', 'with_more_tracing']
-
-    schools_closure_scenarios_label = ['Cohorting', 'Cohorting + NPI', 'Cohorting, NPI, Screening',
-                                 'Cohorting, NPI, Screening, Testing, Tracing',
-                                       'Cohorting, NPI, Screening, More Testing, More Tracing']
-
-    num_pos = [None, None, 10000, 10000, 10000]
-    test_prob = [.5, .5, 0, .5,  1]
-    trace_prob = [.5, .5, 0, .5,  1]
-    NPI_schools = [None, 0.75, 0.75, 0.75, 0.75]
-    test_freq = None
-
-    # analysis_name = 'naive'
+    # analysis_name = 'school_reopening_analysis_with_teachertesting'
     #
     # schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_screening',
-    #                              'with_test_trace',
-    #                              'with_more_testing', 'with_more_tracing']
+    #                              'with_test_trace', 'with_more_tracing', 'with_testing_teachers']
     #
     # schools_closure_scenarios_label = ['Cohorting', 'Cohorting + NPI', 'Cohorting, NPI, Screening',
     #                                    'Cohorting, NPI, Screening, Testing, Tracing',
-    #                                    'Cohorting, NPI, Screening, More Testing, Tracing',
-    #                                    'Cohorting, NPI, Screening, More Testing, More Tracing']
+    #                                    'Cohorting, NPI, Screening, More Testing, More Tracing',
+    #                                    'Cohorting, NPI, Screening, More Testing, More Tracing, Test Teachers Weekly']
     #
     # num_pos = [None, None, 10000, 10000, 10000, 10000]
-    # test_prob = [.5, .5, 0, .5, 1, 1]
-    # trace_prob = [.5, .5, 0, .5, .5, 1]
-    # NPI_schools = [None, 0.75, 0.75, 0.75, 0.75, 0.75]
-    # test_freq = None
+    # test_prob = [.5, .5, 0, .5,  1, 1]
+    # trace_prob = [.5, .5, 0, .5,  1, 1]
+    # NPI_schools = [None, 0.75, 0.75, 0.75, 0.75, .75]
+    # test_freq = [None, None, None, None, None, 7]
+
+    analysis_name = 'school_reopening_analysis_with_teachertesting'
+
+    schools_closure_scenarios = ['with_testing_teachers']
+
+    schools_closure_scenarios_label = ['Cohorting, NPI, Screening, More Testing, More Tracing, Test Teachers Weekly']
+
+    num_pos = [10000]
+    test_prob = [1]
+    trace_prob = [1]
+    NPI_schools = [.75]
+    test_freq = 7
 
     if rerun:
         indices = range(n_reps)

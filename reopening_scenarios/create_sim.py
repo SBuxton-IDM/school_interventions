@@ -19,7 +19,7 @@ inputs         = 'inputs'
 epi_data_file  = f'{inputs}/20200614chop5_KingCounty_Covasim.csv'
 age_data_file  = f'{inputs}/20200614chop5_KingCounty_AgeHist.csv'
 safegraph_file = f'{inputs}/KC_weeklyinteractions_20200616.csv'
-popfile_stem   = f'{inputs}/kc_synthpops_with_ltcf_seed'
+popfile_stem   = f'{inputs}/kc_synthpops_cohorting_seed'
 
 
 def make_safegraph(sim):
