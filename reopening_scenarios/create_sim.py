@@ -19,7 +19,8 @@ inputs         = 'inputs'
 epi_data_file  = f'{inputs}/20200614chop5_KingCounty_Covasim.csv'
 age_data_file  = f'{inputs}/20200614chop5_KingCounty_AgeHist.csv'
 safegraph_file = f'{inputs}/KC_weeklyinteractions_20200616.csv'
-popfile_stem   = f'{inputs}/kc_synthpops_cohorting_seed'
+popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
+popfile_stem_change = f'{inputs}/kc_synthpops_clustered_seed'
 
 
 def make_safegraph(sim):
@@ -98,7 +99,8 @@ def define_pars(which='best', kind='default', use_safegraph=True):
 
 
 def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None,
-               trace_prob=None, NPI_schools=None, test_freq=None):
+               trace_prob=None, NPI_schools=None, test_freq=None, network_change=False, school_start_day=None,
+               intervention_start_day=None):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -135,6 +137,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
         # Generate the population filename
         n_popfiles = 5
         popfile = popfile_stem + str(pars['rand_seed']%n_popfiles) + '.ppl'
+        popfile_change = popfile_stem_change + str(pars['rand_seed'] % n_popfiles) + '.ppl'
 
         # Check that the population file exists
         if not os.path.exists(popfile):
@@ -155,8 +158,8 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-08-30']
 
     b_ch.h = [1.00, 1.10, 1.20, 1.20, 1]
-    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8]
-    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8]
+    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
+    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
     if NPI_schools is None:
         b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00]
     else:
@@ -171,10 +174,15 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
         interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
 
     # Define school closure interventions
-    interventions += [cv.reopen_schools(day_schools_closed='2020-03-12')]
+    if network_change:
+        popfile_new = popfile_change
+    else:
+        popfile_new = None
 
-    if num_pos is not None:
-        interventions += [cv.close_schools(start_day='2020-09-01', num_pos=num_pos, test=test_prob,
+    interventions += [cv.reopen_schools(day_schools_closed='2020-03-12', start_day=school_start_day,
+                                        pop_file=popfile_new)]
+
+    interventions += [cv.close_schools(start_day=intervention_start_day, num_pos=num_pos, test=test_prob,
                                        trace=trace_prob, ili_prev=0.0033, test_freq=test_freq)]
 
     # SafeGraph intervention

@@ -34,40 +34,48 @@ def process_schools(sub_sim):
 
     return num_asymp, num_symp
 
+
 if __name__ == "__main__":
 
     rerun = True
     do_save = True
     n_reps = 1
-    date = '06232020'
+    date = '06262020'
 
-    # analysis_name = 'school_reopening_analysis_with_teachertesting'
+    analysis_name = 'school_reopening'
+
+    schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_screening',
+                                 'with_test_trace', 'with_weekly_testing']
+
+    schools_closure_scenarios_label = ['As Normal', 'NPI', 'NPI, Screening',
+                                       'NPI, Screening, Testing, Tracing',
+                                       'NPI, Screening, Testing, Tracing, Weekly Testing']
+
+    num_pos = None
+    test_prob = [0, 0, 0, 1, 1]
+    trace_prob = [0, 0, 0, 1, 1]
+    NPI_schools = [None, 0.75, 0.75, 0.75, 0.75]
+    test_freq = [None, None, None, None, 7]
+    network_change = False
+    school_start_day = {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}
+    intervention_start_day = [None, None,
+                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}]
+
+    # schools_closure_scenarios = ['all_in']
     #
-    # schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_screening',
-    #                              'with_test_trace', 'with_more_tracing', 'with_testing_teachers']
+    # schools_closure_scenarios_label = ['Schools with Daily Testing']
     #
-    # schools_closure_scenarios_label = ['Cohorting', 'Cohorting + NPI', 'Cohorting, NPI, Screening',
-    #                                    'Cohorting, NPI, Screening, Testing, Tracing',
-    #                                    'Cohorting, NPI, Screening, More Testing, More Tracing',
-    #                                    'Cohorting, NPI, Screening, More Testing, More Tracing, Test Teachers Weekly']
-    #
-    # num_pos = [None, None, 10000, 10000, 10000, 10000]
-    # test_prob = [.5, .5, 0, .5,  1, 1]
-    # trace_prob = [.5, .5, 0, .5,  1, 1]
-    # NPI_schools = [None, 0.75, 0.75, 0.75, 0.75, .75]
-    # test_freq = [None, None, None, None, None, 7]
+    # num_pos = None
+    # test_prob = [1]
+    # trace_prob = [1]
+    # NPI_schools = [0.75]
+    # test_freq = [1]
+    # network_change = [False]
+    # school_start_day = [{'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}]
+    # intervention_start_day = [{'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}]
 
-    analysis_name = 'school_reopening_analysis_with_teachertesting'
-
-    schools_closure_scenarios = ['with_testing_teachers']
-
-    schools_closure_scenarios_label = ['Cohorting, NPI, Screening, More Testing, More Tracing, Test Teachers Weekly']
-
-    num_pos = [10000]
-    test_prob = [1]
-    trace_prob = [1]
-    NPI_schools = [.75]
-    test_freq = 7
 
     if rerun:
         indices = range(n_reps)
@@ -75,7 +83,7 @@ if __name__ == "__main__":
         json = sc.loadjson(jsonfile)
 
 
-        for i, changes in enumerate(num_pos):
+        for i, changes in enumerate(intervention_start_day):
             all_sims = []
             num_school_closures = []
             for index in indices:
@@ -83,9 +91,11 @@ if __name__ == "__main__":
                 pars = entry['pars']
                 pars['end_day'] = '2020-12-01'
                 pars['rand_seed'] = int(entry['index'])
-                all_sims.append(cs.create_sim(pars=pars, num_pos=changes, test_prob=test_prob[i],
+                all_sims.append(cs.create_sim(pars=pars, num_pos=num_pos, test_prob=test_prob[i],
                                               trace_prob=trace_prob[i], NPI_schools=NPI_schools[i],
-                                              label=schools_closure_scenarios_label[i], test_freq=test_freq))
+                                              label=schools_closure_scenarios_label[i], test_freq=test_freq[i],
+                                              network_change=network_change, school_start_day=school_start_day,
+                                              intervention_start_day=changes))
 
             msim = cv.MultiSim(sims=all_sims)
             msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
@@ -101,22 +111,23 @@ if __name__ == "__main__":
 
         school_results = dict()
         for i, sim in enumerate(msims):
-            if num_pos[i] is not None:
-                school_results[schools_closure_scenarios[i]] = dict()
-                if len(sim.sims) > 1:  # if running multiple param sets, print all of them
-                    school_results[schools_closure_scenarios[i]]['school_closures'] = []
-                    school_results[schools_closure_scenarios[i]]['cum_infections'] = []
-                    school_results[schools_closure_scenarios[i]]['num_tested'] = []
-                    school_results[schools_closure_scenarios[i]]['num_traced'] = []
-                    school_results[schools_closure_scenarios[i]]['school_days_lost'] = []
-                    school_results[schools_closure_scenarios[i]]['num_students'] = []
-                    school_results[schools_closure_scenarios[i]]['num_symptomatic'] = []
-                    school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = []
-                    for j, sub_sim in enumerate(sim.sims):
+            school_results[schools_closure_scenarios[i]] = dict()
+            if len(sim.sims) > 1:  # if running multiple param sets, print all of them
+                school_results[schools_closure_scenarios[i]]['school_closures'] = []
+                school_results[schools_closure_scenarios[i]]['cum_infections'] = []
+                school_results[schools_closure_scenarios[i]]['num_tested'] = []
+                school_results[schools_closure_scenarios[i]]['num_traced'] = []
+                school_results[schools_closure_scenarios[i]]['school_days_lost'] = []
+                school_results[schools_closure_scenarios[i]]['num_students'] = []
+                school_results[schools_closure_scenarios[i]]['num_symptomatic'] = []
+                school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = []
+                for j, sub_sim in enumerate(sim.sims):
+                    if 'school_info' in sub_sim:
                         # num_asymp, num_symp = process_schools(sub_sim)
                         # school_results[schools_closure_scenarios[i]]['num_asymptomatic'].append(num_asymp)
                         # school_results[schools_closure_scenarios[i]]['num_symptomatic'].append(num_symp)
-                        school_results[schools_closure_scenarios[i]]['num_students'].append(sub_sim.school_info['num_students'])
+                        school_results[schools_closure_scenarios[i]]['num_students'].append(
+                            sub_sim.school_info['num_students'])
                         school_results[schools_closure_scenarios[i]]['school_closures'].append(
                             sub_sim.school_info['school_closures'])
                         school_results[schools_closure_scenarios[i]]['school_days_lost'].append(
@@ -127,20 +138,21 @@ if __name__ == "__main__":
                             sub_sim.school_info['num_tested'])
                         school_results[schools_closure_scenarios[i]]['num_traced'].append(
                             sub_sim.school_info['num_traced'])
-                else:
-                    for sub_sim in sim.sims:
-                        # num_asymp, num_symp = process_schools(sub_sim)
-                        # school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = num_asymp
-                        # school_results[schools_closure_scenarios[i]]['num_symptomatic'] = num_symp
-                        school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info['num_students']
-                        school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info[
-                            'school_closures']
-                        school_results[schools_closure_scenarios[i]]['school_days_lost'] = sub_sim.school_info[
-                            'school_days_lost']
-                        school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary[
-                            'cum_infections']
-                        school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
-                        school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
+            else:
+                for sub_sim in sim.sims:
+                    # num_asymp, num_symp = process_schools(sub_sim)
+                    # school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = num_asymp
+                    # school_results[schools_closure_scenarios[i]]['num_symptomatic'] = num_symp
+                    school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info[
+                        'num_students']
+                    school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info[
+                        'school_closures']
+                    school_results[schools_closure_scenarios[i]]['school_days_lost'] = sub_sim.school_info[
+                        'school_days_lost']
+                    school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary[
+                        'cum_infections']
+                    school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
+                    school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
 
         csvfile = f'{analysis_name}_output.csv'
         with open(csvfile, 'w') as f:
@@ -148,20 +160,13 @@ if __name__ == "__main__":
                 f.write("%s,%s\n" % (key, school_results[key]))
 
         figname = analysis_name
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=6)
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
         for ax in fig1.axes:
-            ax.set_xlim([200, 279])
-            ax.set_ylim([0, 8000])
+            ax.set_xlim([200, 305])
+            ax.set_ylim([0, 2000])
         fig1.savefig(f'infectious_{figname}_{date}.png')
-
         fig2 = sim_plots.plot(to_plot=['r_eff'], do_show=False)
         fig2.savefig(f'reff_{figname}_{date}.png')
-
-        # fig3 = sim_plots.plot(to_plot=['new_diagnoses', 'new_quarantined'], do_show=False)
-        # for ax in fig3.axes:
-        #     ax.set_xlim([200, 249])
-        # fig3.savefig(f'resources_{figname}_{date}.png')
-
 
     else:
         msims = []
@@ -169,61 +174,62 @@ if __name__ == "__main__":
             filename = f'msims/calibrated_{i}.msim'
             msims.append(cv.load(filename))
         sim_plots = cv.MultiSim.merge(msims, base=True)
-        # school_results = dict()
-        # for i, sim in enumerate(msims):
-        #     if num_pos[i] is not None:
-        #         school_results[schools_closure_scenarios[i]] = dict()
-        #         if len(sim.sims) > 1:  # if running multiple param sets, print all of them
-        #             school_results[schools_closure_scenarios[i]]['school_closures'] = []
-        #             school_results[schools_closure_scenarios[i]]['cum_infections'] = []
-        #             school_results[schools_closure_scenarios[i]]['num_tested'] = []
-        #             school_results[schools_closure_scenarios[i]]['num_traced'] = []
-        #             school_results[schools_closure_scenarios[i]]['school_days_lost'] = []
-        #             school_results[schools_closure_scenarios[i]]['num_students'] = []
-        #             school_results[schools_closure_scenarios[i]]['num_symptomatic'] = []
-        #             school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = []
-        #             for j, sub_sim in enumerate(sim.sims):
-        #                 # num_asymp, num_symp = process_schools(sub_sim)
-        #                 # school_results[schools_closure_scenarios[i]]['num_asymptomatic'].append(num_asymp)
-        #                 # school_results[schools_closure_scenarios[i]]['num_symptomatic'].append(num_symp)
-        #                 school_results[schools_closure_scenarios[i]]['num_students'].append(
-        #                     sub_sim.school_info['num_students'])
-        #                 school_results[schools_closure_scenarios[i]]['school_closures'].append(
-        #                     sub_sim.school_info['school_closures'])
-        #                 school_results[schools_closure_scenarios[i]]['school_days_lost'].append(
-        #                     sub_sim.school_info['school_days_lost'])
-        #                 school_results[schools_closure_scenarios[i]]['cum_infections'].append(
-        #                     sub_sim.summary['cum_infections'])
-        #                 school_results[schools_closure_scenarios[i]]['num_tested'].append(
-        #                     sub_sim.school_info['num_tested'])
-        #                 school_results[schools_closure_scenarios[i]]['num_traced'].append(
-        #                     sub_sim.school_info['num_traced'])
-        #         else:
-        #             for sub_sim in sim.sims:
-        #                 # num_asymp, num_symp = process_schools(sub_sim)
-        #                 # school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = num_asymp
-        #                 # school_results[schools_closure_scenarios[i]]['num_symptomatic'] = num_symp
-        #                 school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info[
-        #                     'num_students']
-        #                 school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info[
-        #                     'school_closures']
-        #                 school_results[schools_closure_scenarios[i]]['school_days_lost'] = sub_sim.school_info[
-        #                     'school_days_lost']
-        #                 school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary[
-        #                     'cum_infections']
-        #                 school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
-        #                 school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
-        #
-        # csvfile = f'{analysis_name}_output.csv'
-        # with open(csvfile, 'w') as f:
-        #     for key in school_results.keys():
-        #         f.write("%s,%s\n" % (key, school_results[key]))
+        school_results = dict()
+        for i, sim in enumerate(msims):
+            school_results[schools_closure_scenarios[i]] = dict()
+            if len(sim.sims) > 1:  # if running multiple param sets, print all of them
+                school_results[schools_closure_scenarios[i]]['school_closures'] = []
+                school_results[schools_closure_scenarios[i]]['cum_infections'] = []
+                school_results[schools_closure_scenarios[i]]['num_tested'] = []
+                school_results[schools_closure_scenarios[i]]['num_traced'] = []
+                school_results[schools_closure_scenarios[i]]['school_days_lost'] = []
+                school_results[schools_closure_scenarios[i]]['num_students'] = []
+                school_results[schools_closure_scenarios[i]]['num_symptomatic'] = []
+                school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = []
+                for j, sub_sim in enumerate(sim.sims):
+                    if 'school_info' in sub_sim:
+                        # num_asymp, num_symp = process_schools(sub_sim)
+                        # school_results[schools_closure_scenarios[i]]['num_asymptomatic'].append(num_asymp)
+                        # school_results[schools_closure_scenarios[i]]['num_symptomatic'].append(num_symp)
+                        school_results[schools_closure_scenarios[i]]['num_students'].append(
+                            sub_sim.school_info['num_students'])
+                        school_results[schools_closure_scenarios[i]]['school_closures'].append(
+                            sub_sim.school_info['school_closures'])
+                        school_results[schools_closure_scenarios[i]]['school_days_lost'].append(
+                            sub_sim.school_info['school_days_lost'])
+                        school_results[schools_closure_scenarios[i]]['cum_infections'].append(
+                            sub_sim.summary['cum_infections'])
+                        school_results[schools_closure_scenarios[i]]['num_tested'].append(
+                            sub_sim.school_info['num_tested'])
+                        school_results[schools_closure_scenarios[i]]['num_traced'].append(
+                            sub_sim.school_info['num_traced'])
+            else:
+                for sub_sim in sim.sims:
+                    # num_asymp, num_symp = process_schools(sub_sim)
+                    # school_results[schools_closure_scenarios[i]]['num_asymptomatic'] = num_asymp
+                    # school_results[schools_closure_scenarios[i]]['num_symptomatic'] = num_symp
+                    school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info[
+                        'num_students']
+                    school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info[
+                        'school_closures']
+                    school_results[schools_closure_scenarios[i]]['school_days_lost'] = sub_sim.school_info[
+                        'school_days_lost']
+                    school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary[
+                        'cum_infections']
+                    school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
+                    school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
+
+
+        csvfile = f'{analysis_name}_output.csv'
+        with open(csvfile, 'w') as f:
+            for key in school_results.keys():
+                f.write("%s,%s\n" % (key, school_results[key]))
 
         figname = analysis_name
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=6)
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
         for ax in fig1.axes:
-            ax.set_xlim([210, 309])
-            ax.set_ylim([0, 8000])
+            ax.set_xlim([200, 309])
+            ax.set_ylim([0, 2000])
         fig1.savefig(f'infectious_{figname}_{date}.png')
 
         fig2 = sim_plots.plot(to_plot=['r_eff'], do_show=False)
