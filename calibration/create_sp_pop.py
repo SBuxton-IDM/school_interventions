@@ -17,15 +17,16 @@ def cache_populations(seed=0, popfile=None):
         rand_seed = seed,
     )
 
-    cohorting_all = False
+    cohorting = False
     with_school_types = True
 
-    if cohorting_all:
-        strategy = 'cohorting'
-        school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'clustered', 'uv': 'clustered'}
+    if cohorting:
+        strategy = 'clustered'
+        school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'random', 'uv': 'clustered'}
     else:
         strategy = 'normal'
-        school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'random', 'hs': 'random', 'uv': 'random'}
+        school_mixing_type = {'pk': 'age_and_class_clustered', 'es': 'age_and_class_clustered', 'ms': 'age_and_class_clustered',
+                              'hs': 'random', 'uv': 'random'}
 
     if popfile is None:
         popfile = f'inputs/kc_synthpops_{strategy}_seed{pars.rand_seed}.ppl'
