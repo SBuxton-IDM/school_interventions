@@ -10,32 +10,59 @@ cv.check_save_version('1.4.7', die=True)
 
 def process_schools(sub_sim):
     snapshot = sub_sim['analyzers'][1]
-
-    total_infectious = []
-    students_infectious = []
-    teachers_infectious = []
-
-    total_cases_in_school = []
-    total_schools_with_at_least_one_case = []
+    school_snapshot_dict = dict()
+    school_snapshot_dict['total_infectious'] = []
+    school_snapshot_dict['students_infectious'] = []
+    school_snapshot_dict['teachers_infectious'] = []
+    school_snapshot_dict['total_cases_in_es'] = []
+    school_snapshot_dict['total_cases_in_ms'] = []
+    school_snapshot_dict['total_cases_in_hs'] = []
+    school_snapshot_dict['total_es_with_at_least_one_case'] = []
+    school_snapshot_dict['total_ms_with_at_least_one_case'] = []
+    school_snapshot_dict['total_hs_with_at_least_one_case'] = []
 
     for date, shot in snapshot.snapshots.items():
 
         teacher_inds = np.array([i for i in range(len(shot.teacher_flag)) if shot.teacher_flag[i] == True])
         student_inds = np.array([i for i in range(len(shot.student_flag)) if shot.student_flag[i] == True])
 
-        total_infectious += cvu.itrue(shot.infectious, shot.age).tolist()
-        teachers_infectious += cvu.itrue(shot.infectious[teacher_inds],teacher_inds).tolist()
-        students_infectious += cvu.itrue(shot.infectious[student_inds], student_inds).tolist()
+        total = len(cvu.itrue(shot.infectious, shot.age))
+        school_snapshot_dict['total_infectious'].append(total)
+        teachers = len(cvu.itrue(shot.infectious[teacher_inds],teacher_inds))
+        school_snapshot_dict['teachers_infectious'].append(teachers)
+        students = len(cvu.itrue(shot.infectious[student_inds], student_inds))
+        school_snapshot_dict['students_infectious'].append(students)
 
-        for _, school in shot.schools.items():
-            if isinstance(school, int):
-                school = [school]
-            cases_in_school = cvu.itrue(shot.infectious[school], np.array(school)).tolist()
-            total_cases_in_school += cases_in_school
-            if len(cases_in_school) >= 1:
-                total_schools_with_at_least_one_case += 1
+        for type, schools in shot.school_types.items():
+            total_cases = 0
+            total_schools = 0
+            if type == 'es':
+                for school in schools:
+                    cases_in_school = len(cvu.itrue(shot.infectious[shot.schools[school]], np.array(shot.schools[school])))
+                    total_cases += cases_in_school
+                    if cases_in_school >= 1:
+                        total_schools += 1
+                school_snapshot_dict['total_cases_in_es'].append(total_cases)
+                school_snapshot_dict['total_es_with_at_least_one_case'].append(total_schools)
+            elif type == 'ms':
+                for school in schools:
+                    cases_in_school = len(cvu.itrue(shot.infectious[shot.schools[school]], np.array(shot.schools[school])))
+                    total_cases += cases_in_school
+                    if cases_in_school >= 1:
+                        total_schools += 1
+                school_snapshot_dict['total_cases_in_ms'].append(total_cases)
+                school_snapshot_dict['total_ms_with_at_least_one_case'].append(total_schools)
+            elif type == 'hs':
+                for school in schools:
+                    cases_in_school = len(cvu.itrue(shot.infectious[shot.schools[school]], np.array(shot.schools[school])))
+                    total_cases += cases_in_school
+                    if cases_in_school >= 1:
+                        total_schools += 1
+                school_snapshot_dict['total_cases_in_hs'].append(total_cases)
+                school_snapshot_dict['total_hs_with_at_least_one_case'].append(total_schools)
 
-    return total_infectious, students_infectious, teachers_infectious, total_cases_in_school, total_schools_with_at_least_one_case
+
+    return school_snapshot_dict
 
 
 if __name__ == "__main__":
@@ -47,53 +74,37 @@ if __name__ == "__main__":
 
     analysis_name = 'testing_80perc_mobility'
 
-    # schools_closure_scenarios = ['as_normal', 'with_NPI', 'with_screening',
-    #                              'with_test_trace', 'with_daily_testing']
+
+
+    # schools_closure_scenarios = ['no_school', 'school', 'with_NPI', 'with_cohorting', 'with_screening',
+    #                              'with_test_trace']
     #
-    # schools_closure_scenarios_label = ['As Normal', 'NPI', 'NPI, Screening',
-    #                                    'NPI, Screening, Testing, Tracing',
-    #                                    'NPI, Screening, Testing, Tracing, Daily Testing']
+    # schools_closure_scenarios_label = ['No School', 'School "As Normal"', 'School with NPI', 'School with NPI + Cohorting',
+    #                                    'School with NPI, Cohorting, Screening', 'School with NPI, Cohorting, Screening, Testing, Tracing']
     #
-    # test_prob = [0, 0, 0, 1, 1]
-    # trace_prob = [0, 0, 0, 1, 1]
-    # NPI_schools = [None, 0.75, 0.75, 0.75, 0.75]
-    # test_freq = [None, None, None, None, 1]
-    # network_change = False
-    # school_start_day = {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}
-    # intervention_start_day = [None, None,
+    # test_prob = [0, 0, 0, 0, 0, 1]
+    # trace_prob = [0, 0, 0, 0, 0, 1]
+    # NPI_schools = [None, None, 0.75, 0.75, 0.75, 0.75]
+    # test_freq = [None, None, None, None, None, None]
+    # network_change = [False, False, False, True, True, True]
+    # school_start_day = [{'pk': None, 'es': None, 'ms': None, 'hs': None, 'uv': None},
+    #                     '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01']
+    # intervention_start_day = [None, None, None, None,
     #                           {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
     #                           {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-    #                           {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}]
+    #                           ]
 
-    schools_closure_scenarios = ['no_school', 'school', 'with_NPI', 'with_cohorting', 'with_screening',
-                                 'with_test_trace']
+    schools_closure_scenarios = ['with_cohorting']
 
-    schools_closure_scenarios_label = ['No School', 'School "As Normal"', 'School with NPI', 'School with NPI + Cohorting',
-                                       'School with NPI, Cohorting, Screening', 'School with NPI, Cohorting, Screening, Testing, Tracing']
+    schools_closure_scenarios_label = ['School with NPI + Cohorting']
 
-    test_prob = [0, 0, 0, 0, 0, 1]
-    trace_prob = [0, 0, 0, 0, 0, 1]
-    NPI_schools = [None, None, 0.75, 0.75, 0.75, 0.75]
-    test_freq = [None, None, None, None, None, None]
-    network_change = [False, False, False, True, True, True]
-    school_start_day = [{'pk': None, 'es': None, 'ms': None, 'hs': None, 'uv': None},
-                        '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01']
-    intervention_start_day = [None, None, None, None,
-                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-                              ]
-
-    # schools_closure_scenarios = ['with_cohorting']
-    #
-    # schools_closure_scenarios_label = ['School with NPI + Cohorting']
-    #
-    # test_prob = [ 0]
-    # trace_prob = [0]
-    # NPI_schools = [0.75]
-    # test_freq = [None]
-    # network_change = [True]
-    # school_start_day = ['2020-09-01']
-    # intervention_start_day = [None]
+    test_prob = [ 0]
+    trace_prob = [0]
+    NPI_schools = [0.75]
+    test_freq = [None]
+    network_change = [True]
+    school_start_day = ['2020-09-01']
+    intervention_start_day = [None]
 
     if rerun:
         indices = range(n_reps)
@@ -138,17 +149,28 @@ if __name__ == "__main__":
                 school_results[schools_closure_scenarios[i]]['total_cases'] = []
                 school_results[schools_closure_scenarios[i]]['student_cases'] = []
                 school_results[schools_closure_scenarios[i]]['teacher_cases'] = []
-                school_results[schools_closure_scenarios[i]]['cases_in_school'] = []
-                school_results[schools_closure_scenarios[i]]['schools_with_a_case'] = []
+                school_results[schools_closure_scenarios[i]]['cases_in_es'] = []
+                school_results[schools_closure_scenarios[i]]['cases_in_ms'] = []
+                school_results[schools_closure_scenarios[i]]['cases_in_hs'] = []
+                school_results[schools_closure_scenarios[i]]['es_with_a_case'] = []
+                school_results[schools_closure_scenarios[i]]['ms_with_a_case'] = []
+                school_results[schools_closure_scenarios[i]]['hs_with_a_case'] = []
                 for j, sub_sim in enumerate(sim.sims):
                     if 'school_info' in sub_sim:
-                        total_infectious, students_infectious, teachers_infectious, total_cases_in_school, \
-                        total_schools_with_at_least_one_case = process_schools(sub_sim)
-                        school_results[schools_closure_scenarios[i]]['total_cases'].append(total_infectious)
-                        school_results[schools_closure_scenarios[i]]['teacher_cases'].append(teachers_infectious)
-                        school_results[schools_closure_scenarios[i]]['student_cases'].append(students_infectious)
-                        school_results[schools_closure_scenarios[i]]['cases_in_school'].append(total_cases_in_school)
-                        school_results[schools_closure_scenarios[i]]['schools_with_a_case'].append(total_schools_with_at_least_one_case)
+                        school_snapshot_dict = process_schools(sub_sim)
+                        school_results[schools_closure_scenarios[i]]['total_cases'].append(school_snapshot_dict['total_infectious'])
+                        school_results[schools_closure_scenarios[i]]['teacher_cases'].append(school_snapshot_dict['teachers_infectious'])
+                        school_results[schools_closure_scenarios[i]]['student_cases'].append(school_snapshot_dict['students_infectious'])
+                        school_results[schools_closure_scenarios[i]]['cases_in_es'].append(school_snapshot_dict['total_cases_in_es'])
+                        school_results[schools_closure_scenarios[i]]['cases_in_ms'].append(
+                            school_snapshot_dict['total_cases_in_ms'])
+                        school_results[schools_closure_scenarios[i]]['cases_in_hs'].append(
+                            school_snapshot_dict['total_cases_in_hs'])
+                        school_results[schools_closure_scenarios[i]]['es_with_a_case'].append(school_snapshot_dict['total_es_with_at_least_one_case'])
+                        school_results[schools_closure_scenarios[i]]['ms_with_a_case'].append(
+                            school_snapshot_dict['total_ms_with_at_least_one_case'])
+                        school_results[schools_closure_scenarios[i]]['hs_with_a_case'].append(
+                            school_snapshot_dict['total_hs_with_at_least_one_case'])
                         school_results[schools_closure_scenarios[i]]['num_students'].append(
                             sub_sim.school_info['num_students'])
                         school_results[schools_closure_scenarios[i]]['school_closures'].append(
@@ -165,13 +187,16 @@ if __name__ == "__main__":
                             sub_sim.school_info['test_pos'])
             else:
                 for sub_sim in sim.sims:
-                    total_infectious, students_infectious, teachers_infectious, total_cases_in_school, \
-                    total_schools_with_at_least_one_case = process_schools(sub_sim)
-                    school_results[schools_closure_scenarios[i]]['total_cases'] = total_infectious
-                    school_results[schools_closure_scenarios[i]]['teacher_cases'] = teachers_infectious
-                    school_results[schools_closure_scenarios[i]]['student_cases'] = students_infectious
-                    school_results[schools_closure_scenarios[i]]['cases_in_school'] = total_cases_in_school
-                    school_results[schools_closure_scenarios[i]]['schools_with_a_case'] = total_schools_with_at_least_one_case
+                    school_snapshot_dict = process_schools(sub_sim)
+                    school_results[schools_closure_scenarios[i]]['total_cases'] = school_snapshot_dict['total_infectious']
+                    school_results[schools_closure_scenarios[i]]['teacher_cases'] = school_snapshot_dict['teachers_infectious']
+                    school_results[schools_closure_scenarios[i]]['student_cases'] = school_snapshot_dict['students_infectious']
+                    school_results[schools_closure_scenarios[i]]['cases_in_es'] = school_snapshot_dict['total_cases_in_es']
+                    school_results[schools_closure_scenarios[i]]['cases_in_ms'] = school_snapshot_dict['total_cases_in_ms']
+                    school_results[schools_closure_scenarios[i]]['cases_in_hs'] = school_snapshot_dict['total_cases_in_hs']
+                    school_results[schools_closure_scenarios[i]]['es_with_a_case'] = school_snapshot_dict['total_es_with_at_least_one_case']
+                    school_results[schools_closure_scenarios[i]]['ms_with_a_case'] = school_snapshot_dict['total_ms_with_at_least_one_case']
+                    school_results[schools_closure_scenarios[i]]['hs_with_a_case'] = school_snapshot_dict['total_hs_with_at_least_one_case']
                     school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info[
                         'num_students']
                     school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info[
@@ -218,18 +243,33 @@ if __name__ == "__main__":
                 school_results[schools_closure_scenarios[i]]['total_cases'] = []
                 school_results[schools_closure_scenarios[i]]['student_cases'] = []
                 school_results[schools_closure_scenarios[i]]['teacher_cases'] = []
-                school_results[schools_closure_scenarios[i]]['cases_in_school'] = []
-                school_results[schools_closure_scenarios[i]]['schools_with_a_case'] = []
+                school_results[schools_closure_scenarios[i]]['cases_in_es'] = []
+                school_results[schools_closure_scenarios[i]]['cases_in_ms'] = []
+                school_results[schools_closure_scenarios[i]]['cases_in_hs'] = []
+                school_results[schools_closure_scenarios[i]]['es_with_a_case'] = []
+                school_results[schools_closure_scenarios[i]]['ms_with_a_case'] = []
+                school_results[schools_closure_scenarios[i]]['hs_with_a_case'] = []
                 for j, sub_sim in enumerate(sim.sims):
                     if 'school_info' in sub_sim:
-                        total_infectious, students_infectious, teachers_infectious, total_cases_in_school, \
-                        total_schools_with_at_least_one_case = process_schools(sub_sim)
-                        school_results[schools_closure_scenarios[i]]['total_cases'].append(total_infectious)
-                        school_results[schools_closure_scenarios[i]]['teacher_cases'].append(teachers_infectious)
-                        school_results[schools_closure_scenarios[i]]['student_cases'].append(students_infectious)
-                        school_results[schools_closure_scenarios[i]]['cases_in_school'].append(total_cases_in_school)
-                        school_results[schools_closure_scenarios[i]]['schools_with_a_case'].append(
-                            total_schools_with_at_least_one_case)
+                        school_snapshot_dict = process_schools(sub_sim)
+                        school_results[schools_closure_scenarios[i]]['total_cases'].append(
+                            school_snapshot_dict['total_infectious'])
+                        school_results[schools_closure_scenarios[i]]['teacher_cases'].append(
+                            school_snapshot_dict['teachers_infectious'])
+                        school_results[schools_closure_scenarios[i]]['student_cases'].append(
+                            school_snapshot_dict['students_infectious'])
+                        school_results[schools_closure_scenarios[i]]['cases_in_es'].append(
+                            school_snapshot_dict['total_cases_in_es'])
+                        school_results[schools_closure_scenarios[i]]['cases_in_ms'].append(
+                            school_snapshot_dict['total_cases_in_ms'])
+                        school_results[schools_closure_scenarios[i]]['cases_in_hs'].append(
+                            school_snapshot_dict['total_cases_in_hs'])
+                        school_results[schools_closure_scenarios[i]]['es_with_a_case'].append(
+                            school_snapshot_dict['total_es_with_at_least_one_case'])
+                        school_results[schools_closure_scenarios[i]]['ms_with_a_case'].append(
+                            school_snapshot_dict['total_ms_with_at_least_one_case'])
+                        school_results[schools_closure_scenarios[i]]['hs_with_a_case'].append(
+                            school_snapshot_dict['total_hs_with_at_least_one_case'])
                         school_results[schools_closure_scenarios[i]]['num_students'].append(
                             sub_sim.school_info['num_students'])
                         school_results[schools_closure_scenarios[i]]['school_closures'].append(
@@ -246,14 +286,25 @@ if __name__ == "__main__":
                             sub_sim.school_info['test_pos'])
             else:
                 for sub_sim in sim.sims:
-                    total_infectious, students_infectious, teachers_infectious, total_cases_in_school, \
-                    total_schools_with_at_least_one_case = process_schools(sub_sim)
-                    school_results[schools_closure_scenarios[i]]['total_cases'] = total_infectious
-                    school_results[schools_closure_scenarios[i]]['teacher_cases'] = teachers_infectious
-                    school_results[schools_closure_scenarios[i]]['student_cases'] = students_infectious
-                    school_results[schools_closure_scenarios[i]]['cases_in_school'] = total_cases_in_school
-                    school_results[schools_closure_scenarios[i]][
-                        'schools_with_a_case'] = total_schools_with_at_least_one_case
+                    school_snapshot_dict = process_schools(sub_sim)
+                    school_results[schools_closure_scenarios[i]]['total_cases'] = school_snapshot_dict[
+                        'total_infectious']
+                    school_results[schools_closure_scenarios[i]]['teacher_cases'] = school_snapshot_dict[
+                        'teachers_infectious']
+                    school_results[schools_closure_scenarios[i]]['student_cases'] = school_snapshot_dict[
+                        'students_infectious']
+                    school_results[schools_closure_scenarios[i]]['cases_in_es'] = school_snapshot_dict[
+                        'total_cases_in_es']
+                    school_results[schools_closure_scenarios[i]]['cases_in_ms'] = school_snapshot_dict[
+                        'total_cases_in_ms']
+                    school_results[schools_closure_scenarios[i]]['cases_in_hs'] = school_snapshot_dict[
+                        'total_cases_in_hs']
+                    school_results[schools_closure_scenarios[i]]['es_with_a_case'] = school_snapshot_dict[
+                        'total_es_with_at_least_one_case']
+                    school_results[schools_closure_scenarios[i]]['ms_with_a_case'] = school_snapshot_dict[
+                        'total_ms_with_at_least_one_case']
+                    school_results[schools_closure_scenarios[i]]['hs_with_a_case'] = school_snapshot_dict[
+                        'total_hs_with_at_least_one_case']
                     school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info[
                         'num_students']
                     school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info[
