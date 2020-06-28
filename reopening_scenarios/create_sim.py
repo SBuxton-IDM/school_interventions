@@ -155,15 +155,15 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
-    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-08-30']
+    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-05-18', '2020-08-30']
 
-    b_ch.h = [1.00, 1.10, 1.20, 1.20, 1]
-    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
-    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
+    b_ch.h = [1.00, 1.10, 1.20, 1.20, 1.2, 1]
+    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, (p.bc_wc3-0.25), (p.bc_wc3-0.25)]
+    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, (p.bc_wc3-0.25), (p.bc_wc3-0.25)]
     if NPI_schools is None:
-        b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00]
+        b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00, 1.00]
     else:
-        b_ch.s = [1.00, 1.00, 1.00, 1.00, NPI_schools]
+        b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00, NPI_schools]
 
     # LTCF intervention
     b_days_l = np.arange(sim.day(b_days[0]), sim.day(b_days[2]) + 1)
@@ -183,14 +183,14 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
                                         pop_file=popfile_new)]
 
     interventions += [cv.close_schools(start_day=intervention_start_day, num_pos=num_pos, test=test_prob,
-                                       trace=trace_prob, ili_prev=0.0033, test_freq=test_freq)]
+                                       trace=trace_prob, ili_prev=0.002, test_freq=test_freq)]
 
     # SafeGraph intervention
     interventions += make_safegraph(sim)
     sim['interventions'] = interventions
 
     analyzers = [cv.age_histogram(datafile=age_data_file)]
-    analyzers += [cv.snapshot('2020-09-02', '2020-10-01', '2020-11-01')]
+    analyzers += [cv.snapshot('2020-09-01', '2020-10-01', '2020-11-01')]
 
     sim['analyzers'] += analyzers
 
