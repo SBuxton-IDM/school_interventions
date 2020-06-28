@@ -192,7 +192,23 @@ def school_dict(msims):
                 school_results[schools_closure_scenarios[i]]['test_pos'] = sub_sim.school_info['test_pos']
 
 
+
+
+    for _, results in school_results.items():
+        for key, value in results.items():
+            if isinstance(value, list):
+                if isinstance(value[0], list):
+                    total = [sum(x) for x in zip(*value)]
+                    num_sublists = len(value)
+                    for ind, value in enumerate(total):
+                        total[ind] = value / num_sublists
+                    results[key] = total
+                else:
+                    mean = sum(value)/len(value)
+                    results[key] = mean
+
     school_results = pd.DataFrame.from_dict(school_results)
+
     return school_results
 
 
@@ -202,7 +218,7 @@ if __name__ == "__main__":
     do_save = True
     save_dict = True
     n_params = 1
-    n_seeds = 4
+    n_seeds = 5
     date = '06282020'
 
     analysis_name = 'school_reopening_analysis_80perc_mobility_withmasks'
@@ -281,13 +297,24 @@ if __name__ == "__main__":
             school_results.to_csv(filename, header=True)
 
         figname = analysis_name
-        fig1 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
-        # for ax in fig1.axes:
-        #     ax.set_xlim([200, 305])
-        #     ax.set_ylim([0, 2000])
-        fig1.savefig(f'new_infections_{figname}_{date}.png')
-        fig2 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
-        fig2.savefig(f'cum_infections_{figname}_{date}.png')
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
+        for ax in fig1.axes:
+            ax.set_xlim([200, 309])
+            ax.set_ylim([0, 2000])
+        fig1.savefig(f'infectious_{figname}_{date}.png')
+
+        fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
+        for ax in fig2.axes:
+            ax.set_xlim([200, 309])
+            ax.set_ylim([0, 500])
+        fig2.savefig(f'new_infections_{figname}_{date}.png')
+
+        fig3 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
+        for ax in fig3.axes:
+            ax.set_xlim([210, 309])
+            ax.set_ylim([70000, 85000])
+        fig3.savefig(f'cum_infections_{figname}_{date}.png')
+
 
     else:
         msims = []
@@ -302,17 +329,17 @@ if __name__ == "__main__":
             school_results.to_csv(filename, header=True)
 
         figname = analysis_name
-        # fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
-        # for ax in fig1.axes:
-        #     ax.set_xlim([200, 309])
-        #     ax.set_ylim([0, 2000])
-        # fig1.savefig(f'infectious_{figname}_{date}.png')
-        #
-        # fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
-        # for ax in fig2.axes:
-        #     ax.set_xlim([200, 309])
-        #     ax.set_ylim([0, 500])
-        # fig2.savefig(f'new_infections_{figname}_{date}.png')
+        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
+        for ax in fig1.axes:
+            ax.set_xlim([200, 309])
+            ax.set_ylim([0, 2000])
+        fig1.savefig(f'infectious_{figname}_{date}.png')
+
+        fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
+        for ax in fig2.axes:
+            ax.set_xlim([200, 309])
+            ax.set_ylim([0, 500])
+        fig2.savefig(f'new_infections_{figname}_{date}.png')
 
         fig3 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
         for ax in fig3.axes:
