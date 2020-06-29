@@ -216,6 +216,7 @@ if __name__ == "__main__":
 
     rerun = True
     do_save = True
+    do_plot = False
     save_dict = True
     n_params = 1
     n_seeds = 5
@@ -266,9 +267,9 @@ if __name__ == "__main__":
         jsonfile = 'optimization_v12_safegraph_062620.json'
         json = sc.loadjson(jsonfile)
 
-        msims = []
-        for i, changes in enumerate(schools_closure_scenarios_label):
-            for index in indices:
+        for index in indices:
+            msims = []
+            for i, changes in enumerate(schools_closure_scenarios_label):
                 all_sims = []
                 entry = json[index]
                 pars = entry['pars']
@@ -286,63 +287,68 @@ if __name__ == "__main__":
                 msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
                 msim.reduce()
                 if do_save:
-                    cv.save(filename=f'msims/calibrated_{schools_closure_scenarios[i]}_param{index}.msim', obj=msim)
+                    cv.save(
+                        filename=f'msims/calibrated_{analysis_name}_{schools_closure_scenarios[i]}_param{index}.msim',
+                        obj=msim)
                 msims.append(msim)
 
-        sim_plots = cv.MultiSim.merge(msims, base=True)
+            if save_dict:
+                school_results = school_dict(msims)
+                filename = f'{analysis_name}_param{index}_output.csv'
+                school_results.to_csv(filename, header=True)
 
-        if save_dict:
-            school_results = school_dict(msims)
-            filename = f'{analysis_name}_output.csv'
-            school_results.to_csv(filename, header=True)
+            if do_plot:
+                sim_plots = cv.MultiSim.merge(msims, base=True)
+                figname = f'{analysis_name}_param{index}'
+                fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
+                for ax in fig1.axes:
+                    ax.set_xlim([200, 309])
+                    ax.set_ylim([0, 2000])
+                fig1.savefig(f'infectious_{figname}_{date}.png')
 
-        figname = analysis_name
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
-        for ax in fig1.axes:
-            ax.set_xlim([200, 309])
-            ax.set_ylim([0, 2000])
-        fig1.savefig(f'infectious_{figname}_{date}.png')
+                fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
+                for ax in fig2.axes:
+                    ax.set_xlim([200, 309])
+                    ax.set_ylim([0, 500])
+                fig2.savefig(f'new_infections_{figname}_{date}.png')
 
-        fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
-        for ax in fig2.axes:
-            ax.set_xlim([200, 309])
-            ax.set_ylim([0, 500])
-        fig2.savefig(f'new_infections_{figname}_{date}.png')
-
-        fig3 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
-        for ax in fig3.axes:
-            ax.set_xlim([210, 309])
-            ax.set_ylim([70000, 85000])
-        fig3.savefig(f'cum_infections_{figname}_{date}.png')
-
+                fig3 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
+                for ax in fig3.axes:
+                    ax.set_xlim([210, 309])
+                    ax.set_ylim([70000, 85000])
+                fig3.savefig(f'cum_infections_{figname}_{date}.png')
 
     else:
-        msims = []
-        for i in schools_closure_scenarios:
-            filename = f'msims/calibrated_{i}.msim'
-            msims.append(cv.load(filename))
-        sim_plots = cv.MultiSim.merge(msims, base=True)
+        indices = range(n_params)
+        for index in indices:
+            msims = []
+            for i in schools_closure_scenarios:
+                filename = f'msims/calibrated_{analysis_name}_{i}_param{index}.msim'
+                msims.append(cv.load(filename))
+            sim_plots = cv.MultiSim.merge(msims, base=True)
 
-        if save_dict:
-            school_results = school_dict(msims)
-            filename = f'{analysis_name}_output.csv'
-            school_results.to_csv(filename, header=True)
+            if save_dict:
+                school_results = school_dict(msims)
+                filename = f'{analysis_name}_param{index}_output.csv'
+                school_results.to_csv(filename, header=True)
 
-        figname = analysis_name
-        fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
-        for ax in fig1.axes:
-            ax.set_xlim([200, 309])
-            ax.set_ylim([0, 2000])
-        fig1.savefig(f'infectious_{figname}_{date}.png')
+            if do_plot:
+                sim_plots = cv.MultiSim.merge(msims, base=True)
+                figname = f'{analysis_name}_param{index}'
+                fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
+                for ax in fig1.axes:
+                    ax.set_xlim([200, 309])
+                    ax.set_ylim([0, 2000])
+                fig1.savefig(f'infectious_{figname}_{date}.png')
 
-        fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
-        for ax in fig2.axes:
-            ax.set_xlim([200, 309])
-            ax.set_ylim([0, 500])
-        fig2.savefig(f'new_infections_{figname}_{date}.png')
+                fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
+                for ax in fig2.axes:
+                    ax.set_xlim([200, 309])
+                    ax.set_ylim([0, 500])
+                fig2.savefig(f'new_infections_{figname}_{date}.png')
 
-        fig3 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
-        for ax in fig3.axes:
-            ax.set_xlim([210, 309])
-            ax.set_ylim([70000, 85000])
-        fig3.savefig(f'cum_infections_{figname}_{date}.png')
+                fig3 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
+                for ax in fig3.axes:
+                    ax.set_xlim([210, 309])
+                    ax.set_ylim([70000, 85000])
+                fig3.savefig(f'cum_infections_{figname}_{date}.png')
