@@ -2,13 +2,13 @@
   "covasim": {
     "version": "1.4.7",
     "branch": "hospitals-and-schools",
-    "hash": "aa49083",
-    "date": "2020-06-17T10:11:06-04:00"
+    "hash": "e4cc271",
+    "date": "2020-06-27T15:07:59-04:00"
   },
   "called_by": {
     "branch": "master",
-    "hash": "31276a5",
-    "date": "2020-06-17T10:18:59-04:00",
+    "hash": "b2fdc30",
+    "date": "2020-06-28T14:52:13-04:00",
     "filename": "/Users/jamiecohen/PycharmProjects/covid-schools/reopening_scenarios/create_sim.py"
   }
 }

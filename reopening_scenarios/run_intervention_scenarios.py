@@ -254,7 +254,7 @@ if __name__ == "__main__":
 
         for scen, perc in enumerate(mobility_scens):
             analysis_name = f'school_reopening_analysis_{perc}_mobility_withmasks'
-            mobility_file = f'KC_weeklyinteractions_20200616_{perc}.csv'
+            mobility_file = f'inputs/KC_weeklyinteractions_20200616_{perc}.csv'
             for index in indices:
                 msims = []
                 for i, changes in enumerate(schools_closure_scenarios_label):
