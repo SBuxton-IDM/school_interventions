@@ -23,11 +23,14 @@ popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
 popfile_stem_change = f'{inputs}/kc_synthpops_clustered_seed'
 
 
-def make_safegraph(sim):
+def make_safegraph(sim, mobility_file):
     ''' Create interventions representing SafeGraph data '''
 
     # Load data.values
-    fn = safegraph_file
+    if mobility_file is None:
+        fn = safegraph_file
+    else:
+        fn = mobility_file
     df = pd.read_csv(fn)
     week = df['week']
     w = df['p.emp'].values
@@ -100,7 +103,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
 
 def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None,
                trace_prob=None, NPI_schools=None, test_freq=None, network_change=False, school_start_day=None,
-               intervention_start_day=None):
+               intervention_start_day=None, mobility_file=None):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -186,7 +189,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
                                        trace=trace_prob, ili_prev=0.002, test_freq=test_freq)]
 
     # SafeGraph intervention
-    interventions += make_safegraph(sim)
+    interventions += make_safegraph(sim, mobility_file)
     sim['interventions'] = interventions
 
     analyzers = [cv.age_histogram(datafile=age_data_file)]
