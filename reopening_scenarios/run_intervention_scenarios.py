@@ -191,9 +191,6 @@ def school_dict(msims):
                 school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
                 school_results[schools_closure_scenarios[i]]['test_pos'] = sub_sim.school_info['test_pos']
 
-
-
-
     for _, results in school_results.items():
         for key, value in results.items():
             if isinstance(value, list):
