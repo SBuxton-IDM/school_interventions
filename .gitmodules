@@ -1,0 +1,6 @@
+[submodule "covasim"]
+	path = covasim
+	url = https://github.com/amath-idm/covasim.git
+[submodule "synthpops"]
+	path = synthpops
+	url = https://github.com/amath-idm/synthpops.git
