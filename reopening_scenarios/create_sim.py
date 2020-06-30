@@ -193,7 +193,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     sim['interventions'] = interventions
 
     analyzers = [cv.age_histogram(datafile=age_data_file)]
-    analyzers += [cv.snapshot('2020-09-01', '2020-10-01', '2020-11-01')]
+    analyzers += [cv.snapshot('2020-11-01')]
 
     sim['analyzers'] += analyzers
 

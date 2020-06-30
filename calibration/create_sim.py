@@ -1,6 +1,6 @@
 '''
 Create the calibrated sim for the King County results. Note: this script relies
-on kc_synthpops_with_ltcf_seed0.ppl, which is created by cache_sp_pop.py, as well as several
+on kc_synthpops.ppl, which is created by cache_sp_pop.py, as well as several
 CSV files.
 '''
 
@@ -19,7 +19,7 @@ inputs         = 'inputs'
 epi_data_file  = f'{inputs}/20200614chop5_KingCounty_Covasim.csv'
 age_data_file  = f'{inputs}/20200614chop5_KingCounty_AgeHist.csv'
 safegraph_file = f'{inputs}/KC_weeklyinteractions_20200616.csv'
-popfile_stem   = f'{inputs}/kc_synthpops_with_ltcf_seed'
+popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
 
 
 def make_safegraph(sim):
@@ -176,6 +176,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     # These are copied from parameters.py -- needed to get younger and 60-65 groups right
     sim['prognoses']['age_cutoffs'] = np.array([0,      15,      20,      30,      40,      50,      65,      70,      80,      90]) # Age cutoffs (upper limits)
+    sim['prognoses']['trans_ORs'] = np.array([0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1])
 
     return sim
 

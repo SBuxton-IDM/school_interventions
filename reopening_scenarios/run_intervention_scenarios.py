@@ -191,9 +191,6 @@ def school_dict(msims):
                 school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
                 school_results[schools_closure_scenarios[i]]['test_pos'] = sub_sim.school_info['test_pos']
 
-
-
-
     for _, results in school_results.items():
         for key, value in results.items():
             if isinstance(value, list):
@@ -254,7 +251,7 @@ if __name__ == "__main__":
 
         for scen, perc in enumerate(mobility_scens):
             analysis_name = f'school_reopening_analysis_{perc}_mobility_withmasks'
-            mobility_file = f'KC_weeklyinteractions_20200616_{perc}.csv'
+            mobility_file = f'inputs/KC_weeklyinteractions_20200616_{perc}.csv'
             for index in indices:
                 msims = []
                 for i, changes in enumerate(schools_closure_scenarios_label):
