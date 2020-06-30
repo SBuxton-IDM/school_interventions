@@ -102,7 +102,7 @@ def outputs_df(mobility_rate, main_strategy, param_set):
 
 def results_df(mobility_rate, main_strategy, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_withmasks_halftransOR_' + main_strategy + '_param' + '%i' % param_set + '_results.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_withmasks_' + main_strategy + '_param' + '%i' % param_set + '_results.csv')
     return pd.read_csv(file_path)
 
 
@@ -327,7 +327,7 @@ def plot_infections(mobility_rate, strats, num_param_set):
 
 
     # fig.savefig('cuminfections_mobility_rate_' + '%i' % mobility_rate + '.pdf', format='pdf')
-    fig.savefig('cuminfections_halftransOR.pdf', format='pdf')
+    fig.savefig('cuminfections_basecase.pdf', format='pdf')
 
 
 if __name__ == '__main__':
