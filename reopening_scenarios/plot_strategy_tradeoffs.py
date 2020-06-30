@@ -6,10 +6,8 @@ look at tradeoffs.
 import numpy as np
 import pandas as pd
 import sciris as sc
-import covasim as cv
 import matplotlib as mplt
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import math
 import os
 import datetime as dt
@@ -105,7 +103,7 @@ def outputs_df(mobility_rate, main_strategy, param_set):
 
 def results_df(mobility_rate, main_strategy, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_withmasks_' + main_strategy + '_param' + '%i' % param_set + '_results.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_withoutmasks_' + main_strategy + '_param' + '%i' % param_set + '_results.csv')
     return pd.read_csv(file_path)
 
 
@@ -318,7 +316,7 @@ def plot_infections(mobility_rate, strats, num_param_set):
 
     fig, axs = plt.subplots(3, sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=right)
-    fig.suptitle('Cumulative Infections by Mobility', size=24, horizontalalignment='right')
+    fig.suptitle('Cumulative Infections by Community and Workplace Mobility', size=24, horizontalalignment='right')
 
     colors = sc.gridcolors(len(scenario_strategies))
 
@@ -349,6 +347,75 @@ def plot_infections(mobility_rate, strats, num_param_set):
     fig.savefig('cuminfections_basecase.pdf', format='pdf')
 
 
+def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
+
+    df_by_rate = []
+    df_by_rate_std = []
+    for rate in mobility_rate:
+        df_mean = []
+        df_std = []
+        for strat in strats:
+            df_mean.append(combine_results_dfs(rate, strat, num_param_set, measure_to_plot, True))
+            df_std.append(combine_results_dfs(rate, strat, num_param_set, measure_to_plot, False))
+
+        scenario_strategies = strats
+
+        df_comb = pd.DataFrame(df_mean).transpose()
+        df_comb.columns = scenario_strategies
+
+        df_comb_std = pd.DataFrame(df_std).transpose()
+        df_comb_std.columns = scenario_strategies
+        df_by_rate.append(df_comb)
+        df_by_rate_std.append(df_comb_std)
+
+    base = dt.datetime(2020,1,27)
+    date_list = [base + dt.timedelta(days=x) for x in range(len(df_comb))]
+    x = []
+    for date in date_list:
+        x.append(date.strftime('%b %d'))
+
+    date_to_x = {d:i for i, d in enumerate(x)}
+    right = 0.65
+
+    fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(13, 9))
+    fig.subplots_adjust(hspace=0.6, right=right)
+    if measure_to_plot == 'r_eff':
+        measure = 'Effective Reproductive Number'
+    elif measure_to_plot == 'cum_infections':
+        measure = 'Cumulative Infections'
+    fig.suptitle(f'{measure} by Community and Workplace Mobility', size=18, horizontalalignment='center')
+
+    colors = sc.gridcolors(len(scenario_strategies))
+
+    for i, ax in enumerate(axs):
+        for s, strat in enumerate(scenario_strategies):
+            ax.plot(x, df_by_rate[i][strat].values, color=colors[s])
+
+        if i == len(axs) - 1:
+            for s, strat in enumerate(scenario_strategies):
+                ax.plot(-5, -5, color=colors[s], label=strat.replace('Screening, ', 'Screening,\n').replace('Testing, ', 'Testing,\n'))
+            leg = ax.legend(fontsize=13, bbox_to_anchor=(0.63, 3, 1, 0.102))
+            leg.draw_frame(False)
+            xtick_labels = np.array(x)
+            n_xticks = len(ax.get_xticks())
+            interval = 15
+            xticks = np.arange(0, n_xticks, interval)
+            xtick_labels_displayed = xtick_labels[::interval]
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(xtick_labels_displayed)
+
+        ax.set_xlim(left=date_to_x['Aug 01'], right=date_to_x['Dec 01'])
+        if measure_to_plot == 'r_eff':
+            ax.set_ylim(0.5, 2)
+            ax.axhline(y=1, xmin=0, xmax=1, color='black', ls='--')
+        elif measure_to_plot == 'cum_infections':
+            ax.set_ylim(50e3, 500e3)
+        ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=16)
+        ax.tick_params(labelsize=12)
+
+    fig.savefig(f'{measure_to_plot}_basecase.png', format='png')
+
+
 if __name__ == '__main__':
 
     mobility_rate = [80, 90, 100]
@@ -365,7 +432,10 @@ if __name__ == '__main__':
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'cum_infections'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'num_tested'
 
-    plot_infections(mobility_rate, strats, num_param_set)
+    # measure_to_plot = 'cum_infections'
+    measure_to_plot = 'r_eff'
+    # plot_infections(mobility_rate, strats, num_param_set)
+    plot_general(mobility_rate, strats, num_param_set, measure_to_plot)
 
     # for rate in mobility_rate:
         # plot_dimensions(rate, main_strategy, num_param_set, dim1, dim2, dim3)
