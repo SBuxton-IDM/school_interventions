@@ -314,17 +314,24 @@ def plot_infections(mobility_rate, strats, num_param_set):
         x.append(date.strftime('%b %d'))
 
     date_to_x = {d:i for i, d in enumerate(x)}
+    right = 0.65
 
     fig, axs = plt.subplots(3, sharex=True, sharey=False, figsize=(13, 9))
-    fig.subplots_adjust(hspace=0.6, right=0.93)
-    fig.suptitle('Cumulative Infections by Mobility', size=24)
+    fig.subplots_adjust(hspace=0.6, right=right)
+    fig.suptitle('Cumulative Infections by Mobility', size=24, horizontalalignment='right')
+
+    colors = sc.gridcolors(len(scenario_strategies))
 
     for i, ax in enumerate(axs):
-        for strat in scenario_strategies:
-            ax.plot(x, df_by_rate[i][strat].values)
+        for s, strat in enumerate(scenario_strategies):
+            ax.plot(x, df_by_rate[i][strat].values, color=colors[s])
 
         # ax.set_xlim(200, 309)
         if i == len(axs) - 1:
+            for s, strat in enumerate(scenario_strategies):
+                ax.plot(-5, -5, color=colors[s], label=strat.replace('Screening, ', 'Screening,\n').replace('Testing, ', 'Testing,\n'))
+            leg = ax.legend(fontsize=16, bbox_to_anchor=(0.63, 3, 1, 0.102))
+            leg.draw_frame(False)
             xtick_labels = np.array(x)
             n_xticks = len(ax.get_xticks())
             interval = 15
