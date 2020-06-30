@@ -288,6 +288,78 @@ def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim
     fig.savefig('mobility_rate_' + '%i' % mobility_rate + '_' + dim1 + '_' + dim2 + '_' + dim3 + '.pdf', format='pdf')
 
 
+def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, dim1, dim2):
+    df_by_rate = []
+    x_by_rate = []
+    y_by_rate = []
+    z_by_rate = []
+
+    for rate in mobility_rate:
+        df = combine_dfs(rate, main_strategy, num_param_set)
+        df_by_rate.append(df)
+        scenario_strategies = df.columns[1:]
+        n_strategies = len(scenario_strategies)
+        colors = sc.gridcolors(n_strategies)
+
+        x = []
+        y = []
+        z = []
+
+        for n, strategy in enumerate(scenario_strategies):
+            xi = mean_output(df, strategy, dim1)
+            yi = mean_output(df, strategy, dim2)
+            zi = rate
+
+            if dim1 == 'school_days_lost':
+                # if strategy == 'no_school':
+                #     xi = 2992626
+                # nsi = mean_output(df, strategy, 'num_students')
+                # xi = xi / nsi
+                xi = xi / 2992626. * 100
+
+            elif dim2 == 'school_days_lost':
+                # if strategy == 'no_school':
+                #     yi = 2992626
+                # nsi = mean_output(df, strategy, 'num_students')
+                # yi = yi / nsi
+                yi = yi / 2992626. * 100
+
+            x.append(xi)
+            y.append(yi)
+            z.append(zi)
+
+        x_by_rate.append(x)
+        y_by_rate.append(y)
+        z_by_rate.append(z)
+
+    size_min = 8
+    size_max = 40
+    num_sizes = len(z_by_rate)
+    intervals = (size_max - size_min)/num_sizes
+    sizes = np.arange(size_min, size_max, step = intervals).tolist()
+
+
+    fig = plt.figure(figsize=(13, 9))
+    fig.subplots_adjust(right=0.63, top=0.85)
+    ax = fig.add_subplot(111)
+    alpha = 0.67
+
+    for j, rate in enumerate(mobility_rate):
+        for i in range(n_strategies):
+            ax.plot(x_by_rate[j][i], y_by_rate[j][i], marker='o', markersize=sizes[j], alpha=alpha, markerfacecolor=colors[i],
+                    markeredgewidth=0, label=strategy_labels[scenario_strategies[i]])
+            # ax.plot(-5, -5, linewidth=0, marker='o', markerfacecolor=colors[i], markeredgewidth=0,
+            #         label=strategy_labels[scenario_strategies[i]])
+
+        ax.set_xlabel(measure_labels[dim1] + ' (%)', fontsize=20)
+        ax.set_ylabel(measure_labels[dim2], fontsize=22)
+    ax.tick_params(labelsize=20)
+    leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
+    leg.draw_frame(True)
+    ax.set_title('Trade-Offs with School Reopening', fontsize=28)
+    fig.savefig(dim1 + '_' + dim2 + '_bymobility' + '.pdf', format='pdf')
+
+
 def plot_infections(mobility_rate, strats, num_param_set):
 
     df_by_rate = []
@@ -425,7 +497,7 @@ if __name__ == '__main__':
     param_set = 0
     num_param_set = 5
 
-    # dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_tested'
+    dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_tested'
     # dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_traced'
 
     # dim1, dim2, dim3 = 'student_cases', 'cum_infections', 'teacher_cases'
@@ -433,9 +505,10 @@ if __name__ == '__main__':
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'num_tested'
 
     # measure_to_plot = 'cum_infections'
-    measure_to_plot = 'r_eff'
+    # measure_to_plot = 'r_eff'
     # plot_infections(mobility_rate, strats, num_param_set)
-    plot_general(mobility_rate, strats, num_param_set, measure_to_plot)
+    # plot_general(mobility_rate, strats, num_param_set, measure_to_plot)
+    plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, dim1, dim2)
 
     # for rate in mobility_rate:
         # plot_dimensions(rate, main_strategy, num_param_set, dim1, dim2, dim3)
