@@ -1,0 +1,352 @@
+"""
+Example of plotting different dimensions of school reopening results to
+look at tradeoffs.
+"""
+
+import numpy as np
+import pandas as pd
+import sciris as sc
+import covasim as cv
+import matplotlib as mplt
+import matplotlib.pyplot as plt
+import math
+import os
+
+strats = ['No School',
+          'School As Normal',
+          'School with NPI',
+          'School with NPI + Cohorting',
+          'School with NPI, Cohorting, Screening',
+          'School with NPI, Cohorting, Screening, 25% Follow-Up Testing',
+          'School with NPI, Cohorting, Screening, 50% Follow-Up Testing, 25% Follow-Up Tracing',
+          'School with NPI, Cohorting, Screening, 100% Follow-Up Testing, 100% Follow-Up Tracing',
+          ]
+
+
+strategies = ['withmasks_No School',
+              'withmasks_School As Normal',
+              'withmasks_School with NPI',
+              'withmasks_School with NPI + Cohorting',
+              'withmasks_School with NPI, Cohorting, Screening',
+              'withmasks_School with NPI, Cohorting, Screening, 25% Follow-Up Testing',
+              'withmasks_School with NPI, Cohorting, Screening, 50% Follow-Up Testing, 25% Follow-Up Tracing',
+              'withmasks_School with NPI, Cohorting, Screening, 100% Follow-Up Testing, 100% Follow-Up Tracing',
+]
+
+strategies_2 = ['no_school',
+                'as_normal',
+                'with_NPI',
+                'with_cohorting',
+                'with_screening_notesting',
+                'with_25perctest_notracing',
+                'with_50perctest_25tracing',
+                'with_100perctest_100tracing',
+]
+
+strategy_labels = {
+    'no_school': 'No School',
+    'as_normal': 'As Normal',
+    'with_NPI': 'With NPI',
+    'with_cohorting': 'With NPI and Cohorting',
+    'with_screening_notesting': 'With NPI, Cohorting, Screening, \nand No Testing',
+    'with_25perctest_notracing': 'With NPI, Cohorting, Screening, \nand 25% Testing',
+    'with_50perctest_25tracing': 'With NPI, Cohorting, Screening, \n50% Testing and 25% Tracing',
+    'with_100perctest_100tracing': 'With NPI, Cohorting, Screening, \n100% Testing and 100% Tracing',
+}
+
+measure_labels = {
+    'school_closures': 'School Closures',
+    'cum_infections': 'Cumulative Infections',
+    'num_tested': 'Number Tested',
+    'num_traced': 'Number Traced',
+    'test_pos': 'Test Positive',
+    'school_days_lost (%)': 'School Days Lost (%)',
+    'school_days_lost': 'School Days Lost',
+    'num_students': 'Number of Students',
+    'total_cases': 'Total Cases',
+    'student_cases': 'Student Cases',
+    'teacher_cases': 'Teacher Cases',
+    'cases_in_pk': 'Cases in Preschools',
+    'cases_in_es': 'Cases in Elementary Schools',
+    'cases_in_ms': 'Cases in Middle Schools',
+    'cases_in_hs': 'Cases in High Schools',
+    'cases_in_uv': 'Cases in Universities and Colleges',
+    'pk_with_a_case': 'Preschools with a case',
+    'es_with_a_case': 'Elementary Schools with a case',
+    'ms_with_a_case': 'Middle Schools with a case',
+    'hs_with_a_case': 'High Schools with a case',
+    'uv_with_a_case': 'Universities and Colleges with a case',
+}
+
+
+# scaled_up_measures = ['school_closures', 'cum_infections', 'num_tested', 'num_traced', 'school_days_lost',
+#                       'num_students', 'total_cases']
+
+
+font_size = 30
+font_style = 'Roboto Condensed'
+# font_style = 'Barlow Condensed'
+# font_style = 'Source Sans Pro'
+mplt.rcParams['font.family'] = font_style
+
+
+def get_scenario_name(mobility_rate, strategy):
+    return '%i' % mobility_rate + '_mobility_' + strategy
+
+
+def outputs_df(mobility_rate, main_strategy, param_set):
+
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_param' + '%i' % param_set + '_output.csv')
+    return pd.read_csv(file_path)
+
+
+def results_df(mobility_rate, main_strategy, param_set):
+
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_withmasks_halftransOR_' + main_strategy + '_param' + '%i' % param_set + '_results.csv')
+    return pd.read_csv(file_path)
+
+
+def combine_dfs(mobility_rate, main_strategy, num_param_set):
+    df_list = []
+    for i in range(num_param_set):
+        dfi = outputs_df(mobility_rate, main_strategy, i)
+        df_list.append(dfi)
+
+    df = pd.concat(df_list)
+    return df
+
+
+def combine_results_dfs(mobility_rate, main_strategy, num_param_set, measure, mean):
+    df_list = []
+    for i in range(num_param_set):
+        dfi = results_df(mobility_rate, main_strategy, i)
+        dfi = dfi[measure]
+        df_list.append(dfi)
+
+    df = pd.concat(df_list, axis=1)
+    if mean:
+        df = df.mean(axis=1)
+    else:
+        df = df.std(axis=1)
+
+    return np.array(df)
+
+
+def mean_output(combined_df, strategy, measure):
+    d = combined_df[combined_df['Unnamed: 0'] == measure][strategy]
+    values = d.values
+    try:
+        values = np.array([float(v) for v in values])
+
+    except:
+        values_list = []
+        if ',' in values[0]:
+            values = [v.replace('[', '').replace(']', '') for v in values]
+            values = [v.split(',') for v in values]
+
+            values = [item for subvalue in values for item in subvalue]
+            values = [v for v in values if v not in ['[', ']']]
+        else:
+            # print(values[0])
+            values = [v.replace('[', '').replace(']', '') for v in values]
+            # print(values)
+        # print(values)
+        values = [float(v) for v in values]
+        values = np.array(values)
+        # print(measure, values)
+
+    return np.mean(values)
+
+
+def transform_x(x, xmax, xmin, ymax, ymin):
+    slope = (ymax - ymin) / (xmax - xmin)
+    intercept = ymin - (ymax - ymin) / (xmax - xmin) * xmin
+    return slope * x + intercept
+
+
+def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim3):
+
+    df = combine_dfs(mobility_rate, main_strategy, num_param_set)
+
+    scenario_strategies = df.columns[1:]
+    n_strategies = len(scenario_strategies)
+
+    colors = sc.gridcolors(n_strategies)
+
+    x = []
+    y = []
+    z = []
+
+    for n, strategy in enumerate(scenario_strategies):
+        xi = mean_output(df, strategy, dim1)
+        yi = mean_output(df, strategy, dim2)
+        zi = mean_output(df, strategy, dim3)
+
+        if dim1 == 'school_days_lost':
+            # if strategy == 'no_school':
+            #     xi = 2992626
+            # nsi = mean_output(df, strategy, 'num_students')
+            # xi = xi / nsi
+            xi = xi / 2992626. * 100
+
+        elif dim2 == 'school_days_lost':
+            # if strategy == 'no_school':
+            #     yi = 2992626
+            # nsi = mean_output(df, strategy, 'num_students')
+            # yi = yi / nsi
+            yi = yi / 2992626. * 100
+
+        elif dim3 == 'school_days_lost':
+            # if strategy == 'no_school':
+            #     zi = 2992626
+            # nsi = mean_output(df, strategy, 'num_students')
+            # zi = zi / nsi
+            zi = zi / 2992626. * 100
+
+        x.append(xi)
+        y.append(yi)
+        z.append(zi)
+
+    logzmax = math.ceil(np.log10(max(z)))
+    zmax = 10 ** logzmax
+    zmin = max(min(z), 1)
+    logzmin = math.floor(np.log10(zmin))
+    # logzmin = math.ceil(np.log10(zmin))
+    print(logzmax, logzmin)
+
+    sizes = []
+    size_min = 8
+    size_max = 40
+    for zi in z:
+        zi = max(1, zi)
+        logzi = np.log10(zi)
+
+        si = transform_x(logzi, logzmax, logzmin, size_max, size_min)
+        sizes.append(si)
+
+    # print(x)
+    # print(y)
+    # print(z)
+    # print(sizes)
+
+    fig = plt.figure(figsize=(13, 9))
+    fig.subplots_adjust(right=0.63, top=0.85)
+    ax = fig.add_subplot(111)
+    alpha = 0.67
+
+    for i in range(n_strategies):
+        ax.plot(x[i], y[i], marker='o', markersize=sizes[i], alpha=alpha, markerfacecolor=colors[i], markeredgewidth=0)
+        ax.plot(-5, -5, linewidth=0, marker='o', markerfacecolor=colors[i], markeredgewidth=0, label=strategy_labels[scenario_strategies[i]])
+
+    ax.set_xlabel(measure_labels[dim1] + ' (%)', fontsize=20)
+    # ax.set_xlabel(measure_labels[dim1], fontsize=22)
+    ax.set_ylabel(measure_labels[dim2], fontsize=22)
+
+    ax.set_xlim(left=min(x) - max(x) * 0.05, right=max(x) * 1.1)
+    ax.set_ylim(bottom=min(y) * 0.9, top=max(y) * 1.1)
+    ax.tick_params(labelsize=20)
+    leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
+    leg.draw_frame(False)
+    ax.set_title('Mobility ' + '%i' % mobility_rate + '% Pre COVID' , fontsize=28)
+
+    # legend for marker
+    left = 0.67
+    bottom = 0.48
+    width = 0.3
+    height = 0.39
+
+    ax2 = fig.add_axes([left, bottom, width, height])
+
+    yticks = ax.get_yticks()
+    ymax = max(yticks)
+    ymin = min(yticks)
+
+    yinterval = 0.48/(logzmax + 1)
+
+    for i in np.arange(logzmin, logzmax + 1):
+    # for i in np.arange(logzmax + 1):
+
+        zi = 10 ** i
+        xi = 1
+        yi = (0.5 + yinterval * i) * ymax
+        si = transform_x(i, logzmax, logzmin, size_max, size_min)
+        si = max(si, 1)
+        # print(i, zi, si)
+
+        ax2.plot(xi, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white', markeredgecolor='black')
+        ax2.text(xi * 1.5, yi, '%i' % (zi), verticalalignment='center', fontsize=18)
+
+    # ax2.text(xi * 1.2, yi * 1.08, measure_labels[dim3], horizontalalignment='center', fontsize=20)
+    ax2.text(xi * 1.2, ymax * 0.99, measure_labels[dim3], horizontalalignment='center', fontsize=20)
+
+    ax2.axis('off')
+    ax2.set_xlim(left=0, right=4)
+    # ax2.set_ylim(0.65, 1.10)
+    ax2.set_ylim(0.48 * ymax, ymax)
+
+    fig.savefig('mobility_rate_' + '%i' % mobility_rate + '_' + dim1 + '_' + dim2 + '_' + dim3 + '.pdf', format='pdf')
+
+
+def plot_infections(mobility_rate, strats, num_param_set):
+    df_by_rate = []
+    for rate in mobility_rate:
+        measure = 'cum_infections'
+        df_mean = []
+        df_std = []
+        for strat in strats:
+            df_mean.append(combine_results_dfs(rate, strat, num_param_set, measure, True))
+            df_std.append(combine_results_dfs(rate, strat, num_param_set, measure, False))
+
+        scenario_strategies = strats
+
+        df_comb = pd.DataFrame(df_mean).transpose()
+        df_comb.columns = scenario_strategies
+        df_by_rate.append(df_comb)
+
+        # df_comb_SD = pd.DataFrame(df_std).transpose()
+        # df_comb_SD.columns = scenario_strategies
+    fig, axs = plt.subplots(3, sharex=True, sharey=False)
+    fig.suptitle('Cumulative Infections by Mobility', size=14)
+    for i, ax in enumerate(axs):
+        ax.plot(df_by_rate[i])
+        ax.set_xlim(200, 309)
+        ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=8)
+
+    # for strat in strats:
+    #     x = df_comb[strat].index
+    #     y = df_comb[strat].values
+    #     # error = df_comb_SD[strat].values
+    #     ax.plot(x, y, linewidth=2, label=strat)
+    #     # y_min = y-error
+    #     # y_max = y+error
+    #     # ax.fill_between(x, y_min, y_max, alpha=0.2)
+    #
+    # ax.set_xlim(220, 309)
+    # ax.set_ylim(50e3, 250e3)
+    # ax.legend(loc='upper left')
+
+
+    # fig.savefig('cuminfections_mobility_rate_' + '%i' % mobility_rate + '.pdf', format='pdf')
+    fig.savefig('cuminfections_halftransOR.pdf', format='pdf')
+
+
+if __name__ == '__main__':
+
+    mobility_rate = [80, 90, 100]
+
+    main_strategy = 'withmasks'
+    strats = strats
+    param_set = 0
+    num_param_set = 5
+
+    # dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_tested'
+    # dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_traced'
+
+    # dim1, dim2, dim3 = 'student_cases', 'cum_infections', 'teacher_cases'
+    # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'cum_infections'
+    # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'num_tested'
+
+    plot_infections(mobility_rate, strats, num_param_set)
+
+    # for rate in mobility_rate:
+        # plot_dimensions(rate, main_strategy, num_param_set, dim1, dim2, dim3)
