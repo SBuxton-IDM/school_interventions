@@ -9,8 +9,11 @@ import sciris as sc
 import covasim as cv
 import matplotlib as mplt
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import math
 import os
+import datetime as dt
+
 
 strats = ['No School',
           'School As Normal',
@@ -288,6 +291,7 @@ def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim
 
 
 def plot_infections(mobility_rate, strats, num_param_set):
+
     df_by_rate = []
     for rate in mobility_rate:
         measure = 'cum_infections'
@@ -303,30 +307,24 @@ def plot_infections(mobility_rate, strats, num_param_set):
         df_comb.columns = scenario_strategies
         df_by_rate.append(df_comb)
 
-        # df_comb_SD = pd.DataFrame(df_std).transpose()
-        # df_comb_SD.columns = scenario_strategies
-    fig, axs = plt.subplots(3, sharex=True, sharey=False)
+
+    base = dt.datetime(2020,1,27)
+    date_list = [base + dt.timedelta(days=x) for x in range(len(df_comb))]
+    x = []
+    for date in date_list:
+        x.append(date.strftime('%b %d'))
+    fig, axs = plt.subplots(3, sharex=True, sharey=False, figsize=(13, 9))
     fig.suptitle('Cumulative Infections by Mobility', size=14)
     for i, ax in enumerate(axs):
-        ax.plot(df_by_rate[i])
+        for strat in scenario_strategies:
+            ax.plot(x, df_by_rate[i][strat].values)
+
         ax.set_xlim(200, 309)
+        ax.set_ylim(bottom=50e3)
         ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=8)
+        ax.tick_params(labelsize=10)
+        ax.xaxis.set_minor_locator(ticker.LinearLocator(numticks=5))
 
-    # for strat in strats:
-    #     x = df_comb[strat].index
-    #     y = df_comb[strat].values
-    #     # error = df_comb_SD[strat].values
-    #     ax.plot(x, y, linewidth=2, label=strat)
-    #     # y_min = y-error
-    #     # y_max = y+error
-    #     # ax.fill_between(x, y_min, y_max, alpha=0.2)
-    #
-    # ax.set_xlim(220, 309)
-    # ax.set_ylim(50e3, 250e3)
-    # ax.legend(loc='upper left')
-
-
-    # fig.savefig('cuminfections_mobility_rate_' + '%i' % mobility_rate + '.pdf', format='pdf')
     fig.savefig('cuminfections_basecase.pdf', format='pdf')
 
 
