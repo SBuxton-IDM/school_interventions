@@ -264,7 +264,7 @@ def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim
     ymax = max(yticks)
     ymin = min(yticks)
 
-    yinterval = 0.48/(logzmax + 1)
+    yinterval = 0.48 / (logzmax + 1)
 
     for i in np.arange(logzmin, logzmax + 1):
     # for i in np.arange(logzmax + 1):
@@ -307,23 +307,37 @@ def plot_infections(mobility_rate, strats, num_param_set):
         df_comb.columns = scenario_strategies
         df_by_rate.append(df_comb)
 
-
     base = dt.datetime(2020,1,27)
     date_list = [base + dt.timedelta(days=x) for x in range(len(df_comb))]
     x = []
     for date in date_list:
         x.append(date.strftime('%b %d'))
+
+    date_to_x = {d:i for i, d in enumerate(x)}
+
     fig, axs = plt.subplots(3, sharex=True, sharey=False, figsize=(13, 9))
-    fig.suptitle('Cumulative Infections by Mobility', size=14)
+    fig.subplots_adjust(hspace=0.6, right=0.93)
+    fig.suptitle('Cumulative Infections by Mobility', size=24)
+
     for i, ax in enumerate(axs):
         for strat in scenario_strategies:
             ax.plot(x, df_by_rate[i][strat].values)
 
-        ax.set_xlim(200, 309)
+        # ax.set_xlim(200, 309)
+        if i == len(axs) - 1:
+            xtick_labels = np.array(x)
+            n_xticks = len(ax.get_xticks())
+            interval = 15
+            xticks = np.arange(0, n_xticks, interval)
+            xtick_labels_displayed = xtick_labels[::interval]
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(xtick_labels_displayed)
+
+        ax.set_xlim(left=date_to_x['Aug 01'], right=date_to_x['Dec 01'])
         ax.set_ylim(bottom=50e3)
-        ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=8)
-        ax.tick_params(labelsize=10)
-        ax.xaxis.set_minor_locator(ticker.LinearLocator(numticks=5))
+        ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=20)
+        ax.tick_params(labelsize=16)
+        # ax.xaxis.set_minor_locator(ticker.LinearLocator(numticks=155))
 
     fig.savefig('cuminfections_basecase.pdf', format='pdf')
 
