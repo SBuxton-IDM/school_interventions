@@ -9,6 +9,7 @@ import pandas as pd
 
 cv.check_save_version('1.4.7', die=True)
 
+
 def process_schools(sub_sim):
     snapshot = sub_sim['analyzers'][1]
     school_snapshot_dict = dict()
@@ -212,31 +213,35 @@ def school_dict(msims):
 if __name__ == "__main__":
 
     rerun = True
-    do_save = True
+    do_save = False
     do_plot = False
     save_dict = True
     n_params = 5
     n_seeds = 5
-    date = '06282020'
+    date = '07012020'
+
+    ttq_scen = ['lower', 'medium', 'upper']
 
     mobility_scens = ['100perc', '80perc', '60perc']
 
-    schools_closure_scenarios = ['no_school', 'with_NPI', 'with_cohorting', 'with_screening_notesting',
-                                 'with_25perctest_notracing', 'with_50perctest_25tracing', 'with_100perctest_100tracing']
+    schools_closure_scenarios = ['no_school', 'as_normal', 'with_NPI', 'with_cohorting', 'with_screening_notesting',
+                                 'with_25perctest_notracing', 'with_50perctest_25tracing',
+                                 'with_100perctest_100tracing']
 
-    schools_closure_scenarios_label = ['No School', 'School with NPI', 'School with NPI + Cohorting',
-                                       'School with NPI, Cohorting, Screening', 'School with NPI, Cohorting, Screening, 25% Follow-Up Testing',
+    schools_closure_scenarios_label = ['No School', 'School as Normal', 'School with NPI', 'School with NPI + Cohorting',
+                                       'School with NPI, Cohorting, Screening',
+                                       'School with NPI, Cohorting, Screening, 25% Follow-Up Testing',
                                        'School with NPI, Cohorting, Screening, 50% Follow-Up Testing, 25% Follow-Up Tracing',
                                        'School with NPI, Cohorting, Screening, 100% Follow-Up Testing, 100% Follow-Up Tracing']
 
-    test_prob = [0, 0, 0, 0, .25, .5, 1]
-    trace_prob = [0, 0, 0, 0, 0, .25, 1]
-    NPI_schools = [None, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
+    test_prob = [0, 0, 0, 0, 0, .25, .5, 1]
+    trace_prob = [0, 0, 0, 0, 0, 0, .25, 1]
+    NPI_schools = [None, None, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
     test_freq = None
-    network_change = [False, False, True, True, True, True, True]
-    school_start_day = [{'pk': None, 'es': None, 'ms': None, 'hs': None, 'uv': None},
+    network_change = [False, False, False, True, True, True, True, True]
+    school_start_day = [{'pk': None, 'es': None, 'ms': None, 'hs': None, 'uv': None}, '2020-09-01',
                         '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01']
-    intervention_start_day = [None, None, None,
+    intervention_start_day = [None, None, None, None,
                               {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
                               {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
                               {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
@@ -249,68 +254,44 @@ if __name__ == "__main__":
         jsonfile = 'optimization_v12_safegraph_062620.json'
         json = sc.loadjson(jsonfile)
 
-        for scen, perc in enumerate(mobility_scens):
-            analysis_name = f'school_reopening_analysis_{perc}_mobility_withmasks'
-            mobility_file = f'inputs/KC_weeklyinteractions_20200616_{perc}.csv'
-            for index in indices:
-                msims = []
-                for i, changes in enumerate(schools_closure_scenarios_label):
-                    all_sims = []
-                    entry = json[index]
-                    pars = entry['pars']
-                    pars['end_day'] = '2020-12-01'
-                    for seed in seeds:
-                        pars['rand_seed'] = seed
-                        all_sims.append(cs.create_sim(pars=pars, test_prob=test_prob[i],
-                                                      trace_prob=trace_prob[i], NPI_schools=NPI_schools[i],
-                                                      label=changes, test_freq=test_freq,
-                                                      network_change=network_change[i],
-                                                      school_start_day=school_start_day[i],
-                                                      intervention_start_day=intervention_start_day[i],
-                                                      mobility_file=mobility_file))
+        for scenario in ttq_scen:
+            for scen, perc in enumerate(mobility_scens):
+                analysis_name = f'school_reopening_analysis_{perc}_mobility_{scenario}_ttq'
+                mobility_file = f'inputs/KC_weeklyinteractions_20200616_{perc}.csv'
+                for index in indices:
+                    msims = []
+                    for i, changes in enumerate(schools_closure_scenarios_label):
+                        all_sims = []
+                        entry = json[index]
+                        pars = entry['pars']
+                        pars['end_day'] = '2020-12-01'
+                        for seed in seeds:
+                            pars['rand_seed'] = seed
+                            all_sims.append(cs.create_sim(pars=pars, test_prob=test_prob[i],
+                                                          trace_prob=trace_prob[i], NPI_schools=NPI_schools[i],
+                                                          label=changes, test_freq=test_freq,
+                                                          network_change=network_change[i],
+                                                          school_start_day=school_start_day[i],
+                                                          intervention_start_day=intervention_start_day[i],
+                                                          mobility_file=mobility_file, ttq_scen=scenario))
 
-                    msim = cv.MultiSim(sims=all_sims)
-                    msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
-                    msim.reduce()
-                    df = []
-                    for j in range(len(msim.sims)):
-                        df.append(pd.DataFrame(msim.sims[j].results))
-                    df_concat = pd.concat(df)
-                    by_row_index = df_concat.groupby(df_concat.index)
-                    df_means = by_row_index.mean()
-                    filename = f'results/{analysis_name}_{changes}_param{index}_results.csv'
-                    df_means.to_csv(filename, header=True)
-                    if do_save:
-                        cv.save(
-                            filename=f'msims/calibrated_{analysis_name}_{schools_closure_scenarios[i]}_param{index}.msim',
-                            obj=msim)
-                    msims.append(msim)
+                        msim = cv.MultiSim(sims=all_sims)
+                        msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
+                        msim.reduce()
+                        df = []
+                        for j in range(len(msim.sims)):
+                            df.append(pd.DataFrame(msim.sims[j].results))
+                        df_concat = pd.concat(df)
+                        by_row_index = df_concat.groupby(df_concat.index)
+                        df_means = by_row_index.mean()
+                        filename = f'results/{analysis_name}_{changes}_param{index}_{scenario}_ttq_results.csv'
+                        df_means.to_csv(filename, header=True)
+                        msims.append(msim)
 
-                if save_dict:
-                    school_results = school_dict(msims)
-                    filename = f'results/{analysis_name}_param{index}_output.csv'
-                    school_results.to_csv(filename, header=True)
-
-                if do_plot:
-                    sim_plots = cv.MultiSim.merge(msims, base=True)
-                    figname = f'{analysis_name}_param{index}'
-                    fig1 = sim_plots.plot(to_plot=['n_infectious'], do_show=False, max_sims=7)
-                    for ax in fig1.axes:
-                        ax.set_xlim([200, 309])
-                        ax.set_ylim([0, 2000])
-                    fig1.savefig(f'infectious_{figname}_{date}.png')
-
-                    fig2 = sim_plots.plot(to_plot=['new_infections'], do_show=False, max_sims=7)
-                    for ax in fig2.axes:
-                        ax.set_xlim([200, 309])
-                        ax.set_ylim([0, 500])
-                    fig2.savefig(f'new_infections_{figname}_{date}.png')
-
-                    fig3 = sim_plots.plot(to_plot=['cum_infections'], do_show=False, max_sims=7)
-                    for ax in fig3.axes:
-                        ax.set_xlim([210, 309])
-                        ax.set_ylim([70000, 85000])
-                    fig3.savefig(f'cum_infections_{figname}_{date}.png')
+                    if save_dict:
+                        school_results = school_dict(msims)
+                        filename = f'results/{analysis_name}_param{index}_{scenario}_ttq_output.csv'
+                        school_results.to_csv(filename, header=True)
 
     else:
         indices = range(n_params)

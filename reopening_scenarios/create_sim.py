@@ -103,7 +103,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
 
 def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None,
                trace_prob=None, NPI_schools=None, test_freq=None, network_change=False, school_start_day=None,
-               intervention_start_day=None, mobility_file=None):
+               intervention_start_day=None, mobility_file=None, ttq_scen=None):
     ''' Create a single simulation for further use '''
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both', use_safegraph=use_safegraph), pars))
@@ -156,19 +156,45 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day=None,         **test_kwargs, label='tn3')
     interventions = [tn1, tn2, tn3]
 
-    tp = sc.objdict(
-        symp_prob=0.1,
-        asymp_prob=0.001,
-        symp_quar_prob=0.8,
-        asymp_quar_prob=0.1,
-        test_delay=1.0,
-    )
-    ct = sc.objdict(
-        trace_probs=1.0,
-        trace_time=1.0,
-    )
+    if ttq_scen == 'lower':
+        tp = sc.objdict(
+            symp_prob=0.08,
+            asymp_prob=0.001,
+            symp_quar_prob=0.8,
+            asymp_quar_prob=0.1,
+            test_delay=2.0,
+        )
+        ct = sc.objdict(
+            trace_probs=0.01,
+            trace_time=3.0,
+        )
+    elif ttq_scen == 'medium':
+        tp = sc.objdict(
+            symp_prob=0.12,
+            asymp_prob=0.0015,
+            symp_quar_prob=0.8,
+            asymp_quar_prob=0.1,
+            test_delay=2.0,
+        )
+        ct = sc.objdict(
+            trace_probs=0.25,
+            trace_time=3.0,
+        )
+    elif ttq_scen == 'upper':
+        tp = sc.objdict(
+            symp_prob=0.24,
+            asymp_prob=0.003,
+            symp_quar_prob=0.8,
+            asymp_quar_prob=0.1,
+            test_delay=2.0,
+        )
+        ct = sc.objdict(
+            trace_probs=0.5,
+            trace_time=3.0,
+        )
 
-    interventions += [cv.test_prob(start_day='2020-06-10', **tp), cv.contact_tracing(start_day='2020-06-10', **ct)]
+    if ttq_scen is not None:
+        interventions += [cv.test_prob(start_day='2020-06-10', **tp), cv.contact_tracing(start_day='2020-06-10', **ct)]
 
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()

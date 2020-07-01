@@ -109,13 +109,13 @@ def get_scenario_name(mobility_rate, strategy):
 
 def outputs_df(mobility_rate, main_strategy, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + 'param' + '%i' % param_set + '_output.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_param' + '%i' % param_set + '_output.csv')
     return pd.read_csv(file_path)
 
 
 def results_df(mobility_rate, main_strategy, strat, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + strat + '_param' + '%i' % param_set + '_results.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_' + strat + '_param' + '%i' % param_set + '_results.csv')
     return pd.read_csv(file_path)
 
 
@@ -430,7 +430,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
     ax_leg_2.set_ylim(bottom=ybase-0.1, top=0.9)
 
     ax.set_title('Trade-Offs with School Reopening', fontsize=20)
-    fig.savefig(dim1 + '_' + dim2 + '_bymobility' + '.png', format='png')
+    fig.savefig(dim1 + '_' + dim2 + '_bymobility_' + main_strategy + '.png', format='png')
 
 
 def plot_infections(mobility_rate, strats, num_param_set):
@@ -575,13 +575,13 @@ if __name__ == '__main__':
 
     mobility_rate = [70, 80, 90, 100]
 
-    main_strategy = 'withoutmasks_testtracedelay_'
+    main_strategy = 'withoutmasks_testtracedelay'
     strats = strats
     param_set = 0
     num_param_set = 5
 
-    tests_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_tested')
-    traces_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_traced')
+    # tests_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_tested')
+    # traces_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_traced')
 
     dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_tested'
 
