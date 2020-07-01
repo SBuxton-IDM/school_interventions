@@ -372,7 +372,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
     ax.tick_params(labelsize=20)
 
     # Strategies Legend
-    ax_left = right + 0.02
+    ax_left = right + 0.04
     ax_bottom = bottom + 0.02
     ax_right = 0.95
     ax_width = ax_right - ax_left
@@ -402,7 +402,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
         ax_leg_2.plot(xi, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white', markeredgecolor='black')
         ax_leg_2.text(xi * 1.5, yi, '%i' % (mobility_rate[i]), verticalalignment='center', fontsize=20)
 
-    ax_leg_2.text(xi * 1.2, 0.85, measure_labels[dim3], horizontalalignment='center', fontsize=22)
+    ax_leg_2.text(xi * 1.2, 0.85, 'Mobility % Pre COVID', horizontalalignment='center', fontsize=22)
 
     ax_leg_2.axis('off')
     ax_leg_2.set_xlim(left=0, right=4)
