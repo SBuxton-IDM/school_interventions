@@ -16,9 +16,9 @@ cv.check_save_version('1.4.7', die=True)
 
 # Define the input files
 inputs         = 'inputs'
-epi_data_file  = f'{inputs}/20200614chop5_KingCounty_Covasim.csv'
-age_data_file  = f'{inputs}/20200614chop5_KingCounty_AgeHist.csv'
-safegraph_file = f'{inputs}/KC_weeklyinteractions_20200616.csv'
+epi_data_file  = f'{inputs}/20200628chop5_KingCounty_Covasim.csv'
+age_data_file  = f'{inputs}/20200628chop5_KingCounty_AgeHist.csv'
+safegraph_file = f'{inputs}/KC_weeklyinteractions_070120.csv'
 popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
 
 
@@ -29,8 +29,9 @@ def make_safegraph(sim):
     fn = safegraph_file
     df = pd.read_csv(fn)
     week = df['week']
-    w = df['p.emp'].values
-    c = df['p.cust'].values
+    w = c = df['p.tot'].values
+    # w = df['p.emp'].values
+    # c = df['p.cust'].values
 
     # Do processing
     npts = len(week)
@@ -106,7 +107,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
         print(f'Note, could not find random seed in {pars}! Setting to {seed}')
         p['rand_seed'] = seed # Ensure this exists
     if 'end_day' not in p:
-        end_day = '2020-06-17'
+        end_day = '2020-06-23'
         p['end_day'] = end_day
 
 
@@ -117,7 +118,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
               'pop_infected'  : 400,
               'beta'          : p.beta,
               'start_day'     : '2020-01-27',
-              'end_day'       : '2020-06-17',
+              'end_day'       : '2020-06-23',
               'rescale'       : True,
               'rescale_factor': 1.1,
               'verbose'       : 0.1,
@@ -153,7 +154,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     b_ch = sc.objdict()
     b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25']
     b_ch.s = [1.00, 0.00, 0.00, 0.00]
-    b_ch.h = [1.00, 1.10, 1.20, 1.20]
+    b_ch.h = [1.00, 1.00, 1.00, 1.00]
     b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
     b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
 
@@ -176,7 +177,6 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     # These are copied from parameters.py -- needed to get younger and 60-65 groups right
     sim['prognoses']['age_cutoffs'] = np.array([0,      15,      20,      30,      40,      50,      65,      70,      80,      90]) # Age cutoffs (upper limits)
-    sim['prognoses']['trans_ORs'] = np.array([0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1])
 
     return sim
 
