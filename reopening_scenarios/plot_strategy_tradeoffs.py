@@ -360,7 +360,6 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
             y.append(yi)
             z.append(zi)
 
-
         x_by_rate.append(x)
         y_by_rate.append(y)
         z_by_rate.append(z)
@@ -383,10 +382,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
         for i in range(n_strategies):
             ax.plot(x_by_rate[j][i], y_by_rate[j][i], marker='o', markersize=sizes[j], alpha=alpha, markerfacecolor=colors[i],
                     markeredgewidth=0,
-                    # label=strategy_labels[scenario_strategies[i]]
                     )
-            # ax.plot(-5, -5, linewidth=0, marker='o', markerfacecolor=colors[i], markeredgewidth=0,
-            #         label=strategy_labels[scenario_strategies[i]])
 
         ax.set_xlabel(measure_labels[dim1], fontsize=16)
         ax.set_ylabel(measure_labels[dim2], fontsize=16)
@@ -408,12 +404,13 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
     ax_leg.axis('off')
 
     # Mobility size legend
-    ax_bottom_2 = ax_bottom + ax_height + 0.03
-    ax_height_2 = ax_height - 0.2
+    ax_bottom_2 = ax_bottom + ax_height + 0.0
     ax_leg_2 = fig.add_axes([ax_left, ax_bottom_2, ax_width, ax_height])
 
-    yinterval = 0.12
     ybase = 0.5
+    ytop = 1
+    yinterval = (ytop - ybase)/len(sizes)
+
     for i in range(len(sizes)):
 
         xi = 1
@@ -423,11 +420,11 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
         ax_leg_2.plot(xi, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white', markeredgecolor='black')
         ax_leg_2.text(xi * 1.5, yi, '%i' % (mobility_rate[i]), verticalalignment='center', fontsize=16)
 
-    ax_leg_2.text(xi * 1.2, 0.85, 'Mobility % Pre COVID', horizontalalignment='center', fontsize=18)
+    ax_leg_2.text(xi * 1.2, 0.98, 'Mobility % Pre COVID', horizontalalignment='center', fontsize=18)
 
     ax_leg_2.axis('off')
     ax_leg_2.set_xlim(left=0, right=4)
-    ax_leg_2.set_ylim(bottom=ybase-0.1, top=0.9)
+    ax_leg_2.set_ylim(bottom=ybase*0.9, top=ytop*1.0)
 
     ax.set_title('Trade-Offs with School Reopening', fontsize=20)
     fig.savefig(dim1 + '_' + dim2 + '_bymobility' + '.png', format='png')
@@ -575,6 +572,7 @@ if __name__ == '__main__':
 
     mobility_rate = [70, 80, 90, 100]
 
+    # main_strategy = 'withmasks_'
     main_strategy = 'withoutmasks_testtracedelay_'
     strats = strats
     param_set = 0
@@ -594,8 +592,8 @@ if __name__ == '__main__':
     measure_to_plot = ['r_eff', 'new_infections', 'cum_infections']
     # measure_to_plot = 'new_infections'
     # plot_infections(mobility_rate, strats, num_param_set)
-    for measure in measure_to_plot:
-        plot_general(mobility_rate, main_strategy, strats, num_param_set, measure)
+    # for measure in measure_to_plot:
+        # plot_general(mobility_rate, main_strategy, strats, num_param_set, measure)
     # plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to_plot)
     plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, dim1, dim2)
 
