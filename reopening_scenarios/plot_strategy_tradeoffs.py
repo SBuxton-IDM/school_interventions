@@ -83,12 +83,24 @@ measure_labels = {
 # scaled_up_measures = ['school_closures', 'cum_infections', 'num_tested', 'num_traced', 'school_days_lost',
 #                       'num_students', 'total_cases']
 
-
+# Global plotting styles
 font_size = 30
 font_style = 'Roboto Condensed'
 # font_style = 'Barlow Condensed'
 # font_style = 'Source Sans Pro'
 mplt.rcParams['font.family'] = font_style
+
+colors = []
+colors.append('tab:blue')
+# colors.append('tab:red')
+colors.append('red')
+colors.append('tab:green')
+colors.append('tab:purple')
+colors.append('tab:orange')
+colors.append('gold')
+colors.append('tab:brown')
+colors.append('deeppink')
+colors.append('deepskyblue')
 
 
 def get_scenario_name(mobility_rate, strategy):
@@ -172,7 +184,7 @@ def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim
     scenario_strategies = df.columns[1:]
     n_strategies = len(scenario_strategies)
 
-    colors = sc.gridcolors(n_strategies)
+    # colors = sc.gridcolors(n_strategies)
 
     x = []
     y = []
@@ -298,8 +310,10 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
         df = combine_dfs(rate, main_strategy, num_param_set)
         df_by_rate.append(df)
         scenario_strategies = df.columns[1:]
+        scenario_strategies = scenario_strategies.tolist()
+        scenario_strategies.remove('no_school')
         n_strategies = len(scenario_strategies)
-        colors = sc.gridcolors(n_strategies)
+        # colors = sc.gridcolors(n_strategies)
 
         x = []
         y = []
@@ -328,36 +342,77 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
             y.append(yi)
             z.append(zi)
 
+
         x_by_rate.append(x)
         y_by_rate.append(y)
         z_by_rate.append(z)
 
     size_min = 8
-    size_max = 40
+    size_max = 50
     num_sizes = len(z_by_rate)
     intervals = (size_max - size_min)/num_sizes
     sizes = np.arange(size_min, size_max, step = intervals).tolist()
 
-
+    right = 0.63
+    bottom = 0.10
+    top = 0.85
     fig = plt.figure(figsize=(13, 9))
-    fig.subplots_adjust(right=0.63, top=0.85)
+    fig.subplots_adjust(right=right, top=top, bottom=bottom)
     ax = fig.add_subplot(111)
     alpha = 0.67
 
     for j, rate in enumerate(mobility_rate):
         for i in range(n_strategies):
             ax.plot(x_by_rate[j][i], y_by_rate[j][i], marker='o', markersize=sizes[j], alpha=alpha, markerfacecolor=colors[i],
-                    markeredgewidth=0, label=strategy_labels[scenario_strategies[i]])
+                    markeredgewidth=0,
+                    # label=strategy_labels[scenario_strategies[i]]
+                    )
             # ax.plot(-5, -5, linewidth=0, marker='o', markerfacecolor=colors[i], markeredgewidth=0,
             #         label=strategy_labels[scenario_strategies[i]])
 
-        ax.set_xlabel(measure_labels[dim1] + ' (%)', fontsize=20)
-        ax.set_ylabel(measure_labels[dim2], fontsize=22)
-    ax.tick_params(labelsize=20)
-    leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
-    leg.draw_frame(True)
-    ax.set_title('Trade-Offs with School Reopening', fontsize=28)
-    fig.savefig(dim1 + '_' + dim2 + '_bymobility' + '.pdf', format='pdf')
+        ax.set_xlabel(measure_labels[dim1] + ' (%)', fontsize=16)
+        ax.set_ylabel(measure_labels[dim2], fontsize=16)
+    ax.tick_params(labelsize=16)
+
+    # Strategies Legend
+    ax_left = right + 0.04
+    ax_bottom = bottom + 0.02
+    ax_right = 0.95
+    ax_width = ax_right - ax_left
+    ax_height = (top - bottom)/2.
+    ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+    for s, strat in enumerate(scenario_strategies):
+        ax_leg.plot(-5, -5, color=colors[s], label=strategy_labels[strat])
+
+    leg = ax_leg.legend(loc=10, fontsize=14)
+    # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
+    leg.draw_frame(False)
+    ax_leg.axis('off')
+
+    # Mobility size legend
+    ax_bottom_2 = ax_bottom + ax_height + 0.03
+    ax_height_2 = ax_height - 0.2
+    ax_leg_2 = fig.add_axes([ax_left, ax_bottom_2, ax_width, ax_height])
+
+    yinterval = 0.12
+    ybase = 0.5
+    for i in range(len(sizes)):
+
+        xi = 1
+        yi = ybase + yinterval * i
+        si = sizes[i]
+
+        ax_leg_2.plot(xi, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white', markeredgecolor='black')
+        ax_leg_2.text(xi * 1.5, yi, '%i' % (mobility_rate[i]), verticalalignment='center', fontsize=16)
+
+    ax_leg_2.text(xi * 1.2, 0.85, 'Mobility % Pre COVID', horizontalalignment='center', fontsize=18)
+
+    ax_leg_2.axis('off')
+    ax_leg_2.set_xlim(left=0, right=4)
+    ax_leg_2.set_ylim(bottom=ybase-0.1, top=0.9)
+
+    ax.set_title('Trade-Offs with School Reopening', fontsize=20)
+    fig.savefig(dim1 + '_' + dim2 + '_bymobility' + '.png', format='png')
 
 
 def plot_infections(mobility_rate, strats, num_param_set):
@@ -390,7 +445,7 @@ def plot_infections(mobility_rate, strats, num_param_set):
     fig.subplots_adjust(hspace=0.6, right=right)
     fig.suptitle('Cumulative Infections by Community and Workplace Mobility', size=24, horizontalalignment='right')
 
-    colors = sc.gridcolors(len(scenario_strategies))
+    # colors = sc.gridcolors(len(scenario_strategies))
 
     for i, ax in enumerate(axs):
         for s, strat in enumerate(scenario_strategies):
@@ -449,15 +504,17 @@ def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
     date_to_x = {d:i for i, d in enumerate(x)}
     right = 0.65
 
-    fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(13, 9))
+    fig, axs = plt.subplots(len(mobility_rate), sharex=True, sharey=True, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=right)
     if measure_to_plot == 'r_eff':
         measure = 'Effective Reproductive Number'
     elif measure_to_plot == 'cum_infections':
         measure = 'Cumulative Infections'
+    else:
+        measure = measure_to_plot
     fig.suptitle(f'{measure} by Community and Workplace Mobility', size=18, horizontalalignment='center')
 
-    colors = sc.gridcolors(len(scenario_strategies))
+    # colors = sc.gridcolors(len(scenario_strategies))
 
     for i, ax in enumerate(axs):
         for s, strat in enumerate(scenario_strategies):
@@ -476,7 +533,7 @@ def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
             ax.set_xticks(xticks)
             ax.set_xticklabels(xtick_labels_displayed)
 
-        ax.set_xlim(left=date_to_x['Aug 01'], right=date_to_x['Dec 01'])
+        ax.set_xlim(left=date_to_x['Aug 30'], right=date_to_x['Dec 01'])
         if measure_to_plot == 'r_eff':
             ax.set_ylim(0.5, 2)
             ax.axhline(y=1, xmin=0, xmax=1, color='black', ls='--')
@@ -485,14 +542,14 @@ def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
         ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=16)
         ax.tick_params(labelsize=12)
 
-    fig.savefig(f'{measure_to_plot}_basecase.png', format='png')
+    fig.savefig(f'{measure_to_plot}_withoutmasks.png', format='png')
 
 
 if __name__ == '__main__':
 
-    mobility_rate = [80, 90, 100]
+    mobility_rate = [50, 60, 70]
 
-    main_strategy = 'withmasks'
+    main_strategy = 'withoutmasks'
     strats = strats
     param_set = 0
     num_param_set = 5
@@ -504,7 +561,7 @@ if __name__ == '__main__':
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'cum_infections'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'num_tested'
 
-    # measure_to_plot = 'cum_infections'
+    measure_to_plot = 'n_infectious'
     # measure_to_plot = 'r_eff'
     # plot_infections(mobility_rate, strats, num_param_set)
     # plot_general(mobility_rate, strats, num_param_set, measure_to_plot)
