@@ -442,7 +442,7 @@ def plot_infections(mobility_rate, strats, num_param_set):
     fig.subplots_adjust(hspace=0.6, right=right)
     fig.suptitle('Cumulative Infections by Community and Workplace Mobility', size=24, horizontalalignment='right')
 
-    colors = sc.gridcolors(len(scenario_strategies))
+    # colors = sc.gridcolors(len(scenario_strategies))
 
     for i, ax in enumerate(axs):
         for s, strat in enumerate(scenario_strategies):
@@ -509,7 +509,7 @@ def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
         measure = 'Cumulative Infections'
     fig.suptitle(f'{measure} by Community and Workplace Mobility', size=18, horizontalalignment='center')
 
-    colors = sc.gridcolors(len(scenario_strategies))
+    # colors = sc.gridcolors(len(scenario_strategies))
 
     for i, ax in enumerate(axs):
         for s, strat in enumerate(scenario_strategies):
