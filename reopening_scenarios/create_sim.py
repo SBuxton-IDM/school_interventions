@@ -156,13 +156,27 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day=None,         **test_kwargs, label='tn3')
     interventions = [tn1, tn2, tn3]
 
+    tp = sc.objdict(
+        symp_prob=0.1,
+        asymp_prob=0.001,
+        symp_quar_prob=0.8,
+        asymp_quar_prob=0.1,
+        test_delay=1.0,
+    )
+    ct = sc.objdict(
+        trace_probs=1.0,
+        trace_time=1.0,
+    )
+
+    interventions += [cv.test_prob(start_day='2020-06-10', **tp), cv.contact_tracing(start_day='2020-06-10', **ct)]
+
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
     b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-08-30']
 
     b_ch.h = [1.00, 1.10, 1.20, 1.20, 1]
-    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8]
-    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, .8]
+    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
+    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
     if NPI_schools is None:
         b_ch.s = [1.00, 1.00, 1.00, 1.00, 1.00]
     else:
