@@ -83,12 +83,24 @@ measure_labels = {
 # scaled_up_measures = ['school_closures', 'cum_infections', 'num_tested', 'num_traced', 'school_days_lost',
 #                       'num_students', 'total_cases']
 
-
+# Global plotting styles
 font_size = 30
 font_style = 'Roboto Condensed'
 # font_style = 'Barlow Condensed'
 # font_style = 'Source Sans Pro'
 mplt.rcParams['font.family'] = font_style
+
+colors = []
+colors.append('tab:blue')
+# colors.append('tab:red')
+colors.append('red')
+colors.append('tab:green')
+colors.append('tab:purple')
+colors.append('tab:orange')
+colors.append('gold')
+colors.append('tab:brown')
+colors.append('deeppink')
+colors.append('deepskyblue')
 
 
 def get_scenario_name(mobility_rate, strategy):
@@ -172,7 +184,7 @@ def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim
     scenario_strategies = df.columns[1:]
     n_strategies = len(scenario_strategies)
 
-    colors = sc.gridcolors(n_strategies)
+    # colors = sc.gridcolors(n_strategies)
 
     x = []
     y = []
@@ -299,7 +311,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
         df_by_rate.append(df)
         scenario_strategies = df.columns[1:]
         n_strategies = len(scenario_strategies)
-        colors = sc.gridcolors(n_strategies)
+        # colors = sc.gridcolors(n_strategies)
 
         x = []
         y = []
@@ -338,24 +350,64 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
     intervals = (size_max - size_min)/num_sizes
     sizes = np.arange(size_min, size_max, step = intervals).tolist()
 
-
+    right = 0.63
+    bottom = 0.10
+    top = 0.85
     fig = plt.figure(figsize=(13, 9))
-    fig.subplots_adjust(right=0.63, top=0.85)
+    fig.subplots_adjust(right=right, top=top, bottom=bottom)
     ax = fig.add_subplot(111)
     alpha = 0.67
 
     for j, rate in enumerate(mobility_rate):
         for i in range(n_strategies):
             ax.plot(x_by_rate[j][i], y_by_rate[j][i], marker='o', markersize=sizes[j], alpha=alpha, markerfacecolor=colors[i],
-                    markeredgewidth=0, label=strategy_labels[scenario_strategies[i]])
+                    markeredgewidth=0,
+                    # label=strategy_labels[scenario_strategies[i]]
+                    )
             # ax.plot(-5, -5, linewidth=0, marker='o', markerfacecolor=colors[i], markeredgewidth=0,
             #         label=strategy_labels[scenario_strategies[i]])
 
-        ax.set_xlabel(measure_labels[dim1] + ' (%)', fontsize=20)
+        ax.set_xlabel(measure_labels[dim1] + ' (%)', fontsize=22)
         ax.set_ylabel(measure_labels[dim2], fontsize=22)
     ax.tick_params(labelsize=20)
-    leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
-    leg.draw_frame(True)
+
+    # Strategies Legend
+    ax_left = right + 0.02
+    ax_bottom = bottom + 0.02
+    ax_right = 0.95
+    ax_width = ax_right - ax_left
+    ax_height = (top - bottom)/2.
+    ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+    for s, strat in enumerate(scenario_strategies):
+        ax_leg.plot(-5, -5, color=colors[s], label=strategy_labels[strat])
+
+    leg = ax_leg.legend(loc=10, fontsize=18)
+    # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
+    leg.draw_frame(False)
+    ax_leg.axis('off')
+
+    # Mobility size legend
+    ax_bottom_2 = ax_bottom + ax_height + 0.03
+    ax_height_2 = ax_height - 0.2
+    ax_leg_2 = fig.add_axes([ax_left, ax_bottom_2, ax_width, ax_height])
+
+    yinterval = 0.12
+    ybase = 0.5
+    for i in range(len(sizes)):
+
+        xi = 1
+        yi = ybase + yinterval * i
+        si = sizes[i]
+
+        ax_leg_2.plot(xi, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white', markeredgecolor='black')
+        ax_leg_2.text(xi * 1.5, yi, '%i' % (mobility_rate[i]), verticalalignment='center', fontsize=20)
+
+    ax_leg_2.text(xi * 1.2, 0.85, measure_labels[dim3], horizontalalignment='center', fontsize=22)
+
+    ax_leg_2.axis('off')
+    ax_leg_2.set_xlim(left=0, right=4)
+    ax_leg_2.set_ylim(bottom=ybase-0.1, top=0.9)
+
     ax.set_title('Trade-Offs with School Reopening', fontsize=28)
     fig.savefig(dim1 + '_' + dim2 + '_bymobility' + '.pdf', format='pdf')
 
