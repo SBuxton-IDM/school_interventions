@@ -237,11 +237,6 @@ def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim
         si = transform_x(logzi, logzmax, logzmin, size_max, size_min)
         sizes.append(si)
 
-    # print(x)
-    # print(y)
-    # print(z)
-    # print(sizes)
-
     fig = plt.figure(figsize=(13, 9))
     fig.subplots_adjust(right=0.63, top=0.85)
     ax = fig.add_subplot(111)
@@ -420,7 +415,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
         ax_leg_2.plot(xi, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white', markeredgecolor='black')
         ax_leg_2.text(xi * 1.5, yi, '%i' % (mobility_rate[i]), verticalalignment='center', fontsize=16)
 
-    ax_leg_2.text(xi * 1.2, 0.98, 'Mobility % Pre COVID', horizontalalignment='center', fontsize=18)
+    ax_leg_2.text(xi * 1.2, 0.985, 'Mobility % Pre COVID', horizontalalignment='center', fontsize=18)
 
     ax_leg_2.axis('off')
     ax_leg_2.set_xlim(left=0, right=4)
@@ -517,10 +512,15 @@ def plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to
         x.append(date.strftime('%b %d'))
 
     date_to_x = {d:i for i, d in enumerate(x)}
+
+    left = 0.07
     right = 0.65
+    # right = 0.63
+    bottom = 0.10
+    top = 0.85
 
     fig, axs = plt.subplots(len(mobility_rate), sharex=True, sharey=False, figsize=(13, 9))
-    fig.subplots_adjust(hspace=0.6, right=right)
+    fig.subplots_adjust(hspace=0.6, left=left, right=right)
     if measure_to_plot == 'r_eff':
         measure = 'Effective Reproductive Number'
     elif measure_to_plot == 'cum_infections':
@@ -531,17 +531,12 @@ def plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to
         measure = measure_to_plot
     fig.suptitle(f'{measure} by Community and Workplace Mobility', size=18, horizontalalignment='center')
 
-    # colors = sc.gridcolors(len(scenario_strategies))
-
     for i, ax in enumerate(axs):
         for s, strat in enumerate(scenario_strategies):
             ax.plot(x, df_by_rate[i][strat].values, color=colors[s])
 
+        # Add ticks on the x axis only for the last subplot
         if i == len(axs) - 1:
-            for s, strat in enumerate(scenario_strategies):
-                ax.plot(-5, -5, color=colors[s], label=strat.replace('Screening, ', 'Screening,\n').replace('Testing, ', 'Testing,\n'))
-            leg = ax.legend(fontsize=13, bbox_to_anchor=(0.63, 3, 1, 0.102))
-            leg.draw_frame(False)
             xtick_labels = np.array(x)
             n_xticks = len(ax.get_xticks())
             interval = 15
@@ -563,7 +558,24 @@ def plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to
             ymin = df_by_rate[i]['No School'].min()
             ax.set_ylim(ymin, ymax*1.1)
         ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=16)
-        ax.tick_params(labelsize=12)
+        ax.tick_params(labelsize=15)
+
+    # Strategies Legend
+    ax_left = right + 0.04
+    ax_bottom = bottom + 0.02
+    ax_right = 0.95
+    ax_width = ax_right - ax_left
+    ax_height = top - bottom
+    ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+    for s, strat in enumerate(scenario_strategies):
+        ax_leg.plot(-5, -5, color=colors[s],
+                    label=strat.replace('Screening, ','Screening,\n').replace('Testing, ', 'Testing,\n'),
+                    )
+
+    leg = ax_leg.legend(loc=10, fontsize=16)
+    # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
+    leg.draw_frame(False)
+    ax_leg.axis('off')
 
     fig.savefig(f'{measure_to_plot}_{main_strategy}.png', format='png')
 
@@ -584,7 +596,6 @@ if __name__ == '__main__':
     dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_tested'
 
     # dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_traced'
-
     # dim1, dim2, dim3 = 'student_cases', 'cum_infections', 'teacher_cases'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'cum_infections'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'num_tested'
@@ -592,8 +603,8 @@ if __name__ == '__main__':
     measure_to_plot = ['r_eff', 'new_infections', 'cum_infections']
     # measure_to_plot = 'new_infections'
     # plot_infections(mobility_rate, strats, num_param_set)
-    # for measure in measure_to_plot:
-        # plot_general(mobility_rate, main_strategy, strats, num_param_set, measure)
+    for measure in measure_to_plot:
+        plot_general(mobility_rate, main_strategy, strats, num_param_set, measure)
     # plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to_plot)
     plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, dim1, dim2)
 
