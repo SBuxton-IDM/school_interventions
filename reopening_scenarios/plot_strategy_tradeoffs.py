@@ -109,13 +109,13 @@ def get_scenario_name(mobility_rate, strategy):
 
 def outputs_df(mobility_rate, main_strategy, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_param' + '%i' % param_set + '_output.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + 'param' + '%i' % param_set + '_output.csv')
     return pd.read_csv(file_path)
 
 
-def results_df(mobility_rate, main_strategy, param_set):
+def results_df(mobility_rate, main_strategy, strat, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_withoutmasks_' + main_strategy + '_param' + '%i' % param_set + '_results.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + strat + '_param' + '%i' % param_set + '_results.csv')
     return pd.read_csv(file_path)
 
 
@@ -129,10 +129,10 @@ def combine_dfs(mobility_rate, main_strategy, num_param_set):
     return df
 
 
-def combine_results_dfs(mobility_rate, main_strategy, num_param_set, measure, mean):
+def combine_results_dfs(mobility_rate, main_strategy, strat, num_param_set, measure, mean):
     df_list = []
     for i in range(num_param_set):
-        dfi = results_df(mobility_rate, main_strategy, i)
+        dfi = results_df(mobility_rate, main_strategy, strat, i)
         dfi = dfi[measure]
         df_list.append(dfi)
 
@@ -300,6 +300,24 @@ def plot_dimensions(mobility_rate, main_strategy, num_param_set, dim1, dim2, dim
     fig.savefig('mobility_rate_' + '%i' % mobility_rate + '_' + dim1 + '_' + dim2 + '_' + dim3 + '.pdf', format='pdf')
 
 
+def get_summary_stats(mobility_rate, main_strategy, num_param_set, measure):
+    x_by_rate = []
+
+    for rate in mobility_rate:
+        df = combine_dfs(rate, main_strategy, num_param_set)
+        scenario_strategies = df.columns[1:]
+
+        x = []
+
+        for n, strategy in enumerate(scenario_strategies):
+            xi = mean_output(df, strategy, measure)
+
+            x.append(xi)
+
+        x_by_rate.append(x)
+    return x_by_rate
+
+
 def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, dim1, dim2):
     df_by_rate = []
     x_by_rate = []
@@ -324,19 +342,19 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
             yi = mean_output(df, strategy, dim2)
             zi = rate
 
-            if dim1 == 'school_days_lost':
-                # if strategy == 'no_school':
-                #     xi = 2992626
-                # nsi = mean_output(df, strategy, 'num_students')
-                # xi = xi / nsi
-                xi = xi / 2992626. * 100
-
-            elif dim2 == 'school_days_lost':
-                # if strategy == 'no_school':
-                #     yi = 2992626
-                # nsi = mean_output(df, strategy, 'num_students')
-                # yi = yi / nsi
-                yi = yi / 2992626. * 100
+            # if dim1 == 'school_days_lost':
+            #     # if strategy == 'no_school':
+            #     #     xi = 2992626
+            #     # nsi = mean_output(df, strategy, 'num_students')
+            #     # xi = xi / nsi
+            #     xi = xi / 2992626. * 100
+            #
+            # elif dim2 == 'school_days_lost':
+            #     # if strategy == 'no_school':
+            #     #     yi = 2992626
+            #     # nsi = mean_output(df, strategy, 'num_students')
+            #     # yi = yi / nsi
+            #     yi = yi / 2992626. * 100
 
             x.append(xi)
             y.append(yi)
@@ -370,7 +388,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
             # ax.plot(-5, -5, linewidth=0, marker='o', markerfacecolor=colors[i], markeredgewidth=0,
             #         label=strategy_labels[scenario_strategies[i]])
 
-        ax.set_xlabel(measure_labels[dim1] + ' (%)', fontsize=16)
+        ax.set_xlabel(measure_labels[dim1], fontsize=16)
         ax.set_ylabel(measure_labels[dim2], fontsize=16)
     ax.tick_params(labelsize=16)
 
@@ -474,7 +492,7 @@ def plot_infections(mobility_rate, strats, num_param_set):
     fig.savefig('cuminfections_basecase.pdf', format='pdf')
 
 
-def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
+def plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to_plot):
 
     df_by_rate = []
     df_by_rate_std = []
@@ -482,8 +500,8 @@ def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
         df_mean = []
         df_std = []
         for strat in strats:
-            df_mean.append(combine_results_dfs(rate, strat, num_param_set, measure_to_plot, True))
-            df_std.append(combine_results_dfs(rate, strat, num_param_set, measure_to_plot, False))
+            df_mean.append(combine_results_dfs(rate, main_strategy, strat, num_param_set, measure_to_plot, True))
+            df_std.append(combine_results_dfs(rate, main_strategy, strat, num_param_set, measure_to_plot, False))
 
         scenario_strategies = strats
 
@@ -504,12 +522,14 @@ def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
     date_to_x = {d:i for i, d in enumerate(x)}
     right = 0.65
 
-    fig, axs = plt.subplots(len(mobility_rate), sharex=True, sharey=True, figsize=(13, 9))
+    fig, axs = plt.subplots(len(mobility_rate), sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=right)
     if measure_to_plot == 'r_eff':
         measure = 'Effective Reproductive Number'
     elif measure_to_plot == 'cum_infections':
         measure = 'Cumulative Infections'
+    elif measure_to_plot == 'new_infections':
+        measure = 'New Infections'
     else:
         measure = measure_to_plot
     fig.suptitle(f'{measure} by Community and Workplace Mobility', size=18, horizontalalignment='center')
@@ -533,38 +553,50 @@ def plot_general(mobility_rate, strats, num_param_set, measure_to_plot):
             ax.set_xticks(xticks)
             ax.set_xticklabels(xtick_labels_displayed)
 
-        ax.set_xlim(left=date_to_x['Aug 30'], right=date_to_x['Dec 01'])
+        ax.set_xlim(left=date_to_x['Sep 01'], right=date_to_x['Dec 01'])
         if measure_to_plot == 'r_eff':
-            ax.set_ylim(0.5, 2)
+            ax.set_ylim(0.5, 1.5)
             ax.axhline(y=1, xmin=0, xmax=1, color='black', ls='--')
         elif measure_to_plot == 'cum_infections':
             ax.set_ylim(50e3, 500e3)
+        elif measure_to_plot == 'new_tests':
+            ax.set_ylim(2e3, 4.5e3)
+        elif measure_to_plot == 'new_infections':
+            ymax = df_by_rate[i]['School As Normal'].max()
+            ymin = df_by_rate[i]['No School'].min()
+            ax.set_ylim(ymin, ymax*1.1)
         ax.set_title('Mobility ' + '%i' % mobility_rate[i] + '% Pre COVID', fontsize=16)
         ax.tick_params(labelsize=12)
 
-    fig.savefig(f'{measure_to_plot}_withoutmasks.png', format='png')
+    fig.savefig(f'{measure_to_plot}_{main_strategy}.png', format='png')
 
 
 if __name__ == '__main__':
 
-    mobility_rate = [50, 60, 70]
+    mobility_rate = [70, 80, 90, 100]
 
-    main_strategy = 'withoutmasks'
+    main_strategy = 'withoutmasks_testtracedelay_'
     strats = strats
     param_set = 0
     num_param_set = 5
 
+    tests_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_tested')
+    traces_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_traced')
+
     dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_tested'
+
     # dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_traced'
 
     # dim1, dim2, dim3 = 'student_cases', 'cum_infections', 'teacher_cases'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'cum_infections'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'num_tested'
 
-    measure_to_plot = 'n_infectious'
-    # measure_to_plot = 'r_eff'
+    measure_to_plot = ['r_eff', 'new_infections', 'cum_infections']
+    # measure_to_plot = 'new_infections'
     # plot_infections(mobility_rate, strats, num_param_set)
-    # plot_general(mobility_rate, strats, num_param_set, measure_to_plot)
+    for measure in measure_to_plot:
+        plot_general(mobility_rate, main_strategy, strats, num_param_set, measure)
+    # plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to_plot)
     plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, dim1, dim2)
 
     # for rate in mobility_rate:
