@@ -56,36 +56,36 @@ def define_pars(which='best', kind='default', use_safegraph=True):
             pardata.update(dict(
                 # name          best      low       high
                 # pop_infected = [400.0   , 70.0    , 700.0]    ,
-                beta         = [  0.012,  0.008  ,   0.014]  ,
-                bc_wc1       = [  0.60  ,  0.10   ,   1.00]   ,
-                bc_wc2       = [  0.50  ,  0.10   ,   1.00]   ,
-                bc_wc3       = [  0.75  ,  0.10   ,   1.00]   ,
-                bc_lf        = [  0.18  ,  0.05   ,   0.50]   ,
-                tn1          = [ 15.0   ,  5.0    ,  50.0]    ,
-                tn2          = [ 15.0   ,  5.0    ,  50.0]    ,
-                tn3          = [ 30.0   ,  5.0    ,  50.0]    ,
+                beta=[0.012, 0.008, 0.014],
+                bc_wc1=[0.60, 0.10, 1.00],
+                bc_wc2=[0.50, 0.10, 1.00],
+                bc_wc3=[0.75, 0.10, 1.00],
+                bc_lf=[0.18, 0.05, 0.50],
+                tn1=[15.0, 5.0, 50.0],
+                tn2=[15.0, 5.0, 50.0],
+                tn3=[30.0, 5.0, 50.0],
             ))
         else:
             pardata.update(dict(
                 # name          best      low       high
                 # pop_infected = [250.0   , 70.0    , 700.0]    ,
-                beta         = [  0.0126,  0.008  ,   0.014]  ,
-                bc_wc1       = [  0.25  ,  0.10   ,   1.00]   ,
-                bc_wc2       = [  0.20  ,  0.10   ,   1.00]   ,
-                bc_wc3       = [  0.30  ,  0.10   ,   1.00]   ,
-                bc_lf        = [  0.15  ,  0.05   ,   0.50]   ,
-                tn1          = [ 15.0   ,  5.0    ,  50.0]    ,
-                tn2          = [ 15.0   ,  5.0    ,  50.0]    ,
-                tn3          = [ 30.0   ,  5.0    ,  50.0]    ,
+                beta=[0.0126, 0.008, 0.014],
+                bc_wc1=[0.25, 0.10, 1.00],
+                bc_wc2=[0.20, 0.10, 1.00],
+                bc_wc3=[0.30, 0.10, 1.00],
+                bc_lf=[0.15, 0.05, 0.50],
+                tn1=[15.0, 5.0, 50.0],
+                tn2=[15.0, 5.0, 50.0],
+                tn3=[30.0, 5.0, 50.0],
             ))
     if kind in ['layers', 'both']:
         pardata.update(dict(
             # name  best    low     high
-            bl_h = [7.0,    1.0,    15.0],
-            bl_s = [0.7,    0.0,     3.0],
-            bl_w = [0.7,    0.0,     3.0],
-            bl_c = [0.14,   0.0,     3.0],
-            bl_l = [2.1,    0.0,     5.0],
+            bl_h=[7.0, 1.0, 15.0],
+            bl_s=[0.7, 0.0, 3.0],
+            bl_w=[0.7, 0.0, 3.0],
+            bl_c=[0.14, 0.0, 3.0],
+            bl_l=[2.1, 0.0, 5.0],
         ))
 
     output = {}
@@ -147,14 +147,13 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     test_kwargs = dict(daily_tests=sim.data['new_tests'], quar_test=1.0, test_delay=2)
     tn1 = cv.test_num(symp_test=p.tn1, start_day='2020-01-27', end_day='2020-03-23', **test_kwargs, label='tn1')
     tn2 = cv.test_num(symp_test=p.tn2, start_day='2020-03-24', end_day='2020-04-14', **test_kwargs, label='tn2')
-    tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day=None,         **test_kwargs, label='tn3')
+    tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day=None, **test_kwargs, label='tn3')
     interventions = [tn1, tn2, tn3]
 
     # Define beta interventions (for calibration)
     b_ch = sc.objdict()
     b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25']
     b_ch.s = [1.00, 0.00, 0.00, 0.00]
-    b_ch.h = [1.00, 1.00, 1.00, 1.00]
     b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
     b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
 
