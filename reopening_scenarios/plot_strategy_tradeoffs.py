@@ -61,6 +61,7 @@ measure_labels = {
     'num_tested': 'Number Tested',
     'num_traced': 'Number Traced',
     'test_pos': 'Test Positive',
+    'attack_rate': 'Attack Rate (%)',
     'school_days_lost (%)': 'School Days Lost (%)',
     'school_days_lost': 'School Days Lost',
     'num_students': 'Number of Students',
@@ -109,13 +110,13 @@ def get_scenario_name(mobility_rate, strategy):
 
 def outputs_df(mobility_rate, main_strategy, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_param' + '%i' % param_set + '_output.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_param' + '%i' % param_set + '_' + main_strategy + '_output.csv')
     return pd.read_csv(file_path)
 
 
 def results_df(mobility_rate, main_strategy, strat, param_set):
 
-    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_' + strat + '_param' + '%i' % param_set + '_results.csv')
+    file_path = os.path.join('results', 'school_reopening_analysis_' + '%i' % mobility_rate + 'perc_mobility_' + main_strategy + '_' + strat + '_param' + '%i' % param_set + '_' + main_strategy + '_results.csv')
     return pd.read_csv(file_path)
 
 
@@ -319,6 +320,7 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
     y_by_rate = []
     z_by_rate = []
 
+
     for rate in mobility_rate:
         df = combine_dfs(rate, main_strategy, num_param_set)
         df_by_rate.append(df)
@@ -337,19 +339,17 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
             yi = mean_output(df, strategy, dim2)
             zi = rate
 
-            # if dim1 == 'school_days_lost':
-            #     # if strategy == 'no_school':
-            #     #     xi = 2992626
-            #     # nsi = mean_output(df, strategy, 'num_students')
-            #     # xi = xi / nsi
-            #     xi = xi / 2992626. * 100
-            #
-            # elif dim2 == 'school_days_lost':
-            #     # if strategy == 'no_school':
-            #     #     yi = 2992626
-            #     # nsi = mean_output(df, strategy, 'num_students')
-            #     # yi = yi / nsi
-            #     yi = yi / 2992626. * 100
+            if dim1 == 'cum_infections':
+                xi = (xi / 2.25e6)*100
+
+            elif dim2 == 'cum_infections':
+                yi = (yi / 2.25e6)*100
+
+            if dim1 == 'perc_school_days_lost':
+                xi = xi *100
+
+            elif dim2 == 'perc_school_days_lost':
+                xi = xi *100
 
             x.append(xi)
             y.append(yi)
@@ -358,6 +358,18 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
         x_by_rate.append(x)
         y_by_rate.append(y)
         z_by_rate.append(z)
+
+    if dim1 == 'cum_infections':
+        dim1 = 'attack_rate'
+
+    elif dim2 == 'cum_infections':
+        dim2 = 'attack_rate'
+
+    if dim1 == 'perc_school_days_lost':
+        dim1 = 'school_days_lost (%)'
+
+    elif dim2 == 'perc_school_days_lost':
+        dim2 = 'school_days_lost (%)'
 
     size_min = 8
     size_max = 50
@@ -418,10 +430,19 @@ def plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, d
     ax_leg_2.text(xi * 1.2, 0.985, 'Mobility % Pre COVID', horizontalalignment='center', fontsize=18)
 
     ax_leg_2.axis('off')
-    ax_leg_2.set_xlim(left=0, right=4)
+    ax_leg_2.set_xlim(left=0, right=20)
     ax_leg_2.set_ylim(bottom=ybase*0.9, top=ytop*1.0)
 
-    ax.set_title('Trade-Offs with School Reopening', fontsize=20)
+    if main_strategy == 'lower_ttq':
+        strat = 'Lower Bound Testing/Contact Tracing'
+
+    elif main_strategy == 'medium_ttq':
+        strat = 'Baseline Testing/Contact Tracing'
+
+    elif main_strategy == 'upper_ttq':
+        strat = 'Upper Bound Testing/Contact Tracing'
+
+    ax.set_title(f'Trade-Offs with School Reopening \n ({strat})', fontsize=20)
     fig.savefig(dim1 + '_' + dim2 + '_bymobility_' + main_strategy + '.png', format='png')
 
 
@@ -529,7 +550,7 @@ def plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to
         measure = 'New Infections'
     else:
         measure = measure_to_plot
-    fig.suptitle(f'{measure} by Community and Workplace Mobility', size=18, horizontalalignment='center')
+    fig.suptitle(f'{measure} by Community and Workplace Mobility \n ({main_strategy})', size=18, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
         for s, strat in enumerate(scenario_strategies):
@@ -572,7 +593,7 @@ def plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to
                     label=strat.replace('Screening, ','Screening,\n').replace('Testing, ', 'Testing,\n'),
                     )
 
-    leg = ax_leg.legend(loc=10, fontsize=16)
+    leg = ax_leg.legend(loc=10, fontsize=14)
     # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
     leg.draw_frame(False)
     ax_leg.axis('off')
@@ -584,9 +605,11 @@ if __name__ == '__main__':
 
     mobility_rate = [70, 80, 90, 100]
 
+    strategy = ['upper_ttq', 'medium_ttq', 'lower_ttq']
+
     # main_strategy = 'withmasks_'
-    main_strategy = 'withoutmasks_testtracedelay_'
-    main_strategy = 'withoutmasks_testtracedelay'
+    # main_strategy = 'withoutmasks_testtracedelay_'
+    # main_strategy = 'withoutmasks_testtracedelay'
     strats = strats
     param_set = 0
     num_param_set = 5
@@ -594,20 +617,15 @@ if __name__ == '__main__':
     # tests_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_tested')
     # traces_by_rate = get_summary_stats(mobility_rate, main_strategy, num_param_set, 'num_traced')
 
-    dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_tested'
+    dim1, dim2, dim3 = 'perc_school_days_lost', 'cum_infections', 'num_tested'
 
     # dim1, dim2, dim3 = 'school_days_lost', 'cum_infections', 'num_traced'
     # dim1, dim2, dim3 = 'student_cases', 'cum_infections', 'teacher_cases'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'cum_infections'
     # dim1, dim2, dim3 = 'student_cases', 'teacher_cases', 'num_tested'
 
-    measure_to_plot = ['r_eff', 'new_infections', 'cum_infections']
-    # measure_to_plot = 'new_infections'
-    # plot_infections(mobility_rate, strats, num_param_set)
-    for measure in measure_to_plot:
-        plot_general(mobility_rate, main_strategy, strats, num_param_set, measure)
-    # plot_general(mobility_rate, main_strategy, strats, num_param_set, measure_to_plot)
-    plot_dimensions_with_mobility(mobility_rate, main_strategy, num_param_set, dim1, dim2)
-
-    # for rate in mobility_rate:
-        # plot_dimensions(rate, main_strategy, num_param_set, dim1, dim2, dim3)
+    measure_to_plot = ['r_eff', 'new_infections']
+    for strat in strategy:
+        # for measure in measure_to_plot:
+        #     plot_general(mobility_rate, strat, strats, num_param_set, measure)
+        plot_dimensions_with_mobility(mobility_rate, strat, num_param_set, dim1, dim2)
