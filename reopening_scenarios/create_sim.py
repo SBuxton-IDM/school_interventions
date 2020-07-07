@@ -126,7 +126,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
               'end_day'       : p['end_day'],
               'rescale'       : True,
               'rescale_factor': 1.1,
-              'verbose'       : 0.1,
+              'verbose'       : 0,
               'rand_seed'     : p.rand_seed,
               # 'analyzers'     : cv.age_histogram(datafile=age_data_file),
               'beta_layer'    : dict(h=p.bl_h, s=p.bl_s, w=p.bl_w, c=p.bl_c, l=p.bl_l),

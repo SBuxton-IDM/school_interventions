@@ -98,6 +98,8 @@ def school_dict(msims):
             school_results[schools_closure_scenarios[i]]['num_traced'] = []
             school_results[schools_closure_scenarios[i]]['test_pos'] = []
             school_results[schools_closure_scenarios[i]]['school_days_lost'] = []
+            school_results[schools_closure_scenarios[i]]['student_school_days'] = []
+            school_results[schools_closure_scenarios[i]]['perc_school_days_lost'] = []
             school_results[schools_closure_scenarios[i]]['num_students'] = []
             school_results[schools_closure_scenarios[i]]['total_cases'] = []
             school_results[schools_closure_scenarios[i]]['student_cases'] = []
@@ -146,8 +148,12 @@ def school_dict(msims):
                     sub_sim.school_info['school_closures'])
                 school_results[schools_closure_scenarios[i]]['school_days_lost'].append(
                     sub_sim.school_info['school_days_lost'])
+                school_results[schools_closure_scenarios[i]]['student_school_days'].append(
+                    sub_sim.school_info['total_student_school_days'])
+                school_results[schools_closure_scenarios[i]]['perc_school_days_lost'].append(
+                    sub_sim.school_info['school_days_lost']/sub_sim.school_info['total_student_school_days'])
                 school_results[schools_closure_scenarios[i]]['cum_infections'].append(
-                    sub_sim.summary['cum_infections'])
+                    sub_sim.summary['cum_infections'] - sub_sim.results['cum_infections'].values[218])
                 school_results[schools_closure_scenarios[i]]['num_tested'].append(
                     sub_sim.school_info['num_tested'])
                 school_results[schools_closure_scenarios[i]]['num_traced'].append(
@@ -186,8 +192,12 @@ def school_dict(msims):
                     'school_closures']
                 school_results[schools_closure_scenarios[i]]['school_days_lost'] = sub_sim.school_info[
                     'school_days_lost']
+                school_results[schools_closure_scenarios[i]]['student_school_days'] = sub_sim.school_info[
+                    'total_student_school_days']
+                school_results[schools_closure_scenarios[i]]['perc_school_days_lost'] = sub_sim.school_info[
+                    'school_days_lost'] / sub_sim.school_info['total_student_school_days']
                 school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary[
-                    'cum_infections']
+                    'cum_infections'] - sub_sim.results['cum_infections'].values[218]
                 school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
                 school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
                 school_results[schools_closure_scenarios[i]]['test_pos'] = sub_sim.school_info['test_pos']
@@ -218,11 +228,11 @@ if __name__ == "__main__":
     save_dict = True
     n_params = 5
     n_seeds = 5
-    date = '07012020'
+    date = '07062020'
 
     ttq_scen = ['lower', 'medium', 'upper']
 
-    mobility_scens = ['100perc', '80perc', '60perc']
+    mobility_scens = ['70perc', '80perc', '90perc', '100perc']
 
     schools_closure_scenarios = ['no_school', 'as_normal', 'with_NPI', 'with_cohorting', 'with_screening_notesting',
                                  'with_25perctest_notracing', 'with_50perctest_25tracing',
@@ -251,13 +261,13 @@ if __name__ == "__main__":
     if rerun:
         indices = range(n_params)
         seeds = range(n_seeds)
-        jsonfile = 'optimization_v12_safegraph_062620.json'
+        jsonfile = 'optimization_v12_safegraph_070120.json'
         json = sc.loadjson(jsonfile)
 
         for scenario in ttq_scen:
             for scen, perc in enumerate(mobility_scens):
                 analysis_name = f'school_reopening_analysis_{perc}_mobility_{scenario}_ttq'
-                mobility_file = f'inputs/KC_weeklyinteractions_20200616_{perc}.csv'
+                mobility_file = f'inputs/KC_weeklyinteractions_070120_{perc}.csv'
                 for index in indices:
                     msims = []
                     for i, changes in enumerate(schools_closure_scenarios_label):

@@ -227,7 +227,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     school_start_day = school_reopening_pars['school_start_day']
     intervention_start_day = school_reopening_pars['intervention_start_day']
-    num_pos = school_reopening_pars['num_pos']
+    num_pos = None
     test_prob = school_reopening_pars['test_prob']
     trace_prob = school_reopening_pars['trace_prob']
     mobility_file = school_reopening_pars['mobility_file']
@@ -245,7 +245,6 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     sim['interventions'] = interventions
 
     analyzers = [cv.age_histogram(datafile=age_data_file)]
-    analyzers += [cv.snapshot('2020-11-01')]
 
     sim['analyzers'] += analyzers
 
