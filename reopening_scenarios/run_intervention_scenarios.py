@@ -228,35 +228,44 @@ if __name__ == "__main__":
     save_dict = True
     n_params = 5
     n_seeds = 5
-    date = '07062020'
+    date = '07102020'
 
     ttq_scen = ['lower', 'medium', 'upper']
 
     mobility_scens = ['70perc', '80perc', '90perc', '100perc']
 
     schools_closure_scenarios = ['no_school', 'as_normal', 'with_NPI', 'with_cohorting', 'with_screening_notesting',
-                                 'with_25perctest_notracing', 'with_50perctest_25tracing',
+                                 'with_25perctest_100tracing', 'with_50perctest_100tracing',
                                  'with_100perctest_100tracing']
 
     schools_closure_scenarios_label = ['No School', 'School as Normal', 'School with NPI', 'School with NPI + Cohorting',
                                        'School with NPI, Cohorting, Screening',
-                                       'School with NPI, Cohorting, Screening, 25% Follow-Up Testing',
-                                       'School with NPI, Cohorting, Screening, 50% Follow-Up Testing, 25% Follow-Up Tracing',
+                                       'School with NPI, Cohorting, Screening, 25% Follow-Up Testing, 100% Follow-Up Tracing',
+                                       'School with NPI, Cohorting, Screening, 50% Follow-Up Testing, 100% Follow-Up Tracing',
                                        'School with NPI, Cohorting, Screening, 100% Follow-Up Testing, 100% Follow-Up Tracing']
 
     test_prob = [0, 0, 0, 0, 0, .25, .5, 1]
-    trace_prob = [0, 0, 0, 0, 0, 0, .25, 1]
+    trace_prob = [0, 0, 0, 0, 0, 1, 1, 1]
     NPI_schools = [None, None, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
     test_freq = None
     network_change = [False, False, False, True, True, True, True, True]
-    school_start_day = [{'pk': None, 'es': None, 'ms': None, 'hs': None, 'uv': None}, '2020-09-01',
-                        '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01']
     intervention_start_day = [None, None, None, None,
                               {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
                               {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
                               {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
                               {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}
                               ]
+    school_start_day = [{'pk': None, 'es': None, 'ms': None, 'hs': None, 'uv': None}, '2020-09-01',
+                        '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01']
+
+    # school_start_day = [{'pk': None, 'es': None, 'ms': None, 'hs': None, 'uv': None},
+    #                     {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+    #                     {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+    #                     {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+    #                     {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+    #                     {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+    #                     {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+    #                     {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},]
 
     if rerun:
         indices = range(n_params)

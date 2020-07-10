@@ -33,8 +33,8 @@ def make_safegraph(sim, mobility_file):
         fn = mobility_file
     df = pd.read_csv(fn)
     week = df['week']
-    w = df['p.emp'].values
-    c = df['p.cust'].values
+    w = df['p.tot'].values
+    c = df['p.tot'].values
 
     # Do processing
     npts = len(week)
@@ -199,8 +199,6 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     # Define beta interventions (for school reopening)
     b_ch = sc.objdict()
     b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25', '2020-08-30']
-
-    b_ch.h = [1.00, 1.10, 1.20, 1.20, 1]
     b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
     b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
     if NPI_schools is None:

@@ -16,8 +16,8 @@ cv.check_save_version('1.4.7', die=True)
 
 # Define the input files
 inputs         = 'inputs'
-epi_data_file  = f'{inputs}/20200628chop5_KingCounty_Covasim.csv'
-age_data_file  = f'{inputs}/20200628chop5_KingCounty_AgeHist.csv'
+epi_data_file  = f'{inputs}/20200705trim5_KingCounty_Covasim.csv'
+age_data_file  = f'{inputs}/20200705trim5_KingCounty_AgeHist.csv'
 safegraph_file = f'{inputs}/KC_weeklyinteractions_070120.csv'
 popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
 
@@ -60,10 +60,12 @@ def define_pars(which='best', kind='default', use_safegraph=True):
                 bc_wc1=[0.60, 0.10, 1.00],
                 bc_wc2=[0.50, 0.10, 1.00],
                 bc_wc3=[0.75, 0.10, 1.00],
+                bc_c4 = [1.00, 0.60, 1.00],
                 bc_lf=[0.18, 0.05, 0.50],
                 tn1=[15.0, 5.0, 50.0],
                 tn2=[15.0, 5.0, 50.0],
                 tn3=[30.0, 5.0, 50.0],
+                tn4=[70.0, 5.0, 100.0]
             ))
         else:
             pardata.update(dict(
@@ -77,6 +79,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
                 tn1=[15.0, 5.0, 50.0],
                 tn2=[15.0, 5.0, 50.0],
                 tn3=[30.0, 5.0, 50.0],
+                tn4=[70.0, 5.0, 100.0]
             ))
     if kind in ['layers', 'both']:
         pardata.update(dict(
@@ -118,10 +121,10 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
               'pop_infected'  : 400,
               'beta'          : p.beta,
               'start_day'     : '2020-01-27',
-              'end_day'       : '2020-06-23',
+              'end_day'       : '2020-07-05',
               'rescale'       : True,
               'rescale_factor': 1.1,
-              'verbose'       : 0.1,
+              'verbose'       : 0,
               'rand_seed'     : p.rand_seed,
               'analyzers'     : cv.age_histogram(datafile=age_data_file),
               'beta_layer'    : dict(h=p.bl_h, s=p.bl_s, w=p.bl_w, c=p.bl_c, l=p.bl_l),
@@ -147,15 +150,16 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     test_kwargs = dict(daily_tests=sim.data['new_tests'], quar_test=1.0, test_delay=2)
     tn1 = cv.test_num(symp_test=p.tn1, start_day='2020-01-27', end_day='2020-03-23', **test_kwargs, label='tn1')
     tn2 = cv.test_num(symp_test=p.tn2, start_day='2020-03-24', end_day='2020-04-14', **test_kwargs, label='tn2')
-    tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day=None, **test_kwargs, label='tn3')
-    interventions = [tn1, tn2, tn3]
+    tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day='2020-06-01', **test_kwargs, label='tn3')
+    tn4 = cv.test_num(symp_test=p.tn3, start_day='2020-06-02', end_day=None,         **test_kwargs, label='tn4')
+    interventions = [tn1, tn2, tn3, tn4]
 
     # Define beta interventions (for calibration)
     b_ch = sc.objdict()
-    b_days = ['2020-03-04', '2020-03-12', '2020-03-23', '2020-04-25']
-    b_ch.s = [1.00, 0.00, 0.00, 0.00]
-    b_ch.w = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
-    b_ch.c = [1.00, p.bc_wc1, p.bc_wc2, p.bc_wc3]
+    b_days = ['2020-03-12', '2020-03-23', '2020-04-25', '2020-06-01']
+    b_ch.s = [0.00, 0.00, 0.00, 0.00]
+    b_ch.w = [p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
+    b_ch.c = [p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_c4]
 
     for lkey,ch in b_ch.items():
         interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
