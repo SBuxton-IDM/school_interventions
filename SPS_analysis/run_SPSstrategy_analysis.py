@@ -7,8 +7,9 @@ import covasim as cv
 import numpy as np
 from covasim import utils as cvu
 import pandas as pd
+import random
 
-cv.check_save_version('1.4.7', die=True)
+cv.check_save_version('1.5.0', die=True)
 
 
 def school_dict(msims, school_dicts, index):
@@ -17,28 +18,51 @@ def school_dict(msims, school_dicts, index):
         label = sim.base_sim.label
         school_results[label] = dict()
         if len(sim.sims) > 1:  # if running multiple seeds, print all of them
+            school_results[label]['num_teachers'] = []
             school_results[label]['num_teachers_tested'] = []
             school_results[label]['num_teachers_test_pos'] = []
             school_results[label]['num_teachers_screen_pos'] = []
-            school_results[label]['num_students_screen_pos'] = []
             school_results[label]['num_teacher_cases'] = []
+
+            school_results[label]['num_staff'] = []
+            school_results[label]['num_staff_tested'] = []
+            school_results[label]['num_staff_test_pos'] = []
+            school_results[label]['num_staff_screen_pos'] = []
+            school_results[label]['num_staff_cases'] = []
+            
+            school_results[label]['num_students_screen_pos'] = []
             school_results[label]['num_student_cases'] = []
             for j, sub_sim in enumerate(sim.sims):
                 school_results[label]['num_teachers_tested'].append(sub_sim.school_info['num_teachers_tested'])
                 school_results[label]['num_teachers_test_pos'].append(sub_sim.school_info['num_teachers_test_pos'])
                 school_results[label]['num_teachers_screen_pos'].append(sub_sim.school_info['num_teachers_screen_pos'])
-                school_results[label]['num_students_screen_pos'].append(sub_sim.school_info['num_students_screen_pos'])
                 school_results[label]['num_teacher_cases'].append(sub_sim.school_info['num_teacher_cases'])
+                school_results[label]['num_teachers'].append(sub_sim.school_info['num_teachers'])
+                
+                school_results[label]['num_staff_tested'].append(sub_sim.school_info['num_staff_tested'])
+                school_results[label]['num_staff_test_pos'].append(sub_sim.school_info['num_staff_test_pos'])
+                school_results[label]['num_staff_screen_pos'].append(sub_sim.school_info['num_staff_screen_pos'])
+                school_results[label]['num_staff_cases'].append(sub_sim.school_info['num_staff_cases'])
+                school_results[label]['num_staff'].append(sub_sim.school_info['num_staff'])
+                
+                school_results[label]['num_students_screen_pos'].append(sub_sim.school_info['num_students_screen_pos'])
                 school_results[label]['num_student_cases'].append(sub_sim.school_info['num_student_cases'])
         else:
             for sub_sim in sim.sims:
                 school_results[label]['num_teachers_tested'] = sub_sim.school_info['num_teachers_tested']
                 school_results[label]['num_teachers_test_pos'] = sub_sim.school_info['num_teachers_test_pos']
                 school_results[label]['num_teachers_screen_pos'] = sub_sim.school_info['num_teachers_screen_pos']
-                school_results[label]['num_students_screen_pos'] = sub_sim.school_info['num_students_screen_pos']
                 school_results[label]['num_teacher_cases'] = sub_sim.school_info['num_teacher_cases']
-                school_results[label]['num_student_cases'] = sub_sim.school_info['num_student_cases']
+                school_results[label]['num_teachers'] = sub_sim.school_info['num_teachers']
 
+                school_results[label]['num_staff_tested'] = sub_sim.school_info['num_staff_tested']
+                school_results[label]['num_staff_test_pos'] = sub_sim.school_info['num_staff_test_pos']
+                school_results[label]['num_staff_screen_pos'] = sub_sim.school_info['num_staff_screen_pos']
+                school_results[label]['num_staff_cases'] = sub_sim.school_info['num_staff_cases']
+                school_results[label]['num_staff'] = sub_sim.school_info['num_staff']
+
+                school_results[label]['num_students_screen_pos'] = sub_sim.school_info['num_students_screen_pos']
+                school_results[label]['num_student_cases'] = sub_sim.school_info['num_student_cases']
 
     for _, results in school_results.items():
         for key, value in results.items():
@@ -78,13 +102,13 @@ def process_school_dicts(school_dicts, n_params, scenarios):
 if __name__ == "__main__":
 
     do_save = True
-    n_params = 2
-    n_seeds = 2
-    date = '07062020'
+    n_params = 1
+    n_seeds = 3
+    date = '07162020'
 
 
     school_reopening_pars = {
-                        'test_prob': 0,
+                        'test_prob': 1,
                         'trace_prob': 1,
                         'NPI_schools': 0.75,
                         'network_change': True,
@@ -97,14 +121,16 @@ if __name__ == "__main__":
 
     teacher_testing_scens = {
                         'no_teacher_testing': {'test_freq': None},
-                        # 'every_over_day_teacher_testing': {'test_freq': 2},
-                        'weekly_teacher_testing': {'test_freq': 7},
+                        'monthly_teacher_testing': {'test_freq': 30},
                         'biweekly_teacher_testing': {'test_freq': 14},
-                        # 'monthly_teacher_testing': {'test_freq': 30},
+                        'weekly_teacher_testing': {'test_freq': 7},
                         }
 
     indices = range(n_params)
     seeds = range(n_seeds)
+    seeds = []
+    for x in range(n_seeds):
+        seeds.append(random.randint(1,100))
     jsonfile = 'optimization_v12_safegraph_070120.json'
     json = sc.loadjson(jsonfile)
 
@@ -116,7 +142,7 @@ if __name__ == "__main__":
             all_sims = []
             entry = json[index]
             pars = entry['pars']
-            pars['end_day'] = '2020-10-01'
+            pars['end_day'] = '2020-12-01'
             for seed in seeds:
                 pars['rand_seed'] = seed
                 all_sims.append(cs.create_sim(pars=pars, label=scen, school_reopening_pars=school_reopening_pars,

@@ -12,15 +12,15 @@ import sciris as sc
 import covasim as cv
 
 
-cv.check_save_version('1.4.7', die=True)
+cv.check_save_version('1.5.0', die=True)
 
 # Define the input files
 inputs         = 'inputs'
 epi_data_file  = f'{inputs}/20200628chop5_KingCounty_Covasim.csv'
 age_data_file  = f'{inputs}/20200628chop5_KingCounty_AgeHist.csv'
 safegraph_file = f'{inputs}/KC_weeklyinteractions_070120.csv'
-popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
-popfile_stem_change = f'{inputs}/kc_synthpops_clustered_seed'
+popfile_stem   = f'{inputs}/kc_synthpops_normal_withstaff_seed'
+popfile_stem_change = f'{inputs}/kc_synthpops_clustered_withstaff_seed'
 
 
 def make_safegraph(sim, mobility_file):
@@ -230,12 +230,12 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     trace_prob = school_reopening_pars['trace_prob']
     mobility_file = school_reopening_pars['mobility_file']
 
-    interventions += [cv.reopen_schools(day_schools_closed='2020-03-12', start_day=school_start_day,
+    interventions += [cv.close_schools(day_schools_closed='2020-03-12', start_day=school_start_day,
                                         pop_file=popfile_new)]
 
     test_freq = teacher_test_scen['test_freq']
 
-    interventions += [cv.close_schools(start_day=intervention_start_day, num_pos=num_pos, test=test_prob,
+    interventions += [cv.reopen_schools(start_day=intervention_start_day, num_pos=num_pos, test=test_prob,
                                        trace=trace_prob, ili_prev=0.002, test_freq=test_freq)]
 
     # SafeGraph intervention
