@@ -113,8 +113,8 @@ def process_school_dicts(school_dicts, n_params, scenarios):
 if __name__ == "__main__":
 
     do_save = True
-    n_params = 1
-    n_seeds = 1
+    n_params = 5
+    n_seeds = 5
     date = '07162020'
 
 
@@ -131,10 +131,10 @@ if __name__ == "__main__":
                         }
 
     teacher_testing_scens = {
-                        # 'no_teacher_testing': {'test_freq': None},
+                        'no_teacher_testing': {'test_freq': None},
                         'monthly_teacher_testing': {'test_freq': 30},
-                        # 'biweekly_teacher_testing': {'test_freq': 14},
-                        # 'weekly_teacher_testing': {'test_freq': 7},
+                        'biweekly_teacher_testing': {'test_freq': 14},
+                        'weekly_teacher_testing': {'test_freq': 7},
                         }
 
     indices = range(n_params)
@@ -150,16 +150,16 @@ if __name__ == "__main__":
     for scen, teacher_testing in teacher_testing_scens.items():
         analysis_name = f'teacher_testing_analysis_{scen}'
         msims = []
+        infectious_by_param = []
         for index in indices:
             all_sims = []
             entry = json[index]
             pars = entry['pars']
-            pars['end_day'] = '2020-10-01'
+            pars['end_day'] = '2020-12-01'
             for seed in seeds:
                 pars['rand_seed'] = seed
                 all_sims.append(cs.create_sim(pars=pars, label=scen, school_reopening_pars=school_reopening_pars,
                                               teacher_test_scen=teacher_testing))
-
             msim = cv.MultiSim(sims=all_sims)
             msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
             msim.reduce()
@@ -175,7 +175,7 @@ if __name__ == "__main__":
             by_row_index = infectious_concat.groupby(infectious_concat.index)
             infectious_means = by_row_index.mean()
             infectious_means.columns = [scen]
-            infectious_by_scen.append(infectious_means)
+            infectious_by_param.append(infectious_means)
             msims.append(msim)
 
             if do_save:
@@ -186,6 +186,12 @@ if __name__ == "__main__":
                 school_results = school_dict(msims, school_dicts, index)
                 # filename = f'results/{analysis_name}_param{index}_output.csv'
                 # school_results.to_csv(filename, header=True)
+
+        infectious_concat = pd.concat(infectious_by_param)
+        by_row_index = infectious_concat.groupby(infectious_concat.index)
+        infectious_means = by_row_index.mean()
+        infectious_by_scen.append(infectious_means)
+
     infectious_by_scen = pd.concat(infectious_by_scen, ignore_index=True, axis=1)
     infectious_by_scen.columns = teacher_testing_scens.keys()
 
