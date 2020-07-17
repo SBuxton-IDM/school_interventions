@@ -147,10 +147,12 @@ if __name__ == "__main__":
 
     school_dicts = dict()
     infectious_by_scen = []
+    diagnosed_by_scen = []
     for scen, teacher_testing in teacher_testing_scens.items():
         analysis_name = f'teacher_testing_analysis_{scen}'
         msims = []
         infectious_by_param = []
+        diagnosed_by_param = []
         for index in indices:
             all_sims = []
             entry = json[index]
@@ -165,38 +167,56 @@ if __name__ == "__main__":
             msim.reduce()
             df = []
             infectious = []
+            diagnosed = []
             for j in range(len(msim.sims)):
                 df.append(pd.DataFrame(msim.sims[j].results))
                 infectious.append(pd.DataFrame(msim.sims[j].school_info['num_infectious']))
+                diagnosed.append(pd.DataFrame(msim.sims[j].school_info['num_diagnosed']))
             df_concat = pd.concat(df)
-            infectious_concat = pd.concat(infectious)
             by_row_index = df_concat.groupby(df_concat.index)
             df_means = by_row_index.mean()
+
+            infectious_concat = pd.concat(infectious)
             by_row_index = infectious_concat.groupby(infectious_concat.index)
             infectious_means = by_row_index.mean()
             infectious_means.columns = [scen]
             infectious_by_param.append(infectious_means)
+
+            diagnosed_concat = pd.concat(diagnosed)
+            by_row_index = diagnosed_concat.groupby(diagnosed_concat.index)
+            diagnosed_means = by_row_index.mean()
+            diagnosed_means.columns = [scen]
+            diagnosed_by_param.append(diagnosed_means)
+
             msims.append(msim)
 
             if do_save:
                 # filename = f'results/{analysis_name}_param{index}_results.csv'
                 # df_means.to_csv(filename, header=True)
-                # filename = f'results/{analysis_name}_param{index}_infectious.csv'
-                # infectious_means.to_csv(filename, header=True)
                 school_results = school_dict(msims, school_dicts, index)
-                # filename = f'results/{analysis_name}_param{index}_output.csv'
-                # school_results.to_csv(filename, header=True)
 
         infectious_concat = pd.concat(infectious_by_param)
         by_row_index = infectious_concat.groupby(infectious_concat.index)
         infectious_means = by_row_index.mean()
         infectious_by_scen.append(infectious_means)
 
+        diagnosed_concat = pd.concat(diagnosed_by_param)
+        by_row_index = diagnosed_concat.groupby(diagnosed_concat.index)
+        diagnosed_means = by_row_index.mean()
+        diagnosed_by_scen.append(diagnosed_means)
+
     infectious_by_scen = pd.concat(infectious_by_scen, ignore_index=True, axis=1)
     infectious_by_scen.columns = teacher_testing_scens.keys()
 
+    diagnosed_by_scen = pd.concat(diagnosed_by_scen, ignore_index=True, axis=1)
+    diagnosed_by_scen.columns = teacher_testing_scens.keys()
+
     filename = f'results/teacher_testing_analysis_infectious_{date}.csv'
     infectious_by_scen.to_csv(filename, header=True)
+
+    filename = f'results/teacher_testing_analysis_diagnosed_{date}.csv'
+    diagnosed_by_scen.to_csv(filename, header=True)
+
     final_results = process_school_dicts(school_dicts, n_params, teacher_testing_scens.keys())
     filename = f'results/teacher_testing_analysis_combined_output_{date}.csv'
     final_results.to_csv(filename, header=True)
