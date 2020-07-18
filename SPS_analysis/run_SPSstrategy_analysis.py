@@ -131,9 +131,9 @@ if __name__ == "__main__":
                         }
 
     teacher_testing_scens = {
-                        # 'no_teacher_testing': {'test_freq': None},
-                        'monthly_teacher_testing': {'test_freq': 28},
-                        'biweekly_teacher_testing': {'test_freq': 14},
+                        'no_teacher_testing': {'test_freq': None},
+                        # 'monthly_teacher_testing': {'test_freq': 28},
+                        # 'biweekly_teacher_testing': {'test_freq': 14},
                         'weekly_teacher_testing': {'test_freq': 7},
                         }
 
@@ -147,12 +147,14 @@ if __name__ == "__main__":
 
     school_dicts = dict()
     infectious_by_scen = []
+    asymptomatic_by_scen = []
     diagnosed_by_scen = []
     undiagnosed_by_scen = []
     for scen, teacher_testing in teacher_testing_scens.items():
         analysis_name = f'teacher_testing_analysis_{scen}'
         msims = []
         infectious_by_param = []
+        asymptomatic_by_param = []
         diagnosed_by_param = []
         undiagnosed_by_param = []
         for index in indices:
@@ -169,11 +171,13 @@ if __name__ == "__main__":
             msim.reduce()
             df = []
             infectious = []
+            asymptomatic = []
             diagnosed = []
             undiagnosed = []
             for j in range(len(msim.sims)):
                 df.append(pd.DataFrame(msim.sims[j].results))
                 infectious.append(pd.DataFrame(msim.sims[j].school_info['num_infectious']))
+                asymptomatic.append(pd.DataFrame(msim.sims[j].school_info['num_asymptomatic']))
                 diagnosed.append(pd.DataFrame(msim.sims[j].school_info['num_diagnosed']))
                 undiagnosed.append(pd.DataFrame(msim.sims[j].school_info['num_undiagnosed']))
             df_concat = pd.concat(df)
@@ -185,6 +189,12 @@ if __name__ == "__main__":
             infectious_means = by_row_index.mean()
             infectious_means.columns = [scen]
             infectious_by_param.append(infectious_means)
+
+            asymptomatic_concat = pd.concat(asymptomatic)
+            by_row_index = asymptomatic_concat.groupby(asymptomatic_concat.index)
+            asymptomatic_means = by_row_index.mean()
+            asymptomatic_means.columns = [scen]
+            asymptomatic_by_param.append(asymptomatic_means)
 
             diagnosed_concat = pd.concat(diagnosed)
             by_row_index = diagnosed_concat.groupby(diagnosed_concat.index)
@@ -210,6 +220,11 @@ if __name__ == "__main__":
         infectious_means = by_row_index.mean()
         infectious_by_scen.append(infectious_means)
 
+        asymptomatic_concat = pd.concat(asymptomatic_by_param)
+        by_row_index = asymptomatic_concat.groupby(asymptomatic_concat.index)
+        asymptomatic_means = by_row_index.mean()
+        asymptomatic_by_scen.append(asymptomatic_means)
+
         diagnosed_concat = pd.concat(diagnosed_by_param)
         by_row_index = diagnosed_concat.groupby(diagnosed_concat.index)
         diagnosed_means = by_row_index.mean()
@@ -223,6 +238,9 @@ if __name__ == "__main__":
     infectious_by_scen = pd.concat(infectious_by_scen, ignore_index=True, axis=1)
     infectious_by_scen.columns = teacher_testing_scens.keys()
 
+    asymptomatic_by_scen = pd.concat(asymptomatic_by_scen, ignore_index=True, axis=1)
+    asymptomatic_by_scen.columns = teacher_testing_scens.keys()
+
     diagnosed_by_scen = pd.concat(diagnosed_by_scen, ignore_index=True, axis=1)
     diagnosed_by_scen.columns = teacher_testing_scens.keys()
 
@@ -231,6 +249,9 @@ if __name__ == "__main__":
 
     filename = f'results/teacher_testing_analysis_infectious_{date}.csv'
     infectious_by_scen.to_csv(filename, header=True)
+
+    filename = f'results/teacher_testing_analysis_asymptomatic_{date}.csv'
+    asymptomatic_by_scen.to_csv(filename, header=True)
 
     filename = f'results/teacher_testing_analysis_diagnosed_{date}.csv'
     diagnosed_by_scen.to_csv(filename, header=True)
