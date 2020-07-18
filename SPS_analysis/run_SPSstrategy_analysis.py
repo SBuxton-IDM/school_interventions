@@ -134,7 +134,8 @@ if __name__ == "__main__":
                         'no_teacher_testing': {'test_freq': None},
                         # 'monthly_teacher_testing': {'test_freq': 28},
                         # 'biweekly_teacher_testing': {'test_freq': 14},
-                        'weekly_teacher_testing': {'test_freq': 7},
+                        # 'weekly_teacher_testing': {'test_freq': 7},
+                        'daily_teacher_testing': {'test_freq': 1},
                         }
 
     indices = range(n_params)
