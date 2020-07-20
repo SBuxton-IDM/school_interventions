@@ -226,8 +226,8 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     school_start_day = school_reopening_pars['school_start_day']
     intervention_start_day = school_reopening_pars['intervention_start_day']
     num_pos = None
-    test_prob = school_reopening_pars['test_prob']
-    trace_prob = school_reopening_pars['trace_prob']
+    test_prob = teacher_test_scen['test_prob']
+    trace_prob = teacher_test_scen['trace_prob']
     mobility_file = school_reopening_pars['mobility_file']
 
     interventions += [cv.close_schools(day_schools_closed='2020-03-12', start_day=school_start_day,
