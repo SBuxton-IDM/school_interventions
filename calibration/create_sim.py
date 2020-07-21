@@ -12,14 +12,14 @@ import sciris as sc
 import covasim as cv
 
 
-cv.check_save_version('1.4.7', die=True)
+cv.check_save_version('1.5.0', die=True)
 
 # Define the input files
 inputs         = 'inputs'
-epi_data_file  = f'{inputs}/20200705trim5_KingCounty_Covasim.csv'
-age_data_file  = f'{inputs}/20200705trim5_KingCounty_AgeHist.csv'
-safegraph_file = f'{inputs}/KC_weeklyinteractions_070120.csv'
-popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
+epi_data_file  = f'{inputs}/20200719trim5_KingCounty_Covasim.csv'
+age_data_file  = f'{inputs}/20200719trim5_KingCounty_AgeHist.csv'
+safegraph_file = f'{inputs}/KC_weeklyinteractions_071520.csv'
+popfile_stem   = f'{inputs}/kc_synthpops_normal_withstaff_seed'
 
 
 def make_safegraph(sim):
@@ -29,9 +29,7 @@ def make_safegraph(sim):
     fn = safegraph_file
     df = pd.read_csv(fn)
     week = df['week']
-    w = c = df['p.tot'].values
-    # w = df['p.emp'].values
-    # c = df['p.cust'].values
+    w = c = df['p.tot'].valueshiop
 
     # Do processing
     npts = len(week)
@@ -60,12 +58,10 @@ def define_pars(which='best', kind='default', use_safegraph=True):
                 bc_wc1=[0.60, 0.10, 1.00],
                 bc_wc2=[0.50, 0.10, 1.00],
                 bc_wc3=[0.75, 0.10, 1.00],
-                bc_c4 = [1.00, 0.60, 1.00],
                 bc_lf=[0.18, 0.05, 0.50],
                 tn1=[15.0, 5.0, 50.0],
                 tn2=[15.0, 5.0, 50.0],
                 tn3=[30.0, 5.0, 50.0],
-                tn4=[70.0, 5.0, 100.0]
             ))
         else:
             pardata.update(dict(
@@ -79,7 +75,6 @@ def define_pars(which='best', kind='default', use_safegraph=True):
                 tn1=[15.0, 5.0, 50.0],
                 tn2=[15.0, 5.0, 50.0],
                 tn3=[30.0, 5.0, 50.0],
-                tn4=[70.0, 5.0, 100.0]
             ))
     if kind in ['layers', 'both']:
         pardata.update(dict(
@@ -90,6 +85,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
             bl_c=[0.14, 0.0, 3.0],
             bl_l=[2.1, 0.0, 5.0],
         ))
+
 
     output = {}
     for key,arr in pardata.items():
@@ -110,7 +106,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
         print(f'Note, could not find random seed in {pars}! Setting to {seed}')
         p['rand_seed'] = seed # Ensure this exists
     if 'end_day' not in p:
-        end_day = '2020-06-23'
+        end_day = '2020-07-19'
         p['end_day'] = end_day
 
 
@@ -121,7 +117,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
               'pop_infected'  : 400,
               'beta'          : p.beta,
               'start_day'     : '2020-01-27',
-              'end_day'       : '2020-07-05',
+              'end_day'       : '2020-07-19',
               'rescale'       : True,
               'rescale_factor': 1.1,
               'verbose'       : 0,
@@ -150,16 +146,15 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     test_kwargs = dict(daily_tests=sim.data['new_tests'], quar_test=1.0, test_delay=2)
     tn1 = cv.test_num(symp_test=p.tn1, start_day='2020-01-27', end_day='2020-03-23', **test_kwargs, label='tn1')
     tn2 = cv.test_num(symp_test=p.tn2, start_day='2020-03-24', end_day='2020-04-14', **test_kwargs, label='tn2')
-    tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day='2020-06-01', **test_kwargs, label='tn3')
-    tn4 = cv.test_num(symp_test=p.tn3, start_day='2020-06-02', end_day=None,         **test_kwargs, label='tn4')
-    interventions = [tn1, tn2, tn3, tn4]
+    tn3 = cv.test_num(symp_test=p.tn3, start_day='2020-04-15', end_day=None, **test_kwargs, label='tn3')
+    interventions = [tn1, tn2, tn3]
 
     # Define beta interventions (for calibration)
     b_ch = sc.objdict()
-    b_days = ['2020-03-12', '2020-03-23', '2020-04-25', '2020-06-01']
-    b_ch.s = [0.00, 0.00, 0.00, 0.00]
-    b_ch.w = [p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_wc3]
-    b_ch.c = [p.bc_wc1, p.bc_wc2, p.bc_wc3, p.bc_c4]
+    b_days = ['2020-03-04', '2020-03-12', '2020-04-25']
+    b_ch.s = [1.00, 0.00, 0.00]
+    b_ch.w = [p.bc_wc1, p.bc_wc2, p.bc_wc3]
+    b_ch.c = [p.bc_wc1, p.bc_wc2, p.bc_wc3]
 
     for lkey,ch in b_ch.items():
         interventions += [cv.change_beta(days=b_days, changes=b_ch[lkey], layers=lkey, label=f'beta_{lkey}')]
