@@ -152,8 +152,8 @@ def school_dict(msims):
 
 if __name__ == "__main__":
 
-    n_params = 2
-    date = '07202020'
+    n_params = 15
+    date = '07212020'
 
     # ttq_scen = ['lower', 'medium', 'upper']
     #
@@ -194,63 +194,76 @@ if __name__ == "__main__":
 
     ttq_scen = 'medium'
 
-    mobility = '80perc'
+    mobility = ['70perc', '80perc', '90perc']
 
-    schools_closure_scenarios = ['hybrid', 'normal']
+    schools_closure_scenarios = ['no_school', 'with_screening_notesting', 'with_25perctest_100tracing',
+                                 'with_hybrid_scheduling']
 
-    schools_closure_scenarios_label = ['Hybrid Schedule', 'Normal']
+    schools_closure_scenarios_label = ['No School', 'School with NPI, Cohorting, Screening',
+                                       'School with NPI, Cohorting, Screening, 25% Follow-Up Testing, 100% Follow-Up Tracing',
+        'Hybrid School Scheduling with NPI, Cohorting, Screening, 25% Follow-Up Testing, 100% Follow-Up Tracing']
 
-    test_prob = [.5, .5]
-    trace_prob = [.5, .5]
-    NPI_schools = [.75, .75]
+    test_prob = [0, 0, .25, .25]
+    trace_prob = [0, 0, 1, 1]
+    NPI_schools = [None, 0.75, 0.75, 0.75]
     test_freq = None
-    network_change = [True, True]
-    intervention_start_day = [{'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}]
-    school_start_day = ['2020-09-01', '2020-09-01']
-    schedule = [{'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None}, None]
+    network_change = [False, True, True, True]
+    intervention_start_day = [None, {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}
+                              ]
+    school_start_day = [None, '2020-09-01', '2020-09-01', '2020-09-01']
+
+    school_start_day = [None, {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+                        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+                        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}]
+
+    schedule = [None, None, None,
+                {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None}]
 
     indices = range(n_params)
     jsonfile = 'optimization_v12_safegraph_070120.json'
     json = sc.loadjson(jsonfile)
 
-    msims = []
 
-    mobility_file = f'inputs/KC_weeklyinteractions_070120_{mobility}.csv'
-    for i, changes in enumerate(schools_closure_scenarios_label):
-        analysis_name = f'{changes}_{mobility}_mobility_{ttq_scen}'
-        all_sims = []
-        for index in indices:
-            entry = json[index]
-            pars = entry['pars']
-            pars['end_day'] = '2020-10-01'
-            pars['rand_seed'] = int(entry['index'])
-            all_sims.append(cs.create_sim(pars=pars, test_prob=test_prob[i],
-                                          trace_prob=trace_prob[i], NPI_schools=NPI_schools[i],
-                                          label=changes, test_freq=test_freq, schedule=schedule[i],
-                                          network_change=network_change[i],
-                                          school_start_day=school_start_day[i],
-                                          intervention_start_day=intervention_start_day[i],
-                                          mobility_file=mobility_file, ttq_scen=ttq_scen))
+    for scen in mobility:
+        msims = []
+        mobility_file = f'inputs/KC_weeklyinteractions_070120_{scen}.csv'
+        for i, changes in enumerate(schools_closure_scenarios_label):
+            analysis_name = f'{changes}_{scen}_mobility_{ttq_scen}'
+            all_sims = []
+            for index in indices:
+                entry = json[index]
+                pars = entry['pars']
+                pars['end_day'] = '2020-10-01'
+                pars['rand_seed'] = int(entry['index'])
+                all_sims.append(cs.create_sim(pars=pars, test_prob=test_prob[i],
+                                              trace_prob=trace_prob[i], NPI_schools=NPI_schools[i],
+                                              label=changes, test_freq=test_freq, schedule=schedule[i],
+                                              network_change=network_change[i],
+                                              school_start_day=school_start_day[i],
+                                              intervention_start_day=intervention_start_day[i],
+                                              mobility_file=mobility_file, ttq_scen=ttq_scen))
 
-        msim = cv.MultiSim(sims=all_sims)
-        msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
-        msim.reduce()
-        msims.append(msim)
-        df = []
-        for j in range(len(msim.sims)):
-            filename = f'results/{analysis_name}_param{j}_results_{date}.csv'
-            results = pd.DataFrame(msim.sims[j].results)
-            results.to_csv(filename, header=True)
-            df.append(results)
+            msim = cv.MultiSim(sims=all_sims)
+            msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
+            msim.reduce()
+            msims.append(msim)
+            df = []
+            for j in range(len(msim.sims)):
+                filename = f'results/{analysis_name}_param{j}_results_{date}.csv'
+                results = pd.DataFrame(msim.sims[j].results)
+                results.to_csv(filename, header=True)
+                df.append(results)
 
-        df_concat = pd.concat(df)
-        by_row_index = df_concat.groupby(df_concat.index)
-        df_means = by_row_index.mean()
-        filename = f'results/{analysis_name}_results_{date}.csv'
-        df_means.to_csv(filename, header=True)
-    
-    school_results = school_dict(msims)
-    filename = f'results/school_reopening_analysis_output_{date}.csv'
-    school_results.to_csv(filename, header=True)
+            df_concat = pd.concat(df)
+            by_row_index = df_concat.groupby(df_concat.index)
+            df_means = by_row_index.mean()
+            filename = f'results/{analysis_name}_results_{date}.csv'
+            df_means.to_csv(filename, header=True)
+
+        school_results = school_dict(msims)
+        filename = f'results/school_reopening_analysis_output_{scen}_{ttq_scen}_{date}.csv'
+        school_results.to_csv(filename, header=True)
+
 
