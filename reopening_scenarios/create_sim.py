@@ -12,15 +12,15 @@ import sciris as sc
 import covasim as cv
 
 
-cv.check_save_version('1.4.7', die=True)
+cv.check_save_version('1.5.0', die=True)
 
 # Define the input files
 inputs         = 'inputs'
-epi_data_file  = f'{inputs}/20200614chop5_KingCounty_Covasim.csv'
-age_data_file  = f'{inputs}/20200614chop5_KingCounty_AgeHist.csv'
-safegraph_file = f'{inputs}/KC_weeklyinteractions_20200616.csv'
-popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
-popfile_stem_change = f'{inputs}/kc_synthpops_clustered_seed'
+epi_data_file  = f'{inputs}/20200628chop5_KingCounty_Covasim.csv'
+age_data_file  = f'{inputs}/20200628chop5_KingCounty_AgeHist.csv'
+safegraph_file = f'{inputs}/KC_weeklyinteractions_070120.csv'
+popfile_stem   = f'{inputs}/kc_synthpops_normal_withstaff_seed'
+popfile_stem_change = f'{inputs}/kc_synthpops_clustered_withstaff_seed'
 
 
 def make_safegraph(sim, mobility_file):
@@ -33,8 +33,9 @@ def make_safegraph(sim, mobility_file):
         fn = mobility_file
     df = pd.read_csv(fn)
     week = df['week']
-    w = df['p.tot'].values
-    c = df['p.tot'].values
+    w = c = df['p.tot'].values
+    # w = df['p.tot'].values
+    # c = df['p.tot'].values
 
     # Do processing
     npts = len(week)
@@ -102,7 +103,7 @@ def define_pars(which='best', kind='default', use_safegraph=True):
 
 
 def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, people=None, num_pos=None, test_prob=None,
-               trace_prob=None, NPI_schools=None, test_freq=None, network_change=False, school_start_day=None,
+               trace_prob=None, NPI_schools=None, test_freq=None, network_change=False, schedule=None, school_start_day=None,
                intervention_start_day=None, mobility_file=None, ttq_scen=None):
     ''' Create a single simulation for further use '''
 
@@ -126,7 +127,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
               'end_day'       : p['end_day'],
               'rescale'       : True,
               'rescale_factor': 1.1,
-              'verbose'       : 0,
+              'verbose'       : 0.1,
               'rand_seed'     : p.rand_seed,
               # 'analyzers'     : cv.age_histogram(datafile=age_data_file),
               'beta_layer'    : dict(h=p.bl_h, s=p.bl_s, w=p.bl_w, c=p.bl_c, l=p.bl_l),
@@ -158,26 +159,26 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     if ttq_scen == 'lower':
         tp = sc.objdict(
-            symp_prob=0.08,
+            symp_prob=0.01,
             asymp_prob=0.001,
             symp_quar_prob=0.8,
             asymp_quar_prob=0.1,
-            test_delay=2.0,
+            test_delay=5.0,
         )
         ct = sc.objdict(
-            trace_probs=0.01,
+            trace_probs=0.25,
             trace_time=3.0,
         )
     elif ttq_scen == 'medium':
         tp = sc.objdict(
-            symp_prob=0.12,
+            symp_prob=0.05,
             asymp_prob=0.0015,
             symp_quar_prob=0.8,
             asymp_quar_prob=0.1,
-            test_delay=2.0,
+            test_delay=3.0,
         )
         ct = sc.objdict(
-            trace_probs=0.25,
+            trace_probs=0.40,
             trace_time=3.0,
         )
     elif ttq_scen == 'upper':
@@ -220,18 +221,17 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     else:
         popfile_new = None
 
-    interventions += [cv.reopen_schools(day_schools_closed='2020-03-12', start_day=school_start_day,
+    interventions += [cv.close_schools(day_schools_closed='2020-03-12', start_day=school_start_day,
                                         pop_file=popfile_new)]
 
-    interventions += [cv.close_schools(start_day=intervention_start_day, num_pos=num_pos, test=test_prob,
-                                       trace=trace_prob, ili_prev=0.002, test_freq=test_freq)]
+    interventions += [cv.reopen_schools(start_day=intervention_start_day, num_pos=num_pos, test=test_prob,
+                                       trace=trace_prob, ili_prev=0.002, test_freq=test_freq, schedule=schedule)]
 
     # SafeGraph intervention
     interventions += make_safegraph(sim, mobility_file)
     sim['interventions'] = interventions
 
     analyzers = [cv.age_histogram(datafile=age_data_file)]
-    analyzers += [cv.snapshot('2020-11-01')]
 
     sim['analyzers'] += analyzers
 
