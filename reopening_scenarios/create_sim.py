@@ -16,11 +16,13 @@ cv.check_save_version('1.5.0', die=True)
 
 # Define the input files
 inputs         = 'inputs'
-epi_data_file  = f'{inputs}/20200628chop5_KingCounty_Covasim.csv'
-age_data_file  = f'{inputs}/20200628chop5_KingCounty_AgeHist.csv'
-safegraph_file = f'{inputs}/KC_weeklyinteractions_070120.csv'
+epi_data_file  = f'{inputs}/20200719chop5_KingCounty_Covasim.csv'
+age_data_file  = f'{inputs}/20200719chop5_KingCounty_AgeHist.csv'
+safegraph_file = f'{inputs}/KC_weeklyinteractions_071520.csv'
 popfile_stem   = f'{inputs}/kc_synthpops_normal_withstaff_seed'
 popfile_stem_change = f'{inputs}/kc_synthpops_clustered_withstaff_seed'
+# popfile_stem   = f'{inputs}/kc_synthpops_normal_seed'
+# popfile_stem_change = f'{inputs}/kc_synthpops_clustered_seed'
 
 
 def make_safegraph(sim, mobility_file):
@@ -159,26 +161,26 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
 
     if ttq_scen == 'lower':
         tp = sc.objdict(
-            symp_prob=0.01,
+            symp_prob=0.08,
             asymp_prob=0.001,
             symp_quar_prob=0.8,
             asymp_quar_prob=0.1,
-            test_delay=5.0,
+            test_delay=2.0,
         )
         ct = sc.objdict(
-            trace_probs=0.25,
+            trace_probs=0.01,
             trace_time=3.0,
         )
     elif ttq_scen == 'medium':
         tp = sc.objdict(
-            symp_prob=0.05,
+            symp_prob=0.12,
             asymp_prob=0.0015,
             symp_quar_prob=0.8,
             asymp_quar_prob=0.1,
-            test_delay=3.0,
+            test_delay=2.0,
         )
         ct = sc.objdict(
-            trace_probs=0.40,
+            trace_probs=0.25,
             trace_time=3.0,
         )
     elif ttq_scen == 'upper':
