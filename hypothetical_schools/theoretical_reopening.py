@@ -190,68 +190,53 @@ def school_dict(msims, day_schools_reopen):
 if __name__ == '__main__':
 
     popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
-    date = '2020-07-24'
+    date = '2020-07-26'
 
-    n_seeds = 1
-    do_save = False
-    do_plot = True
-
-    # schools_closure_scenarios = ['no_school', 'with_screening_notesting', 'with_hybrid_scheduling',
-    #                                  'with_25perctest_100tracing', 'with_25perctest_100tracing_hybrid_scheduling',
-    #                                  ]
-    #
-    # schools_closure_scenarios_label = ['No School', 'School with NPI, Cohorting, Screening',
-    #                                    'Hybrid School Scheduling with NPI, Cohorting, Screening',
-    #                                    'School with NPI, Cohorting, Screening, 25% Follow-Up Testing, 100% Follow-Up Tracing',
-    #                                    'Hybrid School Scheduling with NPI, Cohorting, Screening, 25% Follow-Up Testing, 100% Follow-Up Tracing']
-    #
-    # test_prob = [0, 0, 0, .25, .25]
-    # trace_prob = [0, 0, 0, 1, 1]
-    # NPI_schools = [None, 0.75, 0.75, 0.75, 0.75]
-    # test_freq = None
-    # network_change = [True, True, True, True, True]
-    # intervention_start_day = [None, {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-    #                           {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-    #                           {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-    #                           {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None}
-    #                           ]
-    # school_start_day = [None, '2020-09-01', '2020-09-01', '2020-09-01', '2020-09-01']
-    #
-    # schedule = [None, None, {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None},
-    #             None, {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None}
-    #             ]
+    n_seeds = 5
 
     schools_closure_scenarios = [
-        'with_screening_notesting',
+        'as_normal',
+        'with_screening',
+        'ES_MS_inperson_HS_remote',
+        'ES_inperson_MS_HS_remote',
         'with_hybrid_scheduling',
-        'with_hybrid_scheduling_testing_tracing',
-        'ES_with_screening_notesting_MS_HS_remote',
-        'as_normal'
+        'all_remote'
     ]
-
     schools_closure_scenarios_label = [
-        'School with NPI, Cohorting, Screening',
-        'Hybrid School Scheduling with NPI, Cohorting, Screening',
-        'Hybrid School Scheduling with NPI, Cohorting, Screening, Testing, Tracing',
-        'ES with NPI, Cohorting, Screening, Testing, Tracing, MS/HS Remote',
-        'As Normal'
+        'As Normal',
+        'With Screening',
+        'ES/MS in Person, HS Remote',
+        'ES in Person, MS/HS Remote',
+        'All Hybrid',
+        'All Remote'
     ]
-
+    num_pos = [
+        # None,
+        # 5,
+        # None,
+        # None,
+        # None,
+        # None,
+        # None
+    ]
     test_prob = [
         0,
         0,
-        .25,
-        .25,
-        0
+        0,
+        0,
+        0,
+        0,
     ]
     trace_prob = [
         0,
         0,
-        .5,
-        .5,
-        0
+        0,
+        0,
+        0,
+        0,
     ]
     NPI = [
+        None,
         0.75,
         0.75,
         0.75,
@@ -259,29 +244,30 @@ if __name__ == '__main__':
         None
     ]
     intervention_start_day = [
+        None,
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-                              {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-                              {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
-                              None
+        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
+        {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
+        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+        None
     ]
     schedule = [
         None,
-                {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None},
-                {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None},
-                {'pk': None, 'es': True, 'ms': None, 'hs': None, 'uv': None},
-                None
+        None,
+        None,
+        None,
+        {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None},
+        None
     ]
-
     day_schools_close = '2020-07-01'
     day_schools_open = [
         '2020-09-01',
         '2020-09-01',
-        '2020-09-01',
+        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
-        '2020-09-01'
+        '2020-09-01',
+        None
     ]
-
     tp = sc.objdict(
         symp_prob=0.12,
         asymp_prob=0.0015,
@@ -293,7 +279,6 @@ if __name__ == '__main__':
         trace_probs=0.25,
         trace_time=3.0,
     )
-
     pars = {'pop_size': 225e3,
             'pop_scale': 10,
             'pop_type': 'synthpops',
@@ -302,9 +287,8 @@ if __name__ == '__main__':
             'rescale_factor': 1.1,
             'verbose': 0.1,
             'start_day': '2020-07-01',
-            'end_day': '2020-10-01'
+            'end_day': '2020-12-01'
             }
-
     msims = []
     es_with_a_case = []
     ms_with_a_case = []
@@ -315,23 +299,32 @@ if __name__ == '__main__':
         for j in range(n_seeds):
             popfile = f'{popfile_stem}{j}.ppl'
             sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=scen)
+            under_10 = [i for i in range(len(sim.people.age)) if sim.people.age[i] <= 10]
+            for ind in under_10:
+                sim.people.rel_trans[ind] = sim.people.rel_trans[ind] / 2
             day_schools_reopen = sim.day('2020-09-01')
             interventions = [
                 cv.test_prob(start_day='2020-07-01', **tp),
                 cv.contact_tracing(start_day='2020-07-01', **ct),
                 cv.clip_edges(days='2020-08-01', changes=0.5, layers='w', label='close_work'),
                 cv.clip_edges(days='2020-08-01', changes=0.5, layers='c', label='close_community'),
-                cv.close_schools(day_schools_closed=day_schools_close, start_day=day_schools_open[i], pop_file=popfile),
-                cv.reopen_schools(start_day=intervention_start_day[i], test=test_prob[i], trace=trace_prob[i],
-                                  ili_prev=0.002, schedule=schedule[i])
+                cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
+                cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
+                cv.close_schools(
+                    day_schools_closed=day_schools_close,
+                    start_day=day_schools_open[i]
+                ),
+                cv.reopen_schools(
+                    start_day=intervention_start_day[i],
+                    test=test_prob[i],
+                    trace=trace_prob[i],
+                    ili_prev=0.002,
+                    schedule=schedule[i],
+                    # num_pos=num_pos[i]
+                )
             ]
-
-
             if NPI[i] is not None:
                 interventions += [cv.change_beta(days='2020-09-01', changes=NPI[i], layers='s', label='reopen_schools')]
-            else:
-                interventions += [cv.change_beta(days='2020-09-01', changes=1, layers='s', label='reopen_schools')]
-
             sim['interventions'] = interventions
             for interv in sim['interventions']:
                 interv.do_plot = False
@@ -380,31 +373,18 @@ if __name__ == '__main__':
 
     es_with_a_case = pd.concat(es_with_a_case, ignore_index=True, axis=1)
     es_with_a_case.columns = schools_closure_scenarios_label
-    filename = f'results/es_with_a_case_{date}.csv'
-    es_with_a_case.to_csv(filename, header=True)
-
     ms_with_a_case = pd.concat(ms_with_a_case, ignore_index=True, axis=1)
     ms_with_a_case.columns = schools_closure_scenarios_label
-    filename = f'results/ms_with_a_case_{date}.csv'
-    ms_with_a_case.to_csv(filename, header=True)
-
     hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
     hs_with_a_case.columns = schools_closure_scenarios_label
-    filename = f'results/hs_with_a_case_{date}.csv'
-    hs_with_a_case.to_csv(filename, header=True)
+    with pd.ExcelWriter(f'results/schools_with_a_case_{date}.xlsx') as writer:
+        es_with_a_case.to_excel(writer, sheet_name='ES')
+        ms_with_a_case.to_excel(writer, sheet_name='MS')
+        hs_with_a_case.to_excel(writer, sheet_name='HS')
 
     school_results = school_dict(msims, day_schools_reopen)
     filename = f'results/school_reopening_analysis_output_{date}.csv'
     school_results.to_csv(filename, header=True)
-
-
-    # if do_save:
-    #     cv.save(filename=f'hypothetical_reopening.msim', obj=msim)
-    # if do_plot:
-    #     fig1 = msim.plot(to_plot=['n_infectious'], do_show=True)
-    #     fig3 = msim.plot(to_plot=['cum_infections'], do_show=True)
-    #     fig4 = msim.plot(to_plot=['r_eff'], do_show=True)
-
 
 
 
