@@ -202,7 +202,7 @@ def plot_prevalence(date, cases):
 
     x = np.arange(len(strategy_labels))
 
-    fig, axs = plt.subplots(len(cases), sharex=True, sharey=False, figsize=(13, 9))
+    fig, axs = plt.subplots(nrows = len(cases), sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=0.9)
     fig.suptitle('Prevalence of COVID-19 in Schools', size=24, horizontalalignment='center')
 
@@ -214,6 +214,59 @@ def plot_prevalence(date, cases):
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels.values(), fontsize=12)
         ax.legend(fontsize=12)
+    fig.savefig(f'prevalence.png', format='png')
+
+
+def plot_prevalence_2(date, cases):
+    colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
+
+    staff_by_case = []
+    students_by_case = []
+    for _, case in enumerate(cases):
+        df = outputs_df(date, case)
+        scenario_strategies = df.columns[1:]
+
+        staff = []
+        students = []
+        for n, strategy in enumerate(scenario_strategies):
+            num_staff = df[df['Unnamed: 0'] == 'num_staff'][strategy].values
+            num_staff += df[df['Unnamed: 0'] == 'num_teachers'][strategy].values
+
+            num_staff_cases = df[df['Unnamed: 0'] == 'num_staff_cases'][strategy].values
+            num_staff_cases += df[df['Unnamed: 0'] == 'num_teacher_cases'][strategy].values
+
+            staff.append(100 * num_staff_cases[0] / num_staff[0])
+
+            num_students = df[df['Unnamed: 0'] == 'num_students'][strategy].values
+            num_student_cases = df[df['Unnamed: 0'] == 'num_student_cases'][strategy].values
+            students.append(100 * num_student_cases[0] / num_students[0])
+
+        staff = pd.DataFrame(staff).transpose()
+        staff_by_case.append(staff)
+        students = pd.DataFrame(students).transpose()
+        students_by_case.append(students)
+
+    x = np.arange(len(strategy_labels))
+
+    fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
+    fig.subplots_adjust(hspace=0.6, right=0.9)
+    fig.suptitle('Prevalence of COVID-19 in Schools', size=24, horizontalalignment='center')
+
+    width = [-.2, 0, .2]
+
+    for i, ax in enumerate(axs):
+        for j, case in enumerate(cases):
+            if i == 0:
+                ax.bar(x + width[j], staff_by_case[j], width=0.2, label=prev_labels[case], color=colors[j])
+                ax.set_title('Teachers and Staff', size=16, horizontalalignment='center')
+            else:
+                ax.bar(x + width[j], students_by_case[j], width=0.2, label=prev_labels[case], color=colors[j])
+                ax.set_title('Students', size=16, horizontalalignment='center')
+        ax.set_ylabel('Prevalence (%)', size=12)
+        ax.set_xticks(x)
+        ax.set_xticklabels(strategy_labels.values(), fontsize=12)
+        ax.legend(fontsize=12, title='COVID-19 Prevalence on 09/01')
+
     fig.savefig(f'prevalence.png', format='png')
 
 
@@ -426,7 +479,6 @@ def plot_reff_with_prev(cases, num_param_set, date):
     ax_height = top - bottom
     ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
     leg = ax_leg.legend(loc=10, fontsize=14)
-    # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
     leg.draw_frame(False)
     ax_leg.axis('off')
 
@@ -443,7 +495,7 @@ if __name__ == '__main__':
     # plot_reff(num_param_set, date)
     # plot_reff_with_prev(cases, num_param_set, date)
     plot_infections(num_param_set, date, cases)
-    plot_prevalence(date, cases)
+    plot_prevalence_2(date, cases)
 
 
     print('done')
