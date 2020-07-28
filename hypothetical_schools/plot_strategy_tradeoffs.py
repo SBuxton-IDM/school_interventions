@@ -20,7 +20,8 @@ strats = [
     'ES/MS in Person, HS Remote',
     'ES in Person, MS/HS Remote',
     'All Hybrid',
-    'All Remote'
+    'All Remote',
+    'With Perfect Testing, Tracing & School Closure on 1 COVID+'
           ]
 
 
@@ -30,25 +31,28 @@ strategies = [
     'ES_MS_inperson_HS_remote',
     'ES_inperson_MS_HS_remote',
     'with_hybrid_scheduling',
-    'all_remote'
+    'all_remote',
+    'with_perf_testing_close_on_1'
 ]
 
 strategy_labels = {
     'as_normal': 'As Normal',
     'with_screening': 'All In-Person \n with Screening, \nNPI, Cohorting',
-    'ES_MS_inperson_HS_remote': 'Elementary In-Person, \nMiddle & High \nRemote',
-    'ES_inperson_MS_HS_remote': 'Elementary & \nMiddle In-Person, \nHigh Remote',
+    'ES_MS_inperson_HS_remote': 'Elementary & \nMiddle In-Person, \nHigh Remote',
+    'ES_inperson_MS_HS_remote': 'Elementary In-Person, \nMiddle & High \nRemote',
     'with_hybrid_scheduling': 'All Hybrid \nScheduling',
-    'all_remote': 'All Remote'
+    'all_remote': 'All Remote',
+    'with_perf_testing_close_on_1': 'With Perfect \nTesting, Tracing & \nSchool Closure on \n1 COVID+'
 }
 
 strategy_labels_2 = {
     'as_normal': 'As Normal',
     'with_screening': 'All In-Person with Screening, \nNPI, Cohorting',
-    'ES_MS_inperson_HS_remote': 'Elementary In-Person, Middle & High \nRemote',
-    'ES_inperson_MS_HS_remote': 'Elementary & Middle In-Person, \nHigh Remote',
+    'ES_MS_inperson_HS_remote': 'Elementary & Middle In-Person, \nHigh Remote',
+    'ES_inperson_MS_HS_remote': 'Elementary In-Person, Middle & High \nRemote',
     'with_hybrid_scheduling': 'All Hybrid Scheduling',
-    'all_remote': 'All Remote'
+    'all_remote': 'All Remote',
+    'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
 
 measure_labels = {
@@ -64,6 +68,11 @@ prev_labels = {
     'prev_0.1': '0.1%',
     'prev_0.2': '0.2%',
     'prev_0.4': '0.4%'
+}
+
+re_labels = {
+    're_0.9': '0.9',
+    're_1.1': '1.1'
 }
 
 
@@ -217,7 +226,7 @@ def plot_prevalence(date, cases):
     fig.savefig(f'prevalence.png', format='png')
 
 
-def plot_prevalence_2(date, cases):
+def plot_attack_rate(date, cases, by_prev):
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
 
     staff_by_case = []
@@ -248,29 +257,38 @@ def plot_prevalence_2(date, cases):
 
     x = np.arange(len(strategy_labels))
 
+    width = [-.2, 0, .2]
+
+    if by_prev:
+        labels = prev_labels
+        name = 'COVID-19 Prevalence on 09/01'
+        prev = 'by_prev'
+    else:
+        labels = re_labels
+        name = 'Reff on 09/01'
+        prev = 'by_re'
+
     fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=0.9)
-    fig.suptitle('Prevalence of COVID-19 in Schools', size=24, horizontalalignment='center')
-
-    width = [-.2, 0, .2]
+    fig.suptitle('COVID-19 Attack Rate in Schools', size=24, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
         for j, case in enumerate(cases):
             if i == 0:
-                ax.bar(x + width[j], staff_by_case[j], width=0.2, label=prev_labels[case], color=colors[j])
+                ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=labels[case], color=colors[j])
                 ax.set_title('Teachers and Staff', size=16, horizontalalignment='center')
             else:
-                ax.bar(x + width[j], students_by_case[j], width=0.2, label=prev_labels[case], color=colors[j])
+                ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=labels[case], color=colors[j])
                 ax.set_title('Students', size=16, horizontalalignment='center')
-        ax.set_ylabel('Prevalence (%)', size=12)
+        ax.set_ylabel('Attack Rate (%)', size=12)
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels.values(), fontsize=12)
-        ax.legend(fontsize=12, title='COVID-19 Prevalence on 09/01')
+        ax.legend(fontsize=12, title=name)
 
-    fig.savefig(f'prevalence.png', format='png')
+    fig.savefig(f'attack_rate_{prev}.png', format='png')
 
 
-def plot_infections(num_param_set, date, cases):
+def plot_infections(num_param_set, date, cases, by_prev):
     df_by_prev = []
     df_by_prev_std = []
     measure = 'new_infections'
@@ -304,9 +322,18 @@ def plot_infections(num_param_set, date, cases):
 
     fig, axs = plt.subplots(len(cases), sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=right)
-    fig.suptitle('New Infections by COVID-Prevalence on 09/01', size=20, horizontalalignment='center')
+    fig.suptitle('New Infections', size=20, horizontalalignment='center')
 
     # colors = sc.gridcolors(len(scenario_strategies))
+
+    if by_prev:
+        labels = prev_labels
+        name = ' COVID-19 Prevalence on 09/01'
+        prev = 'by_prev'
+    else:
+        labels = re_labels
+        name = ' Reff on 09/01'
+        prev = 'by_re'
 
     for i, ax in enumerate(axs):
         for s, strat in enumerate(scenario_strategies):
@@ -324,11 +351,11 @@ def plot_infections(num_param_set, date, cases):
             ax.set_xticklabels(xtick_labels_displayed)
 
         ax.set_xlim(left=date_to_x['Aug 01'], right=date_to_x['Dec 01'])
-        ax.set_title(prev_labels[cases[i]] + ' COVID-19 Prevalence on 09/01', fontsize=14)
+        ax.set_title(labels[cases[i]] + name, fontsize=14)
         ax.tick_params(labelsize=12)
 
 
-    fig.savefig(f'{measure}.png', format='png')
+    fig.savefig(f'{measure}_{prev}.png', format='png')
 
 
 def plot_reff(num_param_set, date):
@@ -402,7 +429,7 @@ def plot_reff(num_param_set, date):
     fig.savefig(f'r_eff.png', format='png')
 
 
-def plot_reff_with_prev(cases, num_param_set, date):
+def plot_reff_with_prev(cases, num_param_set, date, by_prev):
 
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
 
@@ -457,17 +484,28 @@ def plot_reff_with_prev(cases, num_param_set, date):
     bottom = 0.10
     top = 0.85
 
+    if by_prev:
+        name = 'COVID-19 Prevalence on 09/01'
+        prev = 'by_prev'
+        label = prev_labels
+    else:
+        name = 'Effective Reproductive \nNumber on 09/01'
+        prev = 'by_re'
+        label = re_labels
+
     fig, ax = plt.subplots(figsize=(13,9))
     for i, rate in enumerate(cases):
         ax.bar(x + width[i], df_by_prev[i].values, yerr = df_by_prev_std[i].values/2, width=0.2,
-               label=prev_labels[rate], color=colors[i], alpha = 0.87)
+               label=label[rate], color=colors[i], alpha = 0.87)
     # ax.bar(x, df_comb.values, yerr=df_comb_std.values / 2, width=0.4, alpha=0.87)
     ax.axhline(y=1, xmin=0, xmax=1, color='black', ls='--')
 
     ax.set_ylabel('Effective Reproductive Number', size=16)
     ax.set_title(f'Effective Reproductive Number by School Reopening Strategy', size=18, horizontalalignment='center')
     ax.set_ylim(0.7, 1.4)
-    ax.legend(fontsize=12, title='COVID-19 Prevalence on 09/01')
+
+
+    ax.legend(fontsize=12, title=name)
     ax.set_xticks(x)
     ax.set_xticklabels(strategy_labels.values(), fontsize=12)
 
@@ -482,20 +520,24 @@ def plot_reff_with_prev(cases, num_param_set, date):
     leg.draw_frame(False)
     ax_leg.axis('off')
 
-    fig.savefig(f'r_eff.png', format='png')
+    fig.savefig(f'r_eff_{prev}.png', format='png')
 
 
 if __name__ == '__main__':
     num_param_set = 5
 
-    cases = ['prev_0.1', 'prev_0.2', 'prev_0.4']
+    prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
+    re = ['re_0.9', 're_1.1']
+    by_prev = True
+    if by_prev:
+        cases = prevalence
+    else:
+        cases = re
 
     date = '2020-07-27'
 
-    # plot_reff(num_param_set, date)
-    # plot_reff_with_prev(cases, num_param_set, date)
-    plot_infections(num_param_set, date, cases)
-    plot_prevalence_2(date, cases)
-
+    plot_reff_with_prev(cases, num_param_set, date, by_prev)
+    plot_infections(num_param_set, date, cases, by_prev)
+    plot_attack_rate(date, cases, by_prev)
 
     print('done')

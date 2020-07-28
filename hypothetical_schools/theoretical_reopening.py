@@ -193,12 +193,18 @@ if __name__ == '__main__':
     date = '2020-07-27'
 
     n_seeds = 5
-
+    prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
+    re = ['re_0.9', 're_1.1']
     rel_trans = False
-    cases = ['prev_0.1', 'prev_0.2', 'prev_0.4']
-
-    clip_edges = [.5, .55, .55]
-    pop_infected = [100, 200, 400]
+    by_prev = False
+    if by_prev:
+        cases = prevalence
+        clip_edges = [.5, .55, .55]
+        pop_infected = [100, 200, 400]
+    else:
+        cases = re
+        clip_edges = [.55, .63]
+        pop_infected = [200, 200]
 
     schools_closure_scenarios = [
         'as_normal',
@@ -206,7 +212,8 @@ if __name__ == '__main__':
         'ES_MS_inperson_HS_remote',
         'ES_inperson_MS_HS_remote',
         'with_hybrid_scheduling',
-        'all_remote'
+        'all_remote',
+        'with_perf_testing_close_on_1'
     ]
     schools_closure_scenarios_label = [
         'As Normal',
@@ -214,16 +221,17 @@ if __name__ == '__main__':
         'ES/MS in Person, HS Remote',
         'ES in Person, MS/HS Remote',
         'All Hybrid',
-        'All Remote'
+        'All Remote',
+        'With Perfect Testing, Tracing & School Closure on 1 COVID+'
     ]
     num_pos = [
-        # None,
-        # 5,
-        # None,
-        # None,
-        # None,
-        # None,
-        # None
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        1
     ]
     test_prob = [
         0,
@@ -232,6 +240,7 @@ if __name__ == '__main__':
         0,
         0,
         0,
+        1
     ]
     trace_prob = [
         0,
@@ -240,6 +249,7 @@ if __name__ == '__main__':
         0,
         0,
         0,
+        1
     ]
     NPI = [
         None,
@@ -247,7 +257,8 @@ if __name__ == '__main__':
         0.75,
         0.75,
         0.75,
-        None
+        None,
+        0.75
     ]
     intervention_start_day = [
         None,
@@ -255,7 +266,8 @@ if __name__ == '__main__':
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
-        None
+        None,
+        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
     ]
     schedule = [
         None,
@@ -263,6 +275,7 @@ if __name__ == '__main__':
         None,
         None,
         {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None},
+        None,
         None
     ]
     day_schools_close = '2020-07-01'
@@ -272,7 +285,8 @@ if __name__ == '__main__':
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
         '2020-09-01',
-        None
+        None,
+        '2020-09-01',
     ]
     tp = sc.objdict(
         symp_prob=0.12,
@@ -286,7 +300,7 @@ if __name__ == '__main__':
         trace_time=3.0,
     )
 
-    for h, prev in enumerate(cases):
+    for h, case in enumerate(cases):
 
         pars = {'pop_size': 225e3,
                 'pop_scale': 10,
@@ -304,7 +318,7 @@ if __name__ == '__main__':
         ms_with_a_case = []
         hs_with_a_case = []
         for i, scen in enumerate(schools_closure_scenarios):
-            analysis_name = f'{scen}_{prev}'
+            analysis_name = f'{scen}_{case}'
             all_sims = []
             for j in range(n_seeds):
                 popfile = f'{popfile_stem}{j}.ppl'
@@ -331,7 +345,7 @@ if __name__ == '__main__':
                         trace=trace_prob[i],
                         ili_prev=0.002,
                         schedule=schedule[i],
-                        # num_pos=num_pos[i]
+                        num_pos=num_pos[i]
                     )
                 ]
                 if NPI[i] is not None:
@@ -389,13 +403,13 @@ if __name__ == '__main__':
         ms_with_a_case.columns = schools_closure_scenarios_label
         hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
         hs_with_a_case.columns = schools_closure_scenarios_label
-        with pd.ExcelWriter(f'results/schools_with_a_case_{prev}_{date}.xlsx') as writer:
+        with pd.ExcelWriter(f'results/schools_with_a_case_{case}_{date}.xlsx') as writer:
             es_with_a_case.to_excel(writer, sheet_name='ES')
             ms_with_a_case.to_excel(writer, sheet_name='MS')
             hs_with_a_case.to_excel(writer, sheet_name='HS')
 
         school_results = school_dict(msims, day_schools_reopen)
-        filename = f'results/school_reopening_analysis_output_{prev}_{date}.csv'
+        filename = f'results/school_reopening_analysis_output_{case}_{date}.csv'
         school_results.to_csv(filename, header=True)
 
 
