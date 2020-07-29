@@ -312,6 +312,67 @@ def plot_attack_rate(date, cases, by_prev, rel_trans):
     fig.savefig(f'attack_rate_{prev}.png', format='png')
 
 
+def plot_attack_rate_by_rel_trans(date, case):
+    colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
+
+    rel_trans = [True, False]
+
+    name = 'Relative Transmission in <10s'
+    prev = 'rel_trans'
+    label = rel_trans_labels
+
+    staff_by_case = []
+    students_by_case = []
+    for i, val in enumerate(rel_trans):
+        df = outputs_df(date, case, val)
+        scenario_strategies = df.columns[1:]
+        scenario_strategies = scenario_strategies.tolist()
+        scenario_strategies.remove('all_remote')
+
+        staff = []
+        students = []
+        for n, strategy in enumerate(scenario_strategies):
+            num_staff = df[df['Unnamed: 0'] == 'num_staff'][strategy].values
+            num_staff += df[df['Unnamed: 0'] == 'num_teachers'][strategy].values
+
+            num_staff_cases = df[df['Unnamed: 0'] == 'num_staff_cases'][strategy].values
+            num_staff_cases += df[df['Unnamed: 0'] == 'num_teacher_cases'][strategy].values
+
+            staff.append(100 * num_staff_cases[0] / num_staff[0])
+
+            num_students = df[df['Unnamed: 0'] == 'num_students'][strategy].values
+            num_student_cases = df[df['Unnamed: 0'] == 'num_student_cases'][strategy].values
+            students.append(100 * num_student_cases[0] / num_students[0])
+
+        staff = pd.DataFrame(staff).transpose()
+        staff_by_case.append(staff)
+        students = pd.DataFrame(students).transpose()
+        students_by_case.append(students)
+
+    x = np.arange(len(scenario_strategies))
+
+    width = [-.2, 0, .2]
+
+    fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
+    fig.subplots_adjust(hspace=0.6, right=0.9)
+    fig.suptitle(f'COVID-19 Attack Rate in Schools (Community Re = {re_labels[cases]}', size=20, horizontalalignment='center')
+
+    for i, ax in enumerate(axs):
+        for j, val in enumerate(rel_trans):
+            if i == 0:
+                ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=re_labels[cases], color=colors[j])
+                ax.set_title('Teachers and Staff', size=16, horizontalalignment='center')
+            else:
+                ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=re_labels[cases], color=colors[j])
+                ax.set_title('Students', size=16, horizontalalignment='center')
+        ax.set_ylabel('Attack Rate (%)', size=14)
+        ax.set_xticks(x)
+        ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
+        ax.legend(fontsize=14, title=name)
+
+    fig.savefig(f'attack_rate_{prev}_{cases}.png', format='png')
+
+
 def plot_infections(num_param_set, date, cases, by_prev, rel_trans):
     df_by_prev = []
     df_by_prev_std = []
@@ -717,23 +778,25 @@ def plot_dimensions(date, cases, by_prev, rel_trans):
 
 
 if __name__ == '__main__':
-    num_param_set = 5
+    num_seeds = 20
 
     prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
     re = ['re_0.9', 're_1.1']
-    rel_trans = False
+    rel_trans = True
     date = '2020-07-29'
     by_prev = True
     if by_prev:
         cases = prevalence
     else:
         cases = re
-        re = get_re(cases, num_param_set, date, rel_trans)
+        re = get_re(cases, num_seeds, date, rel_trans)
         for i, case in enumerate(cases):
             re_labels[case] = round(re[i], 1)
 
-    plot_reff_by_rel_trans('re_1.1', num_param_set, date)
-    plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans)
+    for val in re:
+        plot_reff_by_rel_trans(val, num_seeds, date)
+        plot_attack_rate_by_rel_trans(date, val)
+    plot_reff_with_prev(cases, num_seeds, date, by_prev, rel_trans)
     plot_attack_rate(date, cases, by_prev, rel_trans)
     plot_dimensions(date, cases, by_prev, rel_trans)
     # plot_infections(num_param_set, date, cases, by_prev, rel_trans)
