@@ -634,8 +634,8 @@ if __name__ == '__main__':
         for i, case in enumerate(cases):
             re_labels[case] = round(re[i], 1)
 
-    plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans)
-    plot_attack_rate(date, cases, by_prev, rel_trans)
+    # plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans)
+    # plot_attack_rate(date, cases, by_prev, rel_trans)
     plot_dimensions(date, cases, by_prev, rel_trans)
     plot_infections(num_param_set, date, cases, by_prev, rel_trans)
 
