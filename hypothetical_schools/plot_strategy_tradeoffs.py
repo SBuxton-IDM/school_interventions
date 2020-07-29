@@ -563,7 +563,7 @@ def plot_dimensions(date, cases, by_prev, rel_trans):
     alpha = 0.67
 
     for j, rate in enumerate(cases):
-        ax.plot(perc_school_days_lost_by_case[j], attack_rate_by_case[j], linewidth=3, alpha=0.33, color='grey', linestyle='dashed')
+        ax.plot(perc_school_days_lost_by_case[j].iloc[0, :].values, attack_rate_by_case[j].iloc[0, :].values, linewidth=3, alpha=0.33, color='grey', linestyle='-')
         for i in range(n_strategies):
             ax.plot(perc_school_days_lost_by_case[j][i], attack_rate_by_case[j][i], marker='o', markersize=sizes[j], alpha=alpha,
                     markerfacecolor=colors[i],
@@ -634,8 +634,8 @@ if __name__ == '__main__':
         for i, case in enumerate(cases):
             re_labels[case] = round(re[i], 1)
 
-    plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans)
-    plot_attack_rate(date, cases, by_prev, rel_trans)
+    # plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans)
+    # plot_attack_rate(date, cases, by_prev, rel_trans)
     plot_dimensions(date, cases, by_prev, rel_trans)
 
     print('done')
