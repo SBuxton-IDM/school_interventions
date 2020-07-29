@@ -190,9 +190,9 @@ def school_dict(msims, day_schools_reopen):
 if __name__ == '__main__':
 
     popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
-    date = '2020-07-28'
+    date = '2020-07-29'
 
-    n_seeds = 1
+    n_seeds = 5
     prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
     re = ['re_0.9', 're_1.1']
     rel_trans = False
@@ -214,33 +214,33 @@ if __name__ == '__main__':
     schools_reopening_scenarios = [
         'as_normal',
         'with_screening',
+        'with_hybrid_scheduling',
         'ES_MS_inperson_HS_remote',
         'ES_inperson_MS_HS_remote',
-        'with_hybrid_scheduling',
         'all_remote',
     ]
     schools_reopening_scenarios_label = [
         'As Normal',
         'With Screening',
+        'All Hybrid',
         'ES/MS in Person, HS Remote',
         'ES in Person, MS/HS Remote',
-        'All Hybrid',
         'All Remote',
     ]
     test_prob = [
         0,
-        0,
-        0,
-        0,
-        0,
+        .5,
+        .5,
+        .5,
+        .5,
         0,
     ]
     trace_prob = [
         0,
-        0,
-        0,
-        0,
-        0,
+        .5,
+        .5,
+        .5,
+        .5,
         0,
     ]
     NPI = [
@@ -254,26 +254,26 @@ if __name__ == '__main__':
     intervention_start_day = [
         None,
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
-        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         None,
     ]
     schedule = [
         None,
         None,
-        None,
-        None,
         {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None},
+        None,
+        None,
         None,
     ]
     day_schools_close = '2020-07-01'
     day_schools_open = [
         {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+        {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
         {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
-        {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         None,
     ]
     tp = sc.objdict(
@@ -290,11 +290,11 @@ if __name__ == '__main__':
 
     for h, case in enumerate(cases):
         pars = {'pop_size': 225e3,
-                'pop_scale': 10,
+                'pop_scale': 20,
                 'pop_type': 'synthpops',
                 'pop_infected': pop_infected[h],
                 'rescale': True,
-                'rescale_factor': 1.1,
+                'rescale_factor': 1.2,
                 'verbose': 0.1,
                 'start_day': '2020-07-01',
                 'end_day': '2020-12-01'

@@ -17,9 +17,9 @@ import palettable
 strats = [
     'As Normal',
     'With Screening',
+    'All Hybrid',
     'ES/MS in Person, HS Remote',
     'ES in Person, MS/HS Remote',
-    'All Hybrid',
     'All Remote',
     # 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
           ]
@@ -33,9 +33,9 @@ closure_strats = [
 strategies = [
     'as_normal',
     'with_screening',
+    'with_hybrid_scheduling',
     'ES_MS_inperson_HS_remote',
     'ES_inperson_MS_HS_remote',
-    'with_hybrid_scheduling',
     'all_remote',
     # 'with_perf_testing_close_on_1'
 ]
@@ -48,9 +48,9 @@ closure_strategies = [
 strategy_labels = {
     'as_normal': 'As Normal',
     'with_screening': 'All In Person \n with Screening, \nNPI, Cohorting',
+    'with_hybrid_scheduling': 'All Hybrid \nScheduling',
     'ES_MS_inperson_HS_remote': 'Elementary & \nMiddle In Person, \nHigh Remote',
     'ES_inperson_MS_HS_remote': 'Elementary In \nPerson, Middle \n& High Remote',
-    'with_hybrid_scheduling': 'All Hybrid \nScheduling',
     'all_remote': 'All Remote',
 # 'with_perf_testing_close_on_1': 'With Perfect \nTesting, Tracing & \nSchool Closure on \n1 COVID+'
 }
@@ -61,11 +61,11 @@ closure_strategy_labels = {
 
 strategy_labels_2 = {
     'as_normal': 'As Normal',
-    'with_screening': 'All In-Person with Screening, \nNPI, Cohorting',
-    'ES_MS_inperson_HS_remote': 'Elementary & Middle In-Person, \nHigh Remote',
-    'ES_inperson_MS_HS_remote': 'Elementary In-Person, Middle & High \nRemote',
-    'with_hybrid_scheduling': 'All Hybrid Scheduling',
-    'all_remote': 'All Remote',
+    'with_screening': 'All In Person \n with Screening, \nNPI, Cohorting',
+    'with_hybrid_scheduling': 'All Hybrid \nScheduling',
+    'ES_MS_inperson_HS_remote': 'Elementary & \nMiddle In Person, \nHigh Remote',
+    'ES_inperson_MS_HS_remote': 'Elementary In \nPerson, Middle \n& High Remote',
+    # 'all_remote': 'All Remote',
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
 
@@ -87,6 +87,11 @@ prev_labels = {
 re_labels = {
     're_0.9': '0.9',
     're_1.1': '1.1'
+}
+
+rel_trans_labels = {
+    True: '50%',
+    False: '100%'
 }
 
 
@@ -260,6 +265,8 @@ def plot_attack_rate(date, cases, by_prev, rel_trans):
     for _, case in enumerate(cases):
         df = outputs_df(date, case, rel_trans)
         scenario_strategies = df.columns[1:]
+        scenario_strategies = scenario_strategies.tolist()
+        scenario_strategies.remove('all_remote')
 
         staff = []
         students = []
@@ -281,7 +288,7 @@ def plot_attack_rate(date, cases, by_prev, rel_trans):
         students = pd.DataFrame(students).transpose()
         students_by_case.append(students)
 
-    x = np.arange(len(strategy_labels))
+    x = np.arange(len(scenario_strategies))
 
     width = [-.2, 0, .2]
 
@@ -299,7 +306,7 @@ def plot_attack_rate(date, cases, by_prev, rel_trans):
                 ax.set_title('Students', size=16, horizontalalignment='center')
         ax.set_ylabel('Attack Rate (%)', size=14)
         ax.set_xticks(x)
-        ax.set_xticklabels(strategy_labels.values(), fontsize=12)
+        ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
         ax.legend(fontsize=14, title=name)
 
     fig.savefig(f'attack_rate_{prev}.png', format='png')
@@ -480,6 +487,95 @@ def plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans):
     fig.savefig(f'r_eff_{prev}.png', format='png')
 
 
+def plot_reff_by_rel_trans(cases, num_param_set, date):
+
+    colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
+
+    df_by_prev = []
+    df_by_prev_std = []
+
+    rel_trans = [True, False]
+
+    for i in rel_trans:
+        df_mean = []
+        df_std = []
+        for strat in strategies:
+            df_mean.append(combine_results_dfs(strat, num_param_set, 'r_eff', True, date, cases, i))
+            df_std.append(combine_results_dfs(strat, num_param_set, 'r_eff', False, date, cases, i))
+            # df_mean.append(combine_results_dfs(rate, main_strategy, strat, num_param_set, 'new_infections', True))
+
+        # averted_deaths.append(sum(df_mean[1][218:309]) - sum(df_mean[7][218:309]))
+        scenario_strategies = strats
+
+        df_comb = pd.DataFrame(df_mean).transpose()
+        df_comb.columns = scenario_strategies
+
+        df_comb_std = pd.DataFrame(df_std).transpose()
+        df_comb_std.columns = scenario_strategies
+
+        df_by_prev.append(df_comb)
+        df_by_prev_std.append(df_comb_std)
+
+    base = dt.datetime(2020, 7, 1)
+    date_list = [base + dt.timedelta(days=x) for x in range(len(df_comb))]
+    x = []
+    for date in date_list:
+        x.append(date.strftime('%b %d'))
+
+    date_to_x = {d: i for i, d in enumerate(x)}
+
+    min_x = date_to_x['Aug 30']
+    max_x = date_to_x['Dec 01']
+
+    for i in range(len(rel_trans)):
+        df_by_prev[i] = df_by_prev[i].iloc[min_x:max_x,]
+        df_by_prev[i] = df_by_prev[i].mean(axis=0)
+        df_by_prev_std[i] = df_by_prev_std[i].iloc[min_x:max_x, ]
+        df_by_prev_std[i] = df_by_prev_std[i].mean(axis=0)
+
+    x = np.arange(len(strategy_labels))
+
+    width = [-.2, 0, .2]
+
+    left = 0.07
+    right = 0.9
+    # right = 0.63
+    bottom = 0.10
+    top = 0.85
+
+    name = 'Relative Transmission in <10s'
+    prev = 'rel_trans'
+    label = rel_trans_labels
+
+    fig, ax = plt.subplots(figsize=(13,9))
+    for i, val in enumerate(rel_trans):
+        ax.bar(x + width[i], df_by_prev[i].values, yerr = df_by_prev_std[i].values/2, width=0.2,
+               label=label[val], color=colors[i], alpha = 0.87)
+    # ax.bar(x, df_comb.values, yerr=df_comb_std.values / 2, width=0.4, alpha=0.87)
+    ax.axhline(y=1, xmin=0, xmax=1, color='black', ls='--')
+
+    ax.set_ylabel('Effective Reproductive Number', size=16)
+    ax.set_title(f'Effective Reproductive Number by School Reopening Strategy (Community Re = {re_labels[cases]})', size=16, horizontalalignment='center')
+    ax.set_ylim(0.7, 1.4)
+
+    ax.legend(fontsize=12, title=name)
+    ax.set_xticks(x)
+    ax.set_xticklabels(strategy_labels.values(), fontsize=12)
+
+    # Strategies Legend
+    ax_left = right + 0.04
+    ax_bottom = bottom + 0.02
+    ax_right = 0.95
+    ax_width = ax_right - ax_left
+    ax_height = top - bottom
+    ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+    leg = ax_leg.legend(loc=10, fontsize=14)
+    leg.draw_frame(False)
+    ax_leg.axis('off')
+
+    fig.savefig(f'r_eff_{prev}_{cases}.png', format='png')
+
+
 def get_re(cases, num_param_set, date, rel_trans):
     df_mean = []
     for case in cases:
@@ -524,6 +620,8 @@ def plot_dimensions(date, cases, by_prev, rel_trans):
     for _, case in enumerate(cases):
         df = outputs_df(date, case, rel_trans)
         scenario_strategies = df.columns[1:]
+        scenario_strategies = scenario_strategies.tolist()
+        scenario_strategies.remove('all_remote')
         perc_school_days_lost = []
         attack_rate = []
         for n, strategy in enumerate(scenario_strategies):
@@ -584,7 +682,7 @@ def plot_dimensions(date, cases, by_prev, rel_trans):
     ax_height = (top - bottom) / 2.
     ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
     for s, strat in enumerate(scenario_strategies):
-        ax_leg.plot(-5, -5, color=colors[s], label=strategy_labels[strat])
+        ax_leg.plot(-5, -5, color=colors[s], label=strategy_labels_2[strat])
 
     leg = ax_leg.legend(loc=10, fontsize=14)
     # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
@@ -624,7 +722,7 @@ if __name__ == '__main__':
     prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
     re = ['re_0.9', 're_1.1']
     rel_trans = False
-    date = '2020-07-28'
+    date = '2020-07-29'
     by_prev = True
     if by_prev:
         cases = prevalence
@@ -634,9 +732,10 @@ if __name__ == '__main__':
         for i, case in enumerate(cases):
             re_labels[case] = round(re[i], 1)
 
-    # plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans)
-    # plot_attack_rate(date, cases, by_prev, rel_trans)
+    plot_reff_by_rel_trans('re_1.1', num_param_set, date)
+    plot_reff_with_prev(cases, num_param_set, date, by_prev, rel_trans)
+    plot_attack_rate(date, cases, by_prev, rel_trans)
     plot_dimensions(date, cases, by_prev, rel_trans)
-    plot_infections(num_param_set, date, cases, by_prev, rel_trans)
+    # plot_infections(num_param_set, date, cases, by_prev, rel_trans)
 
     print('done')
