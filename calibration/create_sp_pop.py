@@ -12,7 +12,7 @@ def cache_populations(seed=0, popfile=None):
     ''' Pre-generate the synthpops population '''
 
     pars = sc.objdict(
-        pop_size = 225e3,
+        pop_size = 1e6,
         pop_type = 'synthpops',
         rand_seed = seed,
     )
@@ -37,7 +37,7 @@ def cache_populations(seed=0, popfile=None):
     staff_age_min = 20
     staff_age_max = 75
 
-    cohorting = False
+    cohorting = True
     if cohorting:
         strategy = 'clustered'
         school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'random', 'uv': 'random'}
@@ -47,7 +47,7 @@ def cache_populations(seed=0, popfile=None):
                               'hs': 'random', 'uv': 'random'}
 
     if popfile is None:
-        popfile = f'inputs/kc_synthpops_{strategy}_withstaff_seed{pars.rand_seed}.ppl'
+        popfile = f'inputs/kc_synthpops_{strategy}_withstaff_1m_seed{pars.rand_seed}.ppl'
 
     T = sc.tic()
     print(f'Making "{popfile}"...')
