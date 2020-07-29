@@ -12,7 +12,7 @@ def cache_populations(seed=0, popfile=None):
     ''' Pre-generate the synthpops population '''
 
     pars = sc.objdict(
-        pop_size = 1e6,
+        pop_size = 2.25e6,
         pop_type = 'synthpops',
         rand_seed = seed,
     )
@@ -84,6 +84,16 @@ def cache_populations(seed=0, popfile=None):
 if __name__ == '__main__':
 
     seeds = [0,1,2,3,4]
+    parallelize = True
 
-    for seed in seeds:
-        cache_populations(seed)
+    if parallelize:
+        ram = psutil.virtual_memory().available/1e9
+        required = 80*len(seeds) # 8 GB per 225e3 people
+        if required < ram:
+            print(f'You have {ram} GB of RAM, and this is estimated to require {required} GB: you should be fine')
+        else:
+            print(f'You have {ram:0.2f} GB of RAM, but this is estimated to require {required} GB -- you are in trouble!!!!!!!!!')
+        sc.parallelize(cache_populations, iterarg=seeds) # Run them in parallel
+    else:
+        for seed in seeds:
+            cache_populations(seed)

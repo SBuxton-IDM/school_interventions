@@ -189,7 +189,7 @@ def school_dict(msims, day_schools_reopen):
 
 if __name__ == '__main__':
 
-    popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
+    popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_1m_seed'
     date = '2020-07-29'
 
     n_seeds = 5
@@ -289,8 +289,8 @@ if __name__ == '__main__':
     )
 
     for h, case in enumerate(cases):
-        pars = {'pop_size': 225e3,
-                'pop_scale': 20,
+        pars = {'pop_size': 2.25e6,
+                'pop_scale': 1,
                 'pop_type': 'synthpops',
                 'pop_infected': pop_infected[h],
                 'rescale': True,
