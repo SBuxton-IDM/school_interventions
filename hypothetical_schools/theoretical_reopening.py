@@ -8,166 +8,166 @@ import pandas as pd
 def school_dict(msims, day_schools_reopen):
     school_results = dict()
     for i, sim in enumerate(msims):
-        school_results[schools_closure_scenarios[i]] = dict()
+        school_results[schools_reopening_scenarios[i]] = dict()
         if len(sim.sims) > 1:  # if running multiple param sets, print all of them
-            school_results[schools_closure_scenarios[i]]['school_closures'] = []
-            school_results[schools_closure_scenarios[i]]['cum_infections'] = []
-            school_results[schools_closure_scenarios[i]]['num_tested'] = []
-            school_results[schools_closure_scenarios[i]]['num_traced'] = []
-            school_results[schools_closure_scenarios[i]]['test_pos'] = []
-            school_results[schools_closure_scenarios[i]]['school_days_lost'] = []
-            school_results[schools_closure_scenarios[i]]['student_school_days'] = []
-            school_results[schools_closure_scenarios[i]]['perc_school_days_lost'] = []
-            school_results[schools_closure_scenarios[i]]['num_teachers'] = []
-            school_results[schools_closure_scenarios[i]]['num_teachers_tested'] = []
-            school_results[schools_closure_scenarios[i]]['num_teachers_test_pos'] = []
-            school_results[schools_closure_scenarios[i]]['num_teachers_screen_pos'] = []
-            school_results[schools_closure_scenarios[i]]['num_teacher_cases'] = []
+            school_results[schools_reopening_scenarios[i]]['school_closures'] = []
+            school_results[schools_reopening_scenarios[i]]['cum_infections'] = []
+            school_results[schools_reopening_scenarios[i]]['num_tested'] = []
+            school_results[schools_reopening_scenarios[i]]['num_traced'] = []
+            school_results[schools_reopening_scenarios[i]]['test_pos'] = []
+            school_results[schools_reopening_scenarios[i]]['school_days_lost'] = []
+            school_results[schools_reopening_scenarios[i]]['student_school_days'] = []
+            school_results[schools_reopening_scenarios[i]]['perc_school_days_lost'] = []
+            school_results[schools_reopening_scenarios[i]]['num_teachers'] = []
+            school_results[schools_reopening_scenarios[i]]['num_teachers_tested'] = []
+            school_results[schools_reopening_scenarios[i]]['num_teachers_test_pos'] = []
+            school_results[schools_reopening_scenarios[i]]['num_teachers_screen_pos'] = []
+            school_results[schools_reopening_scenarios[i]]['num_teacher_cases'] = []
 
-            school_results[schools_closure_scenarios[i]]['num_staff'] = []
-            school_results[schools_closure_scenarios[i]]['num_staff_tested'] = []
-            school_results[schools_closure_scenarios[i]]['num_staff_test_pos'] = []
-            school_results[schools_closure_scenarios[i]]['num_staff_screen_pos'] = []
-            school_results[schools_closure_scenarios[i]]['num_staff_cases'] = []
+            school_results[schools_reopening_scenarios[i]]['num_staff'] = []
+            school_results[schools_reopening_scenarios[i]]['num_staff_tested'] = []
+            school_results[schools_reopening_scenarios[i]]['num_staff_test_pos'] = []
+            school_results[schools_reopening_scenarios[i]]['num_staff_screen_pos'] = []
+            school_results[schools_reopening_scenarios[i]]['num_staff_cases'] = []
 
-            school_results[schools_closure_scenarios[i]]['num_students'] = []
-            school_results[schools_closure_scenarios[i]]['num_students_tested'] = []
-            school_results[schools_closure_scenarios[i]]['num_students_test_pos'] = []
-            school_results[schools_closure_scenarios[i]]['num_students_screen_pos'] = []
-            school_results[schools_closure_scenarios[i]]['num_student_cases'] = []
+            school_results[schools_reopening_scenarios[i]]['num_students'] = []
+            school_results[schools_reopening_scenarios[i]]['num_students_tested'] = []
+            school_results[schools_reopening_scenarios[i]]['num_students_test_pos'] = []
+            school_results[schools_reopening_scenarios[i]]['num_students_screen_pos'] = []
+            school_results[schools_reopening_scenarios[i]]['num_student_cases'] = []
 
-            school_results[schools_closure_scenarios[i]]['cum_infectious_staff'] = []
-            school_results[schools_closure_scenarios[i]]['cum_infectious_students'] = []
-            school_results[schools_closure_scenarios[i]]['cum_asymp_staff'] = []
-            school_results[schools_closure_scenarios[i]]['cum_asymp_students'] = []
+            school_results[schools_reopening_scenarios[i]]['cum_infectious_staff'] = []
+            school_results[schools_reopening_scenarios[i]]['cum_infectious_students'] = []
+            school_results[schools_reopening_scenarios[i]]['cum_asymp_staff'] = []
+            school_results[schools_reopening_scenarios[i]]['cum_asymp_students'] = []
 
-            school_results[schools_closure_scenarios[i]]['num_es'] = []
-            school_results[schools_closure_scenarios[i]]['num_ms'] = []
-            school_results[schools_closure_scenarios[i]]['num_hs'] = []
+            school_results[schools_reopening_scenarios[i]]['num_es'] = []
+            school_results[schools_reopening_scenarios[i]]['num_ms'] = []
+            school_results[schools_reopening_scenarios[i]]['num_hs'] = []
             for j, sub_sim in enumerate(sim.sims):
-                school_results[schools_closure_scenarios[i]]['num_students'].append(
+                school_results[schools_reopening_scenarios[i]]['num_students'].append(
                     sub_sim.school_info['num_students'])
-                school_results[schools_closure_scenarios[i]]['school_closures'].append(
+                school_results[schools_reopening_scenarios[i]]['school_closures'].append(
                     sub_sim.school_info['school_closures'])
-                school_results[schools_closure_scenarios[i]]['school_days_lost'].append(
+                school_results[schools_reopening_scenarios[i]]['school_days_lost'].append(
                     sub_sim.school_info['school_days_lost'])
-                school_results[schools_closure_scenarios[i]]['student_school_days'].append(
+                school_results[schools_reopening_scenarios[i]]['student_school_days'].append(
                     sub_sim.school_info['total_student_school_days'])
-                school_results[schools_closure_scenarios[i]]['perc_school_days_lost'].append(
+                school_results[schools_reopening_scenarios[i]]['perc_school_days_lost'].append(
                     sub_sim.school_info['school_days_lost'] / sub_sim.school_info['total_student_school_days'])
-                school_results[schools_closure_scenarios[i]]['cum_infections'].append(
+                school_results[schools_reopening_scenarios[i]]['cum_infections'].append(
                     sub_sim.summary['cum_infections'] - sub_sim.results['cum_infections'].values[day_schools_reopen])
-                school_results[schools_closure_scenarios[i]]['num_tested'].append(
+                school_results[schools_reopening_scenarios[i]]['num_tested'].append(
                     sub_sim.school_info['num_tested'])
-                school_results[schools_closure_scenarios[i]]['num_traced'].append(
+                school_results[schools_reopening_scenarios[i]]['num_traced'].append(
                     sub_sim.school_info['num_traced'])
-                school_results[schools_closure_scenarios[i]]['test_pos'].append(
+                school_results[schools_reopening_scenarios[i]]['test_pos'].append(
                     sub_sim.school_info['test_pos'])
-                school_results[schools_closure_scenarios[i]]['num_es'].append(sub_sim.school_info['num_es'])
-                school_results[schools_closure_scenarios[i]]['num_ms'].append(sub_sim.school_info['num_ms'])
-                school_results[schools_closure_scenarios[i]]['num_hs'].append(sub_sim.school_info['num_hs'])
-                school_results[schools_closure_scenarios[i]]['num_teachers_tested'].append(
+                school_results[schools_reopening_scenarios[i]]['num_es'].append(sub_sim.school_info['num_es'])
+                school_results[schools_reopening_scenarios[i]]['num_ms'].append(sub_sim.school_info['num_ms'])
+                school_results[schools_reopening_scenarios[i]]['num_hs'].append(sub_sim.school_info['num_hs'])
+                school_results[schools_reopening_scenarios[i]]['num_teachers_tested'].append(
                     sub_sim.school_info['num_teachers_tested'])
-                school_results[schools_closure_scenarios[i]]['num_teachers_test_pos'].append(
+                school_results[schools_reopening_scenarios[i]]['num_teachers_test_pos'].append(
                     sub_sim.school_info['num_teachers_test_pos'])
-                school_results[schools_closure_scenarios[i]]['num_teachers_screen_pos'].append(
+                school_results[schools_reopening_scenarios[i]]['num_teachers_screen_pos'].append(
                     sub_sim.school_info['num_teachers_screen_pos'])
-                school_results[schools_closure_scenarios[i]]['num_teacher_cases'].append(
+                school_results[schools_reopening_scenarios[i]]['num_teacher_cases'].append(
                     sub_sim.school_info['num_teacher_cases'])
-                school_results[schools_closure_scenarios[i]]['num_teachers'].append(sub_sim.school_info['num_teachers'])
+                school_results[schools_reopening_scenarios[i]]['num_teachers'].append(sub_sim.school_info['num_teachers'])
 
-                school_results[schools_closure_scenarios[i]]['num_staff_tested'].append(
+                school_results[schools_reopening_scenarios[i]]['num_staff_tested'].append(
                     sub_sim.school_info['num_staff_tested'])
-                school_results[schools_closure_scenarios[i]]['num_staff_test_pos'].append(
+                school_results[schools_reopening_scenarios[i]]['num_staff_test_pos'].append(
                     sub_sim.school_info['num_staff_test_pos'])
-                school_results[schools_closure_scenarios[i]]['num_staff_screen_pos'].append(
+                school_results[schools_reopening_scenarios[i]]['num_staff_screen_pos'].append(
                     sub_sim.school_info['num_staff_screen_pos'])
-                school_results[schools_closure_scenarios[i]]['num_staff_cases'].append(
+                school_results[schools_reopening_scenarios[i]]['num_staff_cases'].append(
                     sub_sim.school_info['num_staff_cases'])
-                school_results[schools_closure_scenarios[i]]['num_staff'].append(sub_sim.school_info['num_staff'])
+                school_results[schools_reopening_scenarios[i]]['num_staff'].append(sub_sim.school_info['num_staff'])
 
-                school_results[schools_closure_scenarios[i]]['num_students_tested'].append(
+                school_results[schools_reopening_scenarios[i]]['num_students_tested'].append(
                     sub_sim.school_info['num_students_tested'])
-                school_results[schools_closure_scenarios[i]]['num_students_test_pos'].append(
+                school_results[schools_reopening_scenarios[i]]['num_students_test_pos'].append(
                     sub_sim.school_info['num_students_test_pos'])
-                school_results[schools_closure_scenarios[i]]['num_students_screen_pos'].append(
+                school_results[schools_reopening_scenarios[i]]['num_students_screen_pos'].append(
                     sub_sim.school_info['num_students_screen_pos'])
-                school_results[schools_closure_scenarios[i]]['num_student_cases'].append(
+                school_results[schools_reopening_scenarios[i]]['num_student_cases'].append(
                     sub_sim.school_info['num_student_cases'])
-                school_results[schools_closure_scenarios[i]]['num_students'].append(sub_sim.school_info['num_students'])
+                school_results[schools_reopening_scenarios[i]]['num_students'].append(sub_sim.school_info['num_students'])
 
-                school_results[schools_closure_scenarios[i]]['cum_infectious_staff'].append(
+                school_results[schools_reopening_scenarios[i]]['cum_infectious_staff'].append(
                     sum(sub_sim.school_info['num_staff_infectious']))
-                school_results[schools_closure_scenarios[i]]['cum_infectious_students'].append(
+                school_results[schools_reopening_scenarios[i]]['cum_infectious_students'].append(
                     sum(sub_sim.school_info['num_students_infectious']))
-                school_results[schools_closure_scenarios[i]]['cum_asymp_staff'].append(
+                school_results[schools_reopening_scenarios[i]]['cum_asymp_staff'].append(
                     sum(sub_sim.school_info['num_staff_asymptomatic']))
-                school_results[schools_closure_scenarios[i]]['cum_asymp_students'].append(
+                school_results[schools_reopening_scenarios[i]]['cum_asymp_students'].append(
                     sum(sub_sim.school_info['num_students_asymptomatic']))
 
         else:
             for sub_sim in sim.sims:
-                school_results[schools_closure_scenarios[i]]['num_teachers_tested'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_teachers_tested'] = sub_sim.school_info[
                     'num_teachers_tested']
-                school_results[schools_closure_scenarios[i]]['num_teachers_test_pos'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_teachers_test_pos'] = sub_sim.school_info[
                     'num_teachers_test_pos']
-                school_results[schools_closure_scenarios[i]]['num_teachers_screen_pos'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_teachers_screen_pos'] = sub_sim.school_info[
                     'num_teachers_screen_pos']
-                school_results[schools_closure_scenarios[i]]['num_teacher_cases'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_teacher_cases'] = sub_sim.school_info[
                     'num_teacher_cases']
-                school_results[schools_closure_scenarios[i]]['num_teachers'] = sub_sim.school_info['num_teachers']
+                school_results[schools_reopening_scenarios[i]]['num_teachers'] = sub_sim.school_info['num_teachers']
 
-                school_results[schools_closure_scenarios[i]]['num_staff_tested'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_staff_tested'] = sub_sim.school_info[
                     'num_staff_tested']
-                school_results[schools_closure_scenarios[i]]['num_staff_test_pos'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_staff_test_pos'] = sub_sim.school_info[
                     'num_staff_test_pos']
-                school_results[schools_closure_scenarios[i]]['num_staff_screen_pos'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_staff_screen_pos'] = sub_sim.school_info[
                     'num_staff_screen_pos']
-                school_results[schools_closure_scenarios[i]]['num_staff_cases'] = sub_sim.school_info['num_staff_cases']
-                school_results[schools_closure_scenarios[i]]['num_staff'] = sub_sim.school_info['num_staff']
+                school_results[schools_reopening_scenarios[i]]['num_staff_cases'] = sub_sim.school_info['num_staff_cases']
+                school_results[schools_reopening_scenarios[i]]['num_staff'] = sub_sim.school_info['num_staff']
 
-                school_results[schools_closure_scenarios[i]]['num_students_tested'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_students_tested'] = sub_sim.school_info[
                     'num_students_tested']
-                school_results[schools_closure_scenarios[i]]['num_students_test_pos'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_students_test_pos'] = sub_sim.school_info[
                     'num_students_test_pos']
-                school_results[schools_closure_scenarios[i]]['num_students_screen_pos'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_students_screen_pos'] = sub_sim.school_info[
                     'num_students_screen_pos']
-                school_results[schools_closure_scenarios[i]]['num_student_cases'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_student_cases'] = sub_sim.school_info[
                     'num_student_cases']
-                school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info['num_students']
+                school_results[schools_reopening_scenarios[i]]['num_students'] = sub_sim.school_info['num_students']
 
-                school_results[schools_closure_scenarios[i]]['cum_infectious_staff'] = sum(
+                school_results[schools_reopening_scenarios[i]]['cum_infectious_staff'] = sum(
                     sub_sim.school_info['num_staff_infectious'])
-                school_results[schools_closure_scenarios[i]]['cum_infectious_students'] = sum(
+                school_results[schools_reopening_scenarios[i]]['cum_infectious_students'] = sum(
                     sub_sim.school_info['num_students_infectious'])
-                school_results[schools_closure_scenarios[i]]['cum_asymp_staff'] = sum(
+                school_results[schools_reopening_scenarios[i]]['cum_asymp_staff'] = sum(
                     sub_sim.school_info['num_staff_asymptomatic'])
-                school_results[schools_closure_scenarios[i]]['cum_asymp_students'] = sum(
+                school_results[schools_reopening_scenarios[i]]['cum_asymp_students'] = sum(
                     sub_sim.school_info['num_students_asymptomatic'])
 
-                school_results[schools_closure_scenarios[i]]['num_students'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['num_students'] = sub_sim.school_info[
                     'num_students']
-                school_results[schools_closure_scenarios[i]]['school_closures'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['school_closures'] = sub_sim.school_info[
                     'school_closures']
-                school_results[schools_closure_scenarios[i]]['school_days_lost'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['school_days_lost'] = sub_sim.school_info[
                     'school_days_lost']
-                school_results[schools_closure_scenarios[i]]['student_school_days'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['student_school_days'] = sub_sim.school_info[
                     'total_student_school_days']
-                school_results[schools_closure_scenarios[i]]['perc_school_days_lost'] = sub_sim.school_info[
+                school_results[schools_reopening_scenarios[i]]['perc_school_days_lost'] = sub_sim.school_info[
                                                                                             'school_days_lost'] / \
                                                                                         sub_sim.school_info[
                                                                                             'total_student_school_days']
-                school_results[schools_closure_scenarios[i]]['cum_infections'] = sub_sim.summary[
+                school_results[schools_reopening_scenarios[i]]['cum_infections'] = sub_sim.summary[
                                                                                      'cum_infections'] - \
                                                                                  sub_sim.results[
                                                                                      'cum_infections'].values[day_schools_reopen]
-                school_results[schools_closure_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
-                school_results[schools_closure_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
-                school_results[schools_closure_scenarios[i]]['test_pos'] = sub_sim.school_info['test_pos']
+                school_results[schools_reopening_scenarios[i]]['num_tested'] = sub_sim.school_info['num_tested']
+                school_results[schools_reopening_scenarios[i]]['num_traced'] = sub_sim.school_info['num_traced']
+                school_results[schools_reopening_scenarios[i]]['test_pos'] = sub_sim.school_info['test_pos']
 
-                school_results[schools_closure_scenarios[i]]['num_es'] = sub_sim.school_info['num_es']
-                school_results[schools_closure_scenarios[i]]['num_ms'] = sub_sim.school_info['num_ms']
-                school_results[schools_closure_scenarios[i]]['num_hs'] = sub_sim.school_info['num_hs']
+                school_results[schools_reopening_scenarios[i]]['num_es'] = sub_sim.school_info['num_es']
+                school_results[schools_reopening_scenarios[i]]['num_ms'] = sub_sim.school_info['num_ms']
+                school_results[schools_reopening_scenarios[i]]['num_hs'] = sub_sim.school_info['num_hs']
 
     for _, results in school_results.items():
         for key, value in results.items():
@@ -190,9 +190,9 @@ def school_dict(msims, day_schools_reopen):
 if __name__ == '__main__':
 
     popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
-    date = '2020-07-27'
+    date = '2020-07-28'
 
-    n_seeds = 5
+    n_seeds = 1
     prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
     re = ['re_0.9', 're_1.1']
     rel_trans = False
@@ -206,32 +206,26 @@ if __name__ == '__main__':
         clip_edges = [.55, .63]
         pop_infected = [200, 200]
 
-    schools_closure_scenarios = [
+    school_closure_scenarios = {
+        'None': None,
+        'Close_On_1': 1
+    }
+
+    schools_reopening_scenarios = [
         'as_normal',
         'with_screening',
         'ES_MS_inperson_HS_remote',
         'ES_inperson_MS_HS_remote',
         'with_hybrid_scheduling',
         'all_remote',
-        'with_perf_testing_close_on_1'
     ]
-    schools_closure_scenarios_label = [
+    schools_reopening_scenarios_label = [
         'As Normal',
         'With Screening',
         'ES/MS in Person, HS Remote',
         'ES in Person, MS/HS Remote',
         'All Hybrid',
         'All Remote',
-        'With Perfect Testing, Tracing & School Closure on 1 COVID+'
-    ]
-    num_pos = [
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        1
     ]
     test_prob = [
         0,
@@ -240,7 +234,6 @@ if __name__ == '__main__':
         0,
         0,
         0,
-        1
     ]
     trace_prob = [
         0,
@@ -249,7 +242,6 @@ if __name__ == '__main__':
         0,
         0,
         0,
-        1
     ]
     NPI = [
         None,
@@ -258,7 +250,6 @@ if __name__ == '__main__':
         0.75,
         0.75,
         None,
-        0.75
     ]
     intervention_start_day = [
         None,
@@ -267,7 +258,6 @@ if __name__ == '__main__':
         {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         None,
-        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
     ]
     schedule = [
         None,
@@ -276,17 +266,15 @@ if __name__ == '__main__':
         None,
         {'pk': None, 'es': True, 'ms': True, 'hs': True, 'uv': None},
         None,
-        None
     ]
     day_schools_close = '2020-07-01'
     day_schools_open = [
-        '2020-09-01',
-        '2020-09-01',
-        {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
-        {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
-        '2020-09-01',
+        {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+        {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
+        {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
+        {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
+        {'pk': '2020-09-01', 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         None,
-        '2020-09-01',
     ]
     tp = sc.objdict(
         symp_prob=0.12,
@@ -301,7 +289,6 @@ if __name__ == '__main__':
     )
 
     for h, case in enumerate(cases):
-
         pars = {'pop_size': 225e3,
                 'pop_scale': 10,
                 'pop_type': 'synthpops',
@@ -312,21 +299,19 @@ if __name__ == '__main__':
                 'start_day': '2020-07-01',
                 'end_day': '2020-12-01'
                 }
-
         msims = []
         es_with_a_case = []
         ms_with_a_case = []
         hs_with_a_case = []
-        for i, scen in enumerate(schools_closure_scenarios):
-            analysis_name = f'{scen}_{case}'
+        for i, scen in enumerate(schools_reopening_scenarios):
+            if rel_trans:
+                analysis_name = f'{scen}_{case}_under10_0.5trans'
+            else:
+                analysis_name = f'{scen}_{case}'
             all_sims = []
             for j in range(n_seeds):
                 popfile = f'{popfile_stem}{j}.ppl'
                 sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=scen)
-                if rel_trans:
-                    under_10 = [i for i in range(len(sim.people.age)) if sim.people.age[i] <= 10]
-                    for ind in under_10:
-                        sim.people.rel_trans[ind] = sim.people.rel_trans[ind] / 2
                 day_schools_reopen = sim.day('2020-09-01')
                 interventions = [
                     cv.test_prob(start_day='2020-07-01', **tp),
@@ -337,7 +322,8 @@ if __name__ == '__main__':
                     cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
                     cv.close_schools(
                         day_schools_closed=day_schools_close,
-                        start_day=day_schools_open[i]
+                        start_day=day_schools_open[i],
+                        label='close_schools'
                     ),
                     cv.reopen_schools(
                         start_day=intervention_start_day[i],
@@ -345,17 +331,21 @@ if __name__ == '__main__':
                         trace=trace_prob[i],
                         ili_prev=0.002,
                         schedule=schedule[i],
-                        num_pos=num_pos[i]
+                        num_pos=school_closure_scenarios['None'],
+                        label='reopen_schools'
                     )
                 ]
+                if rel_trans:
+                    interventions += [
+                        cv.set_rel_trans(start_day=pars['start_day'], age=10, changes=0.5, label='set_rel_trans')
+                    ]
                 if NPI[i] is not None:
                     interventions += [
-                        cv.change_beta(days='2020-09-01', changes=NPI[i], layers='s', label='reopen_schools')]
+                        cv.change_beta(days='2020-09-01', changes=NPI[i], layers='s', label='NPI_schools')]
                 sim['interventions'] = interventions
                 for interv in sim['interventions']:
                     interv.do_plot = False
                 all_sims.append(sim)
-
             msim = cv.MultiSim(all_sims)
             msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
             msim.reduce()
@@ -398,20 +388,20 @@ if __name__ == '__main__':
             hs_with_a_case.append(hs_means)
 
         es_with_a_case = pd.concat(es_with_a_case, ignore_index=True, axis=1)
-        es_with_a_case.columns = schools_closure_scenarios_label
+        es_with_a_case.columns = schools_reopening_scenarios_label
         ms_with_a_case = pd.concat(ms_with_a_case, ignore_index=True, axis=1)
-        ms_with_a_case.columns = schools_closure_scenarios_label
+        ms_with_a_case.columns = schools_reopening_scenarios_label
         hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
-        hs_with_a_case.columns = schools_closure_scenarios_label
+        hs_with_a_case.columns = schools_reopening_scenarios_label
         with pd.ExcelWriter(f'results/schools_with_a_case_{case}_{date}.xlsx') as writer:
             es_with_a_case.to_excel(writer, sheet_name='ES')
             ms_with_a_case.to_excel(writer, sheet_name='MS')
             hs_with_a_case.to_excel(writer, sheet_name='HS')
 
         school_results = school_dict(msims, day_schools_reopen)
-        filename = f'results/school_reopening_analysis_output_{case}_{date}.csv'
+        if rel_trans:
+            filename = f'results/school_reopening_analysis_output_{case}_under10_0.5trans_{date}.csv'
+        else:
+            filename = f'results/school_reopening_analysis_output_{case}_{date}.csv'
         school_results.to_csv(filename, header=True)
-
-
-
 
