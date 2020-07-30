@@ -1,8 +1,86 @@
-'''Show optimized runs'''
+'''
+Explore transmission trees
+'''
 
 import covasim as cv
 import sciris as sc
 import pandas as pd
+import synthpops as sp
+sp.config.set_nbrackets(20) # Essential for getting the age distribution right
+
+pop_size = 20e3 # Set population size
+
+def make_population(seed=0, popfile=None):
+    ''' Pre-generate the synthpops population '''
+
+    pars = sc.objdict(
+        pop_size = pop_size,
+        pop_type = 'synthpops',
+        rand_seed = seed,
+    )
+
+    use_two_group_reduction = True
+    average_LTCF_degree = 20
+    ltcf_staff_age_min = 20
+    ltcf_staff_age_max = 60
+
+    with_school_types = True
+    average_class_size = 20
+    inter_grade_mixing = 0.1
+    average_student_teacher_ratio = 20
+    average_teacher_teacher_degree = 3
+    teacher_age_min = 25
+    teacher_age_max = 75
+
+    with_non_teaching_staff = True
+    # if with_non_teaching_staff is False, but generate is True, then average_all_staff_ratio should be average_student_teacher_ratio or 0
+    average_student_all_staff_ratio = 11
+    average_additional_staff_degree = 20
+    staff_age_min = 20
+    staff_age_max = 75
+
+    cohorting = True
+    if cohorting:
+        strategy = 'clustered'
+        school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'random', 'uv': 'random'}
+    else:
+        strategy = 'normal'
+        school_mixing_type = {'pk': 'age_and_class_clustered', 'es': 'age_and_class_clustered', 'ms': 'age_and_class_clustered',
+                              'hs': 'random', 'uv': 'random'}
+
+    if popfile is None:
+        popfile = f'inputs/transtree_synthpops_{strategy}_withstaff_seed{pars.rand_seed}.ppl'
+
+    T = sc.tic()
+    print(f'Making "{popfile}"...')
+    sim = cv.Sim(pars)
+    cv.make_people(sim,
+                   popfile=popfile,
+                   save_pop=True,
+                   generate=True,
+                   with_facilities=True,
+                   use_two_group_reduction=use_two_group_reduction,
+                   average_LTCF_degree=average_LTCF_degree,
+                   ltcf_staff_age_min=ltcf_staff_age_min,
+                   ltcf_staff_age_max=ltcf_staff_age_max,
+                   with_school_types=with_school_types,
+                   school_mixing_type=school_mixing_type,
+                   average_class_size=average_class_size,
+                   inter_grade_mixing=inter_grade_mixing,
+                   average_student_teacher_ratio=average_student_teacher_ratio,
+                   average_teacher_teacher_degree=average_teacher_teacher_degree,
+                   teacher_age_min=teacher_age_min,
+                   teacher_age_max=teacher_age_max,
+                   with_non_teaching_staff=with_non_teaching_staff,
+                   average_student_all_staff_ratio=average_student_all_staff_ratio,
+                   average_additional_staff_degree=average_additional_staff_degree,
+                   staff_age_min=staff_age_min,
+                   staff_age_max=staff_age_max
+                   )
+    sc.toc(T)
+
+    print('Done')
+    return
 
 
 def school_dict(msims, day_schools_reopen):
@@ -189,10 +267,12 @@ def school_dict(msims, day_schools_reopen):
 
 if __name__ == '__main__':
 
-    popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_1m_seed'
+    T = sc.tic()
+
+    popfile_stem = f'inputs/transtree_synthpops_clustered_withstaff_seed'
     date = '2020-07-29'
 
-    n_seeds = 5
+    n_seeds = 1
     prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
     re = ['re_0.9', 're_1.1']
     rel_trans = False
@@ -288,16 +368,21 @@ if __name__ == '__main__':
         trace_time=3.0,
     )
 
+    for j in range(n_seeds):
+        print(f'Making population {j}...')
+        make_population(j)
+
     for h, case in enumerate(cases):
-        pars = {'pop_size': 2.25e6,
+        pars = {'pop_size': pop_size,
                 'pop_scale': 1,
                 'pop_type': 'synthpops',
                 'pop_infected': pop_infected[h],
                 'rescale': True,
                 'rescale_factor': 1.2,
-                'verbose': 0.1,
+                'verbose': 0.0,
                 'start_day': '2020-07-01',
-                'end_day': '2020-12-01'
+                'end_day': '2020-12-01',
+                'beta': 0.010,
                 }
         msims = []
         es_with_a_case = []
@@ -310,6 +395,7 @@ if __name__ == '__main__':
                 analysis_name = f'{scen}_{case}'
             all_sims = []
             for j in range(n_seeds):
+                print(f'Working on case={h}, scen={i}, seed={j}...')
                 popfile = f'{popfile_stem}{j}.ppl'
                 sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=scen)
                 day_schools_reopen = sim.day('2020-09-01')
@@ -347,7 +433,7 @@ if __name__ == '__main__':
                     interv.do_plot = False
                 all_sims.append(sim)
             msim = cv.MultiSim(all_sims)
-            msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=False)
+            msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=True)
             msim.reduce()
             msims.append(msim)
             es = []
@@ -404,4 +490,10 @@ if __name__ == '__main__':
         else:
             filename = f'results/school_reopening_analysis_output_{case}_{date}.csv'
         school_results.to_csv(filename, header=True)
+
+
+    cv.save('all_scens.msims', msims)
+
+    print('Done!')
+    sc.toc(T)
 
