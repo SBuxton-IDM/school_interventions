@@ -381,7 +381,8 @@ if __name__ == '__main__':
                 'rescale_factor': 1.2,
                 'verbose': 0.0,
                 'start_day': '2020-07-01',
-                'end_day': '2020-12-01'
+                'end_day': '2020-12-01',
+                'beta': 0.010,
                 }
         msims = []
         es_with_a_case = []
