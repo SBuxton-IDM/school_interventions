@@ -1,18 +1,23 @@
 import sciris as sc
-import covasim as cv
 import optuna as op
+import pandas as pd
+import numpy as np
+import pylab as pl
+import covasim as cv
 from hypothetical_schools import create_sim as cs
 
-cv.check_save_version('1.5.0', die=True)
-
-
-name      = 'optimization_school_reopening'
+re_to_fit = 0.9
+cases_to_fit = 20
+name      = f'optimization_school_reopening_re_{re_to_fit}_cases_{cases_to_fit}'
 storage   = f'sqlite:///{name}.db'
 n_trials  = 200
 n_workers = 32
+save_json = True
+plot_trend = True
+best_thresh = 1.5
 
 
-def objective(trial, re_to_fit, cases_to_fit, kind='default'):
+def objective(trial, kind='default'):
     ''' Define the objective for Optuna '''
     pars = {}
     bounds = cs.define_pars(which='bounds', kind=kind)
@@ -20,10 +25,11 @@ def objective(trial, re_to_fit, cases_to_fit, kind='default'):
         pars[key] = trial.suggest_uniform(key, *bound)
     pars['rand_seed'] = trial.number
     sim = cs.run_sim(pars)
-    re = sim.results['r_eff'][sim.day('2020-09-01')]
-    cases = sim.results['new_diagnoses'].iloc[49:63, ].sum(axis=0) * 100e3 / 2.25e6
-    re_mismatch = re_to_fit - re
-    cases_mismatch = cases_to_fit - cases
+    results = pd.DataFrame(sim.results)
+    re = results['r_eff'].iloc[49:63, ].mean(axis=0)
+    cases = results['new_diagnoses'].iloc[49:63, ].sum(axis=0) * 100e3 / 2.25e6
+    re_mismatch = abs(re_to_fit - re)
+    cases_mismatch = abs(cases_to_fit - cases)
     mismatch = re_mismatch + cases_mismatch
     return mismatch
 
@@ -31,7 +37,7 @@ def objective(trial, re_to_fit, cases_to_fit, kind='default'):
 def worker():
     ''' Run a single worker '''
     study = op.load_study(storage=storage, study_name=name)
-    output = study.optimize(objective, n_trials=n_trials, re_to_fit=0.9, cases_to_fit=20)
+    output = study.optimize(objective, n_trials=n_trials)
     return output
 
 
@@ -62,3 +68,77 @@ if __name__ == '__main__':
     best_pars = study.best_params
     T = sc.toc(t0, output=True)
     print(f'Output: {best_pars}, time: {T}')
+
+    sc.heading('Loading data...')
+    best = cs.define_pars('best')
+    bounds = cs.define_pars('bounds')
+    study = op.load_study(storage=storage, study_name=name)
+
+    sc.heading('Making results structure...')
+    results = []
+    n_trials = len(study.trials)
+    failed_trials = []
+    for trial in study.trials:
+        data = {'index': trial.number, 'mismatch': trial.value}
+        for key, val in trial.params.items():
+            data[key] = val
+        if data['mismatch'] is None:
+            failed_trials.append(data['index'])
+        else:
+            results.append(data)
+    print(f'Processed {len(study.trials)} trials; {len(failed_trials)} failed')
+
+    sc.heading('Making data structure...')
+    keys = ['index', 'mismatch'] + list(best.keys())
+    data = sc.objdict().make(keys=keys, vals=[])
+    for i, r in enumerate(results):
+        for key in keys:
+            if key not in r:
+                print(f'Warning! Key {key} is missing from trial {i}, replacing with default')
+                r[key] = best[key]
+            data[key].append(r[key])
+    df = pd.DataFrame.from_dict(data)
+
+    if save_json:
+        order = np.argsort(df['mismatch'])
+        json = []
+        for o in order:
+            row = df.iloc[o,:].to_dict()
+            rowdict = dict(index=row.pop('index'), mismatch=row.pop('mismatch'), pars={})
+            for key,val in row.items():
+                rowdict['pars'][key] = val
+            json.append(rowdict)
+        sc.savejson(f'{name}.json', json, indent=2)
+        saveobj = False
+        if saveobj: # Smaller file, but less portable
+            sc.saveobj(f'{name}.obj', json)
+
+    # Plot the trend in best mismatch over time
+    if plot_trend:
+        mismatch = sc.dcp(df['mismatch'].values)
+        best_mismatch = np.zeros(len(mismatch))
+        for i in range(len(mismatch)):
+            best_mismatch[i] = mismatch[:i+1].min()
+        smoothed_mismatch = sc.smooth(mismatch)
+        pl.figure(figsize=(16,12), dpi=120)
+
+        ax1 = pl.subplot(2,1,1)
+        pl.plot(mismatch, alpha=0.2, label='Original')
+        pl.plot(smoothed_mismatch, lw=3, label='Smoothed')
+        pl.plot(best_mismatch, lw=3, label='Best')
+
+        ax2 = pl.subplot(2,1,2)
+        max_mismatch = mismatch.min()*best_thresh
+        inds = cv.true(mismatch<=max_mismatch)
+        pl.plot(best_mismatch, lw=3, label='Best')
+        pl.scatter(inds, mismatch[inds], c=mismatch[inds], label='Usable indices')
+        for ax in [ax1, ax2]:
+            pl.sca(ax)
+            pl.grid(True)
+            pl.legend()
+            sc.setylim()
+            sc.setxlim()
+            pl.xlabel('Trial number')
+            pl.ylabel('Mismatch')
+
+        pl.savefig("calib_trend.png")
