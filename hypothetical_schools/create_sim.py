@@ -66,11 +66,7 @@ def run_sim(params):
         cv.clip_edges(days='2020-08-01', changes=p.clip_edges, layers='c', label='close_community'),
         cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
         cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
-        cv.close_schools(
-            day_schools_closed='2020-07-01',
-            start_day=None,
-            label='close_schools'
-        )
+        cv.close_schools(day_schools_closed='2020-07-01', start_day=None, label='close_schools')
     ]
     sim['interventions'] = interventions
     for interv in sim['interventions']:

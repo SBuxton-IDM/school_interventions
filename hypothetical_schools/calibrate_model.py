@@ -2,8 +2,6 @@ import sciris as sc
 import optuna as op
 import pandas as pd
 import numpy as np
-import pylab as pl
-import covasim as cv
 from hypothetical_schools import create_sim as cs
 
 re_to_fit = 0.9
@@ -13,8 +11,6 @@ storage   = f'sqlite:///{name}.db'
 n_trials  = 200
 n_workers = 32
 save_json = True
-plot_trend = True
-best_thresh = 1.5
 
 
 def objective(trial, kind='default'):
@@ -72,7 +68,6 @@ if __name__ == '__main__':
     sc.heading('Loading data...')
     best = cs.define_pars('best')
     bounds = cs.define_pars('bounds')
-    study = op.load_study(storage=storage, study_name=name)
 
     sc.heading('Making results structure...')
     results = []
@@ -112,33 +107,3 @@ if __name__ == '__main__':
         saveobj = False
         if saveobj: # Smaller file, but less portable
             sc.saveobj(f'{name}.obj', json)
-
-    # Plot the trend in best mismatch over time
-    if plot_trend:
-        mismatch = sc.dcp(df['mismatch'].values)
-        best_mismatch = np.zeros(len(mismatch))
-        for i in range(len(mismatch)):
-            best_mismatch[i] = mismatch[:i+1].min()
-        smoothed_mismatch = sc.smooth(mismatch)
-        pl.figure(figsize=(16,12), dpi=120)
-
-        ax1 = pl.subplot(2,1,1)
-        pl.plot(mismatch, alpha=0.2, label='Original')
-        pl.plot(smoothed_mismatch, lw=3, label='Smoothed')
-        pl.plot(best_mismatch, lw=3, label='Best')
-
-        ax2 = pl.subplot(2,1,2)
-        max_mismatch = mismatch.min()*best_thresh
-        inds = cv.true(mismatch<=max_mismatch)
-        pl.plot(best_mismatch, lw=3, label='Best')
-        pl.scatter(inds, mismatch[inds], c=mismatch[inds], label='Usable indices')
-        for ax in [ax1, ax2]:
-            pl.sca(ax)
-            pl.grid(True)
-            pl.legend()
-            sc.setylim()
-            sc.setxlim()
-            pl.xlabel('Trial number')
-            pl.ylabel('Mismatch')
-
-        pl.savefig("calib_trend.png")
