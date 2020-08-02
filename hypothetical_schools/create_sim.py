@@ -25,8 +25,13 @@ def define_pars(which='best', kind='default', ):
 
 def run_sim(params):
 
-    popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
+    p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
+    if 'rand_seed' not in p:
+        seed = 1
+        print(f'Note, could not find random seed in {params}! Setting to {seed}')
+        p['rand_seed'] = seed  # Ensure this exists
 
+    popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
 
     tp = sc.objdict(
         symp_prob=0.03,
@@ -40,17 +45,16 @@ def run_sim(params):
         trace_time=5.0,
     )
 
-    all_sims = []
     pars = {'pop_size': 225e3,
             'pop_scale': 10,
             'pop_type': 'synthpops',
-            'pop_infected': params['pop_infected'],
+            'pop_infected': p.pop_infected,
             'rescale': True,
             'rescale_factor': 1.1,
             'verbose': 0,
             'start_day': '2020-07-01',
             'end_day': '2020-09-02',
-            'rand_seed': j,
+            'rand_seed': p.rand_seed,
             }
     n_popfiles = 5
     popfile = popfile_stem + str(params['rand_seed'] % n_popfiles) + '.ppl'
@@ -58,8 +62,8 @@ def run_sim(params):
     interventions = [
         cv.test_prob(start_day='2020-07-01', **tp),
         cv.contact_tracing(start_day='2020-07-01', **ct),
-        cv.clip_edges(days='2020-08-01', changes=params['clip_edges'], layers='w', label='close_work'),
-        cv.clip_edges(days='2020-08-01', changes=params['clip_edges'], layers='c', label='close_community'),
+        cv.clip_edges(days='2020-08-01', changes=p.clip_edges, layers='w', label='close_work'),
+        cv.clip_edges(days='2020-08-01', changes=p.clip_edges, layers='c', label='close_community'),
         cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
         cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
         cv.close_schools(
@@ -71,12 +75,7 @@ def run_sim(params):
     sim['interventions'] = interventions
     for interv in sim['interventions']:
         interv.do_plot = False
-    sim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=True)
-    results = pd.DataFrame(sim.results)
-    re = results['r_eff'][sim.day('2020-09-01')]
-    cases = results['new_diagnoses'].iloc[49:63, ].sum(axis=0) * 100e3 / 2.25e6
-    print(f'Reff is {round(re, 2)}')
-    print(f'In last 14 days, there were {round(cases, 4)} cases per 100k')
+    sim.run()
+    return(sim)
 
-if __name__ == '__main__':
 

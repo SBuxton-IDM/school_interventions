@@ -3,7 +3,7 @@ import covasim as cv
 import optuna as op
 from hypothetical_schools import create_sim as cs
 
-cv.check_save_version('1.4.7', die=True)
+cv.check_save_version('1.5.0', die=True)
 
 
 name      = 'optimization_school_reopening'
@@ -12,21 +12,26 @@ n_trials  = 200
 n_workers = 32
 
 
-def objective(trial, kind='default'):
+def objective(trial, re_to_fit, cases_to_fit, kind='default'):
     ''' Define the objective for Optuna '''
     pars = {}
-    bounds = cs.define_pars(which='bounds', kind=kind, use_safegraph=use_safegraph)
+    bounds = cs.define_pars(which='bounds', kind=kind)
     for key, bound in bounds.items():
         pars[key] = trial.suggest_uniform(key, *bound)
     pars['rand_seed'] = trial.number
-    mismatch = cs.run_sim(pars)
+    sim = cs.run_sim(pars)
+    re = sim.results['r_eff'][sim.day('2020-09-01')]
+    cases = sim.results['new_diagnoses'].iloc[49:63, ].sum(axis=0) * 100e3 / 2.25e6
+    re_mismatch = re_to_fit - re
+    cases_mismatch = cases_to_fit - cases
+    mismatch = re_mismatch + cases_mismatch
     return mismatch
 
 
 def worker():
     ''' Run a single worker '''
     study = op.load_study(storage=storage, study_name=name)
-    output = study.optimize(objective, n_trials=n_trials)
+    output = study.optimize(objective, n_trials=n_trials, re_to_fit=0.9, cases_to_fit=20)
     return output
 
 
