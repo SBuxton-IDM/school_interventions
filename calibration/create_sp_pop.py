@@ -6,13 +6,14 @@ import psutil
 import sciris  as sc
 import covasim as cv
 import synthpops as sp
-sp.config.set_nbrackets(20) # Essential for getting the age distribution right
+sp.set_nbrackets(20) # Essential for getting the age distribution right
 
 def cache_populations(seed=0, popfile=None):
     ''' Pre-generate the synthpops population '''
 
     pars = sc.objdict(
-        pop_size = 2.25e6,
+        # pop_size = 2.25e6,
+        pop_size = 225e3,
         pop_type = 'synthpops',
         rand_seed = seed,
     )
@@ -37,17 +38,24 @@ def cache_populations(seed=0, popfile=None):
     staff_age_min = 20
     staff_age_max = 75
 
-    cohorting = True
+    # For reference re: school_types
+    # school_mixing_type = 'random' means that students in the school have edges randomly chosen from other students, teachers, and non teaching staff across the school. Students, teachers, and non teaching staff are treated the same in terms of edge generation.
+    # school_mixing_type = 'age_clustered' means that students in the school have edges mostly within their own age/grade, with teachers, and non teaching staff. Strict classrooms are not generated. Teachers have some additional edges with other teachers.
+    # school_mixing_type = 'age_and_class_clustered' means that students are cohorted into classes of students of the same age/grade with at least 1 teacher, and then some have contact with non teaching staff. Teachers have some additional edges with other teachers.
+
+    cohorting = False
     if cohorting:
-        strategy = 'clustered'
-        school_mixing_type = {'pk': 'clustered', 'es': 'clustered', 'ms': 'clustered', 'hs': 'random', 'uv': 'random'}
+        strategy = 'clustered'  # students in pre-k, elementary, and middle school are cohorted into strict classrooms
+        school_mixing_type = {'pk': 'age_and_class_clustered', 'es': 'age_and_class_clustered', 'ms': 'age_and_class_clustered',
+                              'hs': 'random', 'uv': 'random'}
     else:
         strategy = 'normal'
-        school_mixing_type = {'pk': 'age_and_class_clustered', 'es': 'age_and_class_clustered', 'ms': 'age_and_class_clustered',
+        school_mixing_type = {'pk': 'age_clustered', 'es': 'age_clustered', 'ms': 'age_clustered',
                               'hs': 'random', 'uv': 'random'}
 
     if popfile is None:
-        popfile = f'inputs/kc_synthpops_{strategy}_withstaff_1m_seed{pars.rand_seed}.ppl'
+        popfile = f'inputs/kc_synthpops_{strategy}_withstaff_seed{pars.rand_seed}.ppl'
+        # popfile = f'inputs/kc_synthpops_{strategy}_withstaff_1m_seed{pars.rand_seed}.ppl'
 
     T = sc.tic()
     print(f'Making "{popfile}"...')
@@ -84,7 +92,8 @@ def cache_populations(seed=0, popfile=None):
 if __name__ == '__main__':
 
     seeds = [0,1,2,3,4]
-    parallelize = True
+    # parallelize = True
+    parallelize = False
 
     if parallelize:
         ram = psutil.virtual_memory().available/1e9
