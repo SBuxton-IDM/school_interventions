@@ -82,10 +82,10 @@ measure_labels = {
     'staff_cases': 'Staff Cases'
 }
 
-prev_labels = {
-    'prev_0.1': '0.1%',
-    'prev_0.2': '0.2%',
-    'prev_0.4': '0.4%'
+inc_labels = {
+    '20_cases': '20',
+    '50_cases': '50',
+    '110_cases': '110',
 }
 
 re_labels = {
@@ -135,7 +135,7 @@ def get_scenario_name(mobility_rate, strategy):
 
 def outputs_df(date, cases, sens=None):
     if sens is not None:
-        file_path = os.path.join('results', 'school_reopening_analysis_output_' + cases + '_' + sens  + '_' + date + '.csv')
+        file_path = os.path.join('results', 'school_reopening_analysis_output_' + cases + '_' + sens + '_' + date + '.csv')
     else:
         file_path = os.path.join('results', 'school_reopening_analysis_output_' + cases + '_' + date + '.csv')
     return pd.read_csv(file_path)
@@ -208,73 +208,26 @@ def transform_x(x, xmax, xmin, ymax, ymin):
     return slope * x + intercept
 
 
-def plot_prevalence(date, cases):
-
-    staff_by_case = []
-    students_by_case = []
-    for _, case in enumerate(cases):
-        df = outputs_df(date, case)
-        scenario_strategies = df.columns[1:]
-
-        staff = []
-        students = []
-        for n, strategy in enumerate(scenario_strategies):
-            num_staff = df[df['Unnamed: 0'] == 'num_staff'][strategy].values
-            num_staff += df[df['Unnamed: 0'] == 'num_teachers'][strategy].values
-
-            num_staff_cases = df[df['Unnamed: 0'] == 'num_staff_cases'][strategy].values
-            num_staff_cases += df[df['Unnamed: 0'] == 'num_teacher_cases'][strategy].values
-
-            staff.append(100 * num_staff_cases[0] / num_staff[0])
-
-            num_students = df[df['Unnamed: 0'] == 'num_students'][strategy].values
-            num_student_cases = df[df['Unnamed: 0'] == 'num_student_cases'][strategy].values
-            students.append(100 * num_student_cases[0] / num_students[0])
-
-        staff = pd.DataFrame(staff).transpose()
-        staff_by_case.append(staff)
-        students = pd.DataFrame(students).transpose()
-        students_by_case.append(students)
-
-    x = np.arange(len(strategy_labels))
-
-    fig, axs = plt.subplots(nrows = len(cases), sharex=True, sharey=False, figsize=(13, 9))
-    fig.subplots_adjust(hspace=0.6, right=0.9)
-    fig.suptitle('Prevalence of COVID-19 in Schools', size=24, horizontalalignment='center')
-
-    for i, ax in enumerate(axs):
-        ax.bar(x + .2, staff_by_case[i], width=0.2, alpha=0.87, label='Teachers and Staff')
-        ax.bar(x - .2, students_by_case[i], width=0.2, alpha=0.87, label='Students')
-        ax.set_ylabel('Prevalence (%)', size=16)
-        ax.set_title(prev_labels[cases[i]] + ' COVID-19 Prevalence on 09/01', size=16, horizontalalignment='center')
-        ax.set_xticks(x)
-        ax.set_xticklabels(strategy_labels.values(), fontsize=12)
-        ax.legend(fontsize=12)
-    fig.savefig(f'prevalence.png', format='png')
-
-
-def plot_attack_rate(date, cases, by_prev, sens):
+def plot_attack_rate(date_of_file, cases, sens):
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
 
-    if by_prev:
-        labels = prev_labels
-        name = 'COVID-19 Prevalence on 09/01'
-        prev = 'by_prev'
+    name = 'Cases per 100k in last 14 days'
+    if '1.1' in cases[0]:
+        prev = 'by_cases_rising'
+        subtitle = '(Re > 1)'
     else:
-        labels = re_labels
-        name = 'Community Reff'
-        prev = 'by_re'
+        prev = 'by_cases_falling'
+        subtitle = '(Re < 1)'
+    label = inc_labels
 
     if sens is not None:
         prev = prev + '_' + sens
-        subtitle = f'\n ({sens_label[sens]})'
-    else:
-        subtitle = ''
+        subtitle += f'\n ({sens_label[sens]})'
 
     staff_by_case = []
     students_by_case = []
     for _, case in enumerate(cases):
-        df = outputs_df(date, case, sens)
+        df = outputs_df(date_of_file, case, sens)
         scenario_strategies = df.columns[1:]
         scenario_strategies = scenario_strategies.tolist()
         scenario_strategies.remove('all_remote')
@@ -310,20 +263,20 @@ def plot_attack_rate(date, cases, by_prev, sens):
     for i, ax in enumerate(axs):
         for j, case in enumerate(cases):
             if i == 0:
-                ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=labels[case], color=colors[j])
+                ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
                 ax.set_title('Teachers and Staff', size=16, horizontalalignment='center')
             else:
-                ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=labels[case], color=colors[j])
+                ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
                 ax.set_title('Students', size=16, horizontalalignment='center')
         ax.set_ylabel('Attack Rate (%)', size=14)
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
         ax.legend(fontsize=14, title=name)
 
-    fig.savefig(f'attack_rate_{prev}.png', format='png')
+    fig.savefig(f'attack_rate_{prev}_{date_of_file}.png', format='png')
 
 
-def plot_attack_rate_by_sens(date, case, sens):
+def plot_attack_rate_by_sens(date_of_file, case, sens):
     colors = ['lightsteelblue', 'cornflowerblue']
 
     sensitivity = [True, False]
@@ -341,7 +294,7 @@ def plot_attack_rate_by_sens(date, case, sens):
     staff_by_case = []
     students_by_case = []
     for i, val in enumerate(rel_trans):
-        df = outputs_df(date, case, val)
+        df = outputs_df(date_of_file, case, val)
         scenario_strategies = df.columns[1:]
         scenario_strategies = scenario_strategies.tolist()
         scenario_strategies.remove('all_remote')
@@ -387,86 +340,10 @@ def plot_attack_rate_by_sens(date, case, sens):
         ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
         ax.legend(fontsize=14, title=name)
 
-    fig.savefig(f'attack_rate_{prev}_{re_labels[case]}.png', format='png')
+    fig.savefig(f'attack_rate_{prev}_{re_labels[case]}_{date_of_file}.png', format='png')
 
 
-def plot_infections(num_param_set, date, cases, by_prev, rel_trans):
-    df_by_prev = []
-    df_by_prev_std = []
-    measure = 'new_infections'
-
-    for case in cases:
-        df_mean = []
-        df_std = []
-        for strat in strategies:
-            df_mean.append(combine_results_dfs(strat, num_param_set, measure, True, date, case, rel_trans))
-            df_std.append(combine_results_dfs(strat, num_param_set, measure, False, date, case, rel_trans))
-
-        scenario_strategies = strats
-
-        df_comb = pd.DataFrame(df_mean).transpose()
-        df_comb.columns = scenario_strategies
-
-        df_comb_std = pd.DataFrame(df_std).transpose()
-        df_comb_std.columns = scenario_strategies
-
-        df_by_prev.append(df_comb)
-        df_by_prev_std.append(df_comb_std)
-
-    base = dt.datetime(2020,7,1)
-    date_list = [base + dt.timedelta(days=x) for x in range(len(df_comb))]
-    x = []
-    for date in date_list:
-        x.append(date.strftime('%b %d'))
-
-    date_to_x = {d:i for i, d in enumerate(x)}
-    right = 0.65
-
-    if by_prev:
-        labels = prev_labels
-        name = ' COVID-19 Prevalence on 09/01'
-        prev = 'by_prev'
-    else:
-        labels = re_labels
-        name = ' Community Reff'
-        prev = 'by_re'
-
-    if rel_trans:
-        prev = prev + '_under10_0.5trans'
-        subtitle = '\n (50% reduced transmission in under 10s)'
-    else:
-        subtitle = ''
-
-    fig, axs = plt.subplots(len(cases), sharex=True, sharey=False, figsize=(13, 9))
-    fig.subplots_adjust(hspace=0.6, right=right)
-    fig.suptitle(f'New Infections {subtitle}', size=20, horizontalalignment='center')
-
-    # colors = sc.gridcolors(len(scenario_strategies))
-
-    for i, ax in enumerate(axs):
-        for s, strat in enumerate(scenario_strategies):
-            ax.plot(x, df_by_prev[i][strat].values, color=colors[s], label=strat)
-
-        if i == len(axs) - 1:
-            leg = ax.legend(fontsize=16, bbox_to_anchor=(0.63, 3, 1, 0.102))
-            leg.draw_frame(False)
-            xtick_labels = np.array(x)
-            n_xticks = len(ax.get_xticks())
-            interval = 15
-            xticks = np.arange(0, n_xticks, interval)
-            xtick_labels_displayed = xtick_labels[::interval]
-            ax.set_xticks(xticks)
-            ax.set_xticklabels(xtick_labels_displayed)
-
-        ax.set_xlim(left=date_to_x['Aug 01'], right=date_to_x['Dec 01'])
-        ax.set_title(labels[cases[i]] + name, fontsize=14)
-        ax.tick_params(labelsize=12)
-
-
-    fig.savefig(f'{measure}_{prev}.png', format='png')
-
-
-def plot_reff_with_prev(cases, num_param_set, date, by_prev, sens):
+def plot_reff(cases, num_param_set, date_of_file, sens):
 
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
 
@@ -477,8 +354,8 @@ def plot_reff_with_prev(cases, num_param_set, date, by_prev, sens):
         df_mean = []
         df_std = []
         for strat in strategies:
-            df_mean.append(combine_results_dfs(strat, num_param_set, 'r_eff', True, date, case, sens))
-            df_std.append(combine_results_dfs(strat, num_param_set, 'r_eff', False, date, case, sens))
+            df_mean.append(combine_results_dfs(strat, num_param_set, 'r_eff', True, date_of_file, case, sens))
+            df_std.append(combine_results_dfs(strat, num_param_set, 'r_eff', False, date_of_file, case, sens))
             # df_mean.append(combine_results_dfs(rate, main_strategy, strat, num_param_set, 'new_infections', True))
 
         # averted_deaths.append(sum(df_mean[1][218:309]) - sum(df_mean[7][218:309]))
@@ -520,20 +397,18 @@ def plot_reff_with_prev(cases, num_param_set, date, by_prev, sens):
     bottom = 0.10
     top = 0.85
 
-    if by_prev:
-        name = 'COVID-19 Prevalence on 09/01'
-        prev = 'by_prev'
-        label = prev_labels
+    name = 'Cases per 100k in last 14 days'
+    if '1.1' in case:
+        prev = 'by_cases_rising'
+        subtitle = '(Re = 1.1)'
     else:
-        name = 'Community Reff'
-        prev = 'by_re'
-        label = re_labels
+        prev = 'by_cases_falling'
+        subtitle = '(Re = 0.9)'
+    label = inc_labels
 
     if sens is not None:
         prev = prev + '_' + sens
-        subtitle = f'\n ({sens_label[sens]})'
-    else:
-        subtitle = ''
+        subtitle += f'\n ({sens_label[sens]})'
 
     fig, ax = plt.subplots(figsize=(13,9))
     for i, rate in enumerate(cases):
@@ -545,8 +420,6 @@ def plot_reff_with_prev(cases, num_param_set, date, by_prev, sens):
     ax.set_ylabel('Effective Reproductive Number', size=16)
     ax.set_title(f'Effective Reproductive Number by School Reopening Strategy {subtitle}', size=18, horizontalalignment='center')
     ax.set_ylim(0.7, 1.4)
-
-
     ax.legend(fontsize=12, title=name)
     ax.set_xticks(x)
     ax.set_xticklabels(strategy_labels.values(), fontsize=12)
@@ -562,10 +435,10 @@ def plot_reff_with_prev(cases, num_param_set, date, by_prev, sens):
     leg.draw_frame(False)
     ax_leg.axis('off')
 
-    fig.savefig(f'r_eff_{prev}.png', format='png')
+    fig.savefig(f'r_eff_{prev}_{date_of_file}.png', format='png')
 
 
-def plot_reff_by_sens(cases, num_param_set, date, sens):
+def plot_reff_by_sens(cases, num_param_set, date_of_file, sens):
 
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
 
@@ -579,8 +452,8 @@ def plot_reff_by_sens(cases, num_param_set, date, sens):
         df_mean = []
         df_std = []
         for strat in strategies:
-            df_mean.append(combine_results_dfs(strat, num_param_set, 'r_eff', True, date, cases, i))
-            df_std.append(combine_results_dfs(strat, num_param_set, 'r_eff', False, date, cases, i))
+            df_mean.append(combine_results_dfs(strat, num_param_set, 'r_eff', True, date_of_file, cases, i))
+            df_std.append(combine_results_dfs(strat, num_param_set, 'r_eff', False, date_of_file, cases, i))
             # df_mean.append(combine_results_dfs(rate, main_strategy, strat, num_param_set, 'new_infections', True))
 
         # averted_deaths.append(sum(df_mean[1][218:309]) - sum(df_mean[7][218:309]))
@@ -657,13 +530,13 @@ def plot_reff_by_sens(cases, num_param_set, date, sens):
     leg.draw_frame(False)
     ax_leg.axis('off')
 
-    fig.savefig(f'r_eff_{prev}_{cases}.png', format='png')
+    fig.savefig(f'r_eff_{prev}_{cases}_{date_of_file}.png', format='png')
 
 
-def get_re(cases, num_param_set, date, sens):
+def get_re(cases, num_param_set, date_of_file, sens):
     df_mean = []
     for case in cases:
-        df_mean.append(combine_results_dfs('all_remote', num_param_set, 'r_eff', True, date, case, sens))
+        df_mean.append(combine_results_dfs('all_remote', num_param_set, 'r_eff', True, date_of_file, case, sens))
 
     df_mean = pd.DataFrame(df_mean).transpose()
     base = dt.datetime(2020, 7, 1)
@@ -673,33 +546,50 @@ def get_re(cases, num_param_set, date, sens):
         x.append(date.strftime('%b %d'))
 
     date_to_x = {d: i for i, d in enumerate(x)}
-    min_x = date_to_x['Aug 30']
-    max_x = date_to_x['Dec 01']
+    x = date_to_x['Sep 01']
 
-    df_mean = df_mean.iloc[min_x:max_x, ]
-    df_mean = df_mean.mean(axis=0)
+    df_mean = df_mean.iloc[x, ]
+    # df_mean = df_mean.mean(axis=0)
 
     return(df_mean.values)
 
 
-def plot_dimensions(date, cases, by_prev, sens):
+def get_inc(cases, num_seeds, date, sens):
+    df_sum = []
+    for case in cases:
+        df_sum.append(combine_results_dfs('all_remote', num_seeds, 'new_diagnoses', True, date, case, sens))
 
-    if by_prev:
-        labels = prev_labels
-        name = 'COVID-19 Prevalence on 09/01'
-        prev = 'by_prev'
-        subtitle = 'By Prevalence'
+    df_sum = pd.DataFrame(df_sum).transpose()
+    base = dt.datetime(2020, 7, 1)
+    date_list = [base + dt.timedelta(days=x) for x in range(len(df_sum[0]))]
+    x = []
+    for date in date_list:
+        x.append(date.strftime('%b %d'))
+
+    date_to_x = {d: i for i, d in enumerate(x)}
+    min_x = date_to_x['Aug 16']
+    max_x = date_to_x['Aug 30']
+
+    df_sum = df_sum.iloc[min_x:max_x, ]
+    df_sum = df_sum.sum(axis=0).values
+    df_sum = df_sum* 100e3/ 2.25e6
+    return (df_sum)
+
+
+def plot_dimensions(date_of_file, cases, sens):
+
+    name = 'Cases per 100k in last 14 days'
+    if '1.1' in cases[0]:
+        prev = 'by_cases_rising'
+        subtitle = '(Re > 1)'
     else:
-        labels = re_labels
-        name = 'Community Reff'
-        prev = 'by_re'
-        subtitle = 'By Community Reff'
+        prev = 'by_cases_falling'
+        subtitle = '(Re < 1)'
+    label = inc_labels
 
     if sens is not None:
         prev = prev + '_' + sens
-        subtitle = f'\n ({sens_label[sens]})'
-    else:
-        subtitle = ''
+        subtitle += f'\n ({sens_label[sens]})'
 
     attack_rate_by_case = []
     perc_school_days_lost_by_case = []
@@ -707,7 +597,7 @@ def plot_dimensions(date, cases, by_prev, sens):
     efficient_x_by_case = []
 
     for _, case in enumerate(cases):
-        df = outputs_df(date, case, sens)
+        df = outputs_df(date_of_file, case, sens)
         scenario_strategies = df.columns[1:]
         scenario_strategies = scenario_strategies.tolist()
         scenario_strategies.remove('all_remote')
@@ -810,45 +700,54 @@ def plot_dimensions(date, cases, by_prev, sens):
 
         ax_leg_2.plot(xi * 1.5, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white',
                       markeredgecolor='black')
-        ax_leg_2.text(xi * 4, yi, (labels[cases[i]]), verticalalignment='center', fontsize=16)
+        ax_leg_2.text(xi * 4, yi, (label[cases[i]]), verticalalignment='center', fontsize=16)
 
-    ax_leg_2.text(xi * 7, 0.985, f'{name}', horizontalalignment='center', fontsize=18)
+        ax_leg_2.text(xi * 7, 0.985, f'{name}', horizontalalignment='center', fontsize=18)
 
     ax_leg_2.axis('off')
     ax_leg_2.set_xlim(left=0, right=20)
     ax_leg_2.set_ylim(bottom=ybase * 0.9, top=ytop * 1.0)
 
     ax.set_title(f'Trade-Offs with School Reopening \n {subtitle}', fontsize=20)
-    fig.savefig(f'tradeoffs_{prev}.png', format='png')
+    fig.savefig(f'tradeoffs_{prev}_{date_of_file}.png', format='png')
 
 
 if __name__ == '__main__':
     num_seeds = 20
 
-    prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
-    re = ['re_0.9', 're_1.1']
+    cases = ['20_cases', '50_cases', '110_cases']
+
+    cases_rising = False
+    if cases_rising:
+        re = 're_1.1'
+    else:
+        re = 're_0.9'
+
+    for i, case in enumerate(cases):
+        cases[i] = case + '_' + re
+
     rel_trans = 'under10_0.5trans'
     beta_layer = '3xschool_beta_layer'
     sens = beta_layer
     # sens = rel_trans
-    sens = None
-    date = '2020-07-31'
-    by_prev = False
-    if by_prev:
-        cases = prevalence
-    else:
-        cases = re
-        comm_re = get_re(cases, num_seeds, date, sens)
-        for i, case in enumerate(cases):
-            re_labels[case] = round(comm_re[i], 1)
+    # sens = None
+    date = '2020-08-02'
 
-    if sens is not None:
-        for val in re:
-            plot_reff_by_sens(val, num_seeds, date, sens)
-            plot_attack_rate_by_sens(date, val, sens)
+    # comm_inc = get_inc(cases, num_seeds, date, sens)
+    # comm_re = get_re(cases, num_seeds, date, sens)
+    # for i, case in enumerate(cases):
+    #     inc_labels[case] = round(comm_inc[i], 0)
+    #
+    # print(comm_inc)
+    # print(comm_re)
 
-    plot_reff_with_prev(cases, num_seeds, date, by_prev, sens)
-    plot_attack_rate(date, cases, by_prev, sens)
-    plot_dimensions(date, cases, by_prev, sens)
+    # if sens is not None:
+    #     for val in cases:
+    #         plot_reff_by_sens(val, num_seeds, date, sens)
+    #         plot_attack_rate_by_sens(date, val, sens)
+
+    plot_reff(cases, num_seeds, date, sens)
+    plot_attack_rate(date, cases, sens)
+    plot_dimensions(date, cases, sens)
 
     print('done')
