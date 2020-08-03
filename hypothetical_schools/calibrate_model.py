@@ -24,8 +24,8 @@ def objective(trial, kind='default'):
     results = pd.DataFrame(sim.results)
     re = results['r_eff'].iloc[49:63, ].mean(axis=0)
     cases = results['new_diagnoses'].iloc[49:63, ].sum(axis=0) * 100e3 / 2.25e6
-    re_mismatch = (re_to_fit - re)**2
-    cases_mismatch = (cases_to_fit - cases)**2
+    re_mismatch = ((re_to_fit - re)**2)/re
+    cases_mismatch = ((cases_to_fit - cases)**2)/cases
     mismatch = re_mismatch + cases_mismatch
     return mismatch
 
