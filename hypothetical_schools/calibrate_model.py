@@ -8,7 +8,7 @@ re_to_fit = 0.9
 cases_to_fit = 20
 name      = f'optimization_school_reopening_re_{re_to_fit}_cases_{cases_to_fit}'
 storage   = f'sqlite:///{name}.db'
-n_trials  = 200
+n_trials  = 30
 n_workers = 32
 save_json = True
 
@@ -24,8 +24,8 @@ def objective(trial, kind='default'):
     results = pd.DataFrame(sim.results)
     re = results['r_eff'].iloc[49:63, ].mean(axis=0)
     cases = results['new_diagnoses'].iloc[49:63, ].sum(axis=0) * 100e3 / 2.25e6
-    re_mismatch = abs(re_to_fit - re)
-    cases_mismatch = abs(cases_to_fit - cases)
+    re_mismatch = (re_to_fit - re)**2
+    cases_mismatch = (cases_to_fit - cases)**2
     mismatch = re_mismatch + cases_mismatch
     return mismatch
 

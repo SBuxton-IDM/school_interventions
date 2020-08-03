@@ -83,9 +83,12 @@ measure_labels = {
 }
 
 inc_labels = {
-    '20_cases': '20',
-    '50_cases': '50',
-    '110_cases': '110',
+    '20_cases_re_0.9': '20',
+    '50_cases_re_0.9': '50',
+    '110_cases_re_0.9': '110',
+    '20_cases_re_1.1': '20',
+    '50_cases_re_1.1': '50',
+    '110_cases_re_1.1': '110',
 }
 
 re_labels = {
@@ -713,7 +716,7 @@ def plot_dimensions(date_of_file, cases, sens):
 
 
 if __name__ == '__main__':
-    num_seeds = 20
+    num_seeds = 25
 
     cases = ['20_cases', '50_cases', '110_cases']
 

@@ -189,39 +189,23 @@ def school_dict(msims, day_schools_reopen):
 
 if __name__ == '__main__':
 
-    popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
-    date = '2020-07-31'
+    popfile_stem = 'inputs/kc_synthpops_normal_withstaff_seed'
+    popfile_stem_change = 'inputs/kc_synthpops_clustered_withstaff_seed'
+    date = '2020-08-02'
 
-    n_seeds = 20
-    prevalence = ['prev_0.1', 'prev_0.2', 'prev_0.4']
-    re = ['re_0.9', 're_1.1']
+    n_seeds = 100
+
     rel_trans = False
     beta_layer = False
-    by_prev = False
-
-    if by_prev:
-        cases = prevalence
-        clip_edges = [.5, .55, .55]
-        pop_infected = [100, 200, 400]
-
-    else:
-        cases = re
-        clip_edges = [.55, .63]
-        pop_infected = [200, 200]
-
-    school_closure_scenarios = {
-        'None': None,
-        'Close_On_1': 1
-    }
 
     schools_reopening_scenarios = [
         'as_normal',
-        'with_screening',
-        'with_hybrid_scheduling',
-        'ES_MS_inperson_HS_remote',
-        'ES_inperson_MS_HS_remote',
-        'ES_hybrid',
-        'all_remote',
+        # 'with_screening',
+        # 'with_hybrid_scheduling',
+        # 'ES_MS_inperson_HS_remote',
+        # 'ES_inperson_MS_HS_remote',
+        # 'ES_hybrid',
+        # 'all_remote',
     ]
     schools_reopening_scenarios_label = [
         'As Normal',
@@ -288,147 +272,144 @@ if __name__ == '__main__':
         None,
     ]
     tp = sc.objdict(
-        symp_prob=0.12,
-        asymp_prob=0.0015,
-        symp_quar_prob=0.8,
-        asymp_quar_prob=0.1,
-        test_delay=2.0,
+        symp_prob=0.03,
+        asymp_prob=0.001,
+        symp_quar_prob=0.01,
+        asymp_quar_prob=0.001,
+        test_delay=5.0,
     )
     ct = sc.objdict(
-        trace_probs=0.25,
-        trace_time=3.0,
+        trace_probs={'w': 0.1, 'c': 0, 'h': 0.8, 's': 0.8},
+        trace_time=5.0,
     )
-
-    for h, case in enumerate(cases):
-        msims = []
-        # es_with_a_case = []
-        # ms_with_a_case = []
-        # hs_with_a_case = []
-        for i, scen in enumerate(schools_reopening_scenarios):
-            analysis_name = f'{scen}_{case}'
-            if rel_trans:
-                analysis_name = analysis_name + '_under10_0.5trans'
-
-            if beta_layer:
-                analysis_name = analysis_name + '_3xschool_beta_layer'
-
-            all_sims = []
-            for j in range(n_seeds):
-                pars = {'pop_size': 225e3,
-                        'pop_scale': 10,
-                        'pop_type': 'synthpops',
-                        'pop_infected': pop_infected[h],
-                        'rescale': True,
-                        'rescale_factor': 1.1,
-                        'verbose': 0.1,
-                        'start_day': '2020-07-01',
-                        'end_day': '2020-12-01',
-                        'rand_seed': j,
-                        }
-                n_popfiles = 5
-                popfile = popfile_stem + str(pars['rand_seed'] % n_popfiles) + '.ppl'
-                sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=scen)
-                day_schools_reopen = sim.day('2020-09-01')
-                interventions = [
-                    cv.test_prob(start_day='2020-07-01', **tp),
-                    cv.contact_tracing(start_day='2020-07-01', **ct),
-                    cv.clip_edges(days='2020-08-01', changes=clip_edges[h], layers='w', label='close_work'),
-                    cv.clip_edges(days='2020-08-01', changes=clip_edges[h], layers='c', label='close_community'),
-                    cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
-                    cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
-                    cv.close_schools(
-                        day_schools_closed=day_schools_close,
-                        start_day=day_schools_open[i],
-                        label='close_schools'
-                    ),
-                    cv.reopen_schools(
-                        start_day=intervention_start_day[i],
-                        test=test_prob[i],
-                        trace=trace_prob[i],
-                        ili_prev=0.002,
-                        schedule=schedule[i],
-                        num_pos=school_closure_scenarios['None'],
-                        label='reopen_schools'
-                    )
-                ]
+    res = ['0.9', '1.1']
+    cases = ['20', '50', '110']
+    for re in res:
+        for case in cases:
+            jsonfile = f'optimization_school_reopening_re_{re}_cases_{case}.json'
+            json = sc.loadjson(jsonfile)
+            msims = []
+            for i, scen in enumerate(schools_reopening_scenarios):
+                analysis_name = f'{scen}_{case}_cases_re_{re}'
                 if rel_trans:
-                    sim['prognoses']['trans_ORs'][0] = 0.5
+                    analysis_name = analysis_name + '_under10_0.5trans'
+
                 if beta_layer:
-                    sim['beta_layer']['s'] = 3
+                    analysis_name = analysis_name + '_3xschool_beta_layer'
 
-                if NPI[i] is not None:
-                    interventions += [
-                        cv.change_beta(days='2020-09-01', changes=NPI[i], layers='s', label='NPI_schools')]
-                sim['interventions'] = interventions
-                for interv in sim['interventions']:
-                    interv.do_plot = False
-                all_sims.append(sim)
-            msim = cv.MultiSim(all_sims)
-            msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=True)
-            # msim.save(f'{analysis_name}.msim')
-            # tt = msim.sims[0].make_transtree()
-            # fig = tt.plot()
-            # fig.savefig(f'{analysis_name}_tt.png')
-            # sc.saveobj(f'tt_{analysis_name}.obj', tt)
-            msim.reduce()
-            msims.append(msim)
-            # es = []
-            # ms = []
-            # hs = []
-            df = []
-            for j in range(len(msim.sims)):
-                filename = f'results/{analysis_name}_param{j}_results_{date}.csv'
-                results = pd.DataFrame(msim.sims[j].results)
-                results.to_csv(filename, header=True)
-                df.append(results)
-                # infectious_by_day = pd.DataFrame(msim.sims[j].school_info['num_cases_by_day'])
-                # filename = f'results/{analysis_name}_param{j}_infectious_{date}.csv'
-                # infectious_by_day.to_csv(filename, header=True)
-                # es.append(pd.DataFrame(msim.sims[j].school_info['es_with_a_case']))
-                # ms.append(pd.DataFrame(msim.sims[j].school_info['ms_with_a_case']))
-                # hs.append(pd.DataFrame(msim.sims[j].school_info['hs_with_a_case']))
+                all_sims = []
+                for j in range(n_seeds):
+                    entry = json[j]
+                    p = entry['pars']
+                    pars = {'pop_size': 225e3,
+                            'pop_scale': 10,
+                            'pop_type': 'synthpops',
+                            'pop_infected': p['pop_infected'],
+                            'rescale': True,
+                            'rescale_factor': 1.1,
+                            'verbose': 0,
+                            'start_day': '2020-07-01',
+                            'end_day': '2020-12-01',
+                            'rand_seed': int(entry['index']),
+                            }
+                    n_popfiles = 5
+                    popfile = popfile_stem + str(pars['rand_seed'] % n_popfiles) + '.ppl'
+                    popfile_new = popfile_stem_change + str(pars['rand_seed'] % n_popfiles) + '.ppl'
+                    sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=scen)
+                    day_schools_reopen = sim.day('2020-09-01')
+                    interventions = [
+                        cv.test_prob(start_day='2020-07-01', **tp),
+                        cv.contact_tracing(start_day='2020-07-01', **ct),
+                        cv.clip_edges(days='2020-08-01', changes=p['clip_edges'], layers='w', label='close_work'),
+                        cv.clip_edges(days='2020-08-01', changes=p['clip_edges'], layers='c', label='close_community'),
+                        cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
+                        cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
+                        cv.close_schools(
+                            day_schools_closed=day_schools_close,
+                            start_day=day_schools_open[i],
+                            pop_file=popfile_new,
+                            label='close_schools'
+                        ),
+                        cv.reopen_schools(
+                            start_day=intervention_start_day[i],
+                            test=test_prob[i],
+                            trace=trace_prob[i],
+                            ili_prev=0.002,
+                            schedule=schedule[i],
+                            num_pos=None,
+                            label='reopen_schools'
+                        )
+                    ]
+                    if rel_trans:
+                        sim['prognoses']['trans_ORs'][0] = 0.5
+                    if beta_layer:
+                        sim['beta_layer']['s'] = 3
 
-            df_concat = pd.concat(df)
-            by_row_index = df_concat.groupby(df_concat.index)
-            df_means = by_row_index.mean()
-            filename = f'results/{analysis_name}_results_{date}.csv'
-            df_means.to_csv(filename, header=True)
+                    if NPI[i] is not None:
+                        interventions += [
+                            cv.change_beta(days='2020-09-01', changes=NPI[i], layers='s', label='NPI_schools')]
+                    sim['interventions'] = interventions
+                    for interv in sim['interventions']:
+                        interv.do_plot = False
+                    all_sims.append(sim)
+                msim = cv.MultiSim(all_sims)
+                msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=True)
+                msim.reduce()
+                msim.save(filename=f'{analysis_name}.msim')
+                msims.append(msim)
+                # es = []
+                # ms = []
+                # hs = []
+                df = []
+                for j in range(len(msim.sims)):
+                    filename = f'results/{analysis_name}_param{j}_results_{date}.csv'
+                    results = pd.DataFrame(msim.sims[j].results)
+                    results.to_csv(filename, header=True)
+                    df.append(results)
+                    # es.append(pd.DataFrame(msim.sims[j].school_info['es_with_a_case']))
+                    # ms.append(pd.DataFrame(msim.sims[j].school_info['ms_with_a_case']))
+                    # hs.append(pd.DataFrame(msim.sims[j].school_info['hs_with_a_case']))
 
-            # es_concat = pd.concat(es)
-            # by_row_index = es_concat.groupby(es_concat.index)
-            # es_means = by_row_index.mean()
-            # es_means.columns = [scen]
-            # es_with_a_case.append(es_means)
-            #
-            # ms_concat = pd.concat(ms)
-            # by_row_index = ms_concat.groupby(ms_concat.index)
-            # ms_means = by_row_index.mean()
-            # ms_means.columns = [scen]
-            # ms_with_a_case.append(ms_means)
-            #
-            # hs_concat = pd.concat(hs)
-            # by_row_index = hs_concat.groupby(hs_concat.index)
-            # hs_means = by_row_index.mean()
-            # hs_means.columns = [scen]
-            # hs_with_a_case.append(hs_means)
+                df_concat = pd.concat(df)
+                by_row_index = df_concat.groupby(df_concat.index)
+                df_means = by_row_index.mean()
+                filename = f'results/{analysis_name}_results_{date}.csv'
+                df_means.to_csv(filename, header=True)
 
-        # es_with_a_case = pd.concat(es_with_a_case, ignore_index=True, axis=1)
-        # es_with_a_case.columns = schools_reopening_scenarios_label
-        # ms_with_a_case = pd.concat(ms_with_a_case, ignore_index=True, axis=1)
-        # ms_with_a_case.columns = schools_reopening_scenarios_label
-        # hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
-        # hs_with_a_case.columns = schools_reopening_scenarios_label
-        # with pd.ExcelWriter(f'results/schools_with_a_case_{case}_{date}.xlsx') as writer:
-        #     es_with_a_case.to_excel(writer, sheet_name='ES')
-        #     ms_with_a_case.to_excel(writer, sheet_name='MS')
-        #     hs_with_a_case.to_excel(writer, sheet_name='HS')
+                # es_concat = pd.concat(es)
+                # by_row_index = es_concat.groupby(es_concat.index)
+                # es_means = by_row_index.mean()
+                # es_means.columns = [scen]
+                # es_with_a_case.append(es_means)
+                #
+                # ms_concat = pd.concat(ms)
+                # by_row_index = ms_concat.groupby(ms_concat.index)
+                # ms_means = by_row_index.mean()
+                # ms_means.columns = [scen]
+                # ms_with_a_case.append(ms_means)
+                #
+                # hs_concat = pd.concat(hs)
+                # by_row_index = hs_concat.groupby(hs_concat.index)
+                # hs_means = by_row_index.mean()
+                # hs_means.columns = [scen]
+                # hs_with_a_case.append(hs_means)
 
-        school_results = school_dict(msims, day_schools_reopen)
-        filename = f'results/school_reopening_analysis_output_{case}_{date}.csv'
-        if rel_trans:
-            filename = f'results/school_reopening_analysis_output_{case}_under10_0.5trans_{date}.csv'
-        if beta_layer:
-            filename = f'results/school_reopening_analysis_output_{case}_3xschool_beta_layer_{date}.csv'
+                # es_with_a_case = pd.concat(es_with_a_case, ignore_index=True, axis=1)
+                # es_with_a_case.columns = schools_reopening_scenarios_label
+                # ms_with_a_case = pd.concat(ms_with_a_case, ignore_index=True, axis=1)
+                # ms_with_a_case.columns = schools_reopening_scenarios_label
+                # hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
+                # hs_with_a_case.columns = schools_reopening_scenarios_label
+                # with pd.ExcelWriter(f'results/schools_with_a_case_{case}_{date}.xlsx') as writer:
+                #     es_with_a_case.to_excel(writer, sheet_name='ES')
+                #     ms_with_a_case.to_excel(writer, sheet_name='MS')
+                #     hs_with_a_case.to_excel(writer, sheet_name='HS')
 
-        school_results.to_csv(filename, header=True)
+                school_results = school_dict(msims, day_schools_reopen)
+                filename = f'results/school_reopening_analysis_output_{case}_cases_re_{re}_{date}.csv'
+                if rel_trans:
+                    filename = f'results/school_reopening_analysis_output_{case}_cases_re_{re}_under10_0.5trans_{date}.csv'
+                if beta_layer:
+                    filename = f'results/school_reopening_analysis_output_{case}_cases_re_{re}_3xschool_beta_layer_{date}.csv'
 
+                school_results.to_csv(filename, header=True)
