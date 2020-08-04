@@ -1,6 +1,5 @@
 import covasim as cv
 import pylab as pl
-import sciris as sc
 
 sdict = cv.load('sdict.obj')
 
