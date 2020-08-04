@@ -24,12 +24,19 @@ schools_reopening_scenarios = [
 
 for i,scen in enumerate(schools_reopening_scenarios):
     ax = pl.subplot(4,2,i+1)
-    colors = sc.gridcolors(4)
+    colors = [
+        [0.1,0.1,0.9],
+        [0.9,0.1,0.1],
+        [0.1,0.6,0.9],
+        [0.9,0.6,0.1],
+        ]
     factor = 1
     last = (i == len(schools_reopening_scenarios)-1)
-    for l,label in enumerate([f'{scen}_20_cases_re_0.9', f'{scen}_110_cases_re_0.9', f'{scen}_20_cases_re_1.1', f'{scen}_110_cases_re_1.1']):
-        pl.plot(sdict[label].school_info['num_cases_by_day'], label=label, lw=3, c=colors[l])
-        pl.plot(sdict[label].results['n_infectious'].values/factor, '--', c=colors[l], lw=2, label='Total cases')
+    for l,l2 in enumerate([f'20_cases_re_0.9', f'110_cases_re_0.9', f'20_cases_re_1.1', f'110_cases_re_1.1']):
+        l1 = f'{scen}_'
+        label = l1 + l2
+        pl.plot(sdict[label].school_info['num_cases_by_day'], label=f'School cases, {l2}', lw=3, c=colors[l])
+        pl.plot(sdict[label].results['n_infectious'].values/factor, '--', c=colors[l], lw=2, label=f'Total cases, {l2}')
     if last:
         pl.legend(bbox_to_anchor=(1.1, 1.0))
     pl.title(f'Number of cases per day (staff + students + teachers) for {scen}')
