@@ -188,6 +188,8 @@ def school_dict(msims, day_schools_reopen):
 
 if __name__ == '__main__':
 
+    T = sc.tic()
+
     popfile_stem = 'inputs/kc_synthpops_normal_withstaff_seed'
     popfile_stem_change = 'inputs/kc_synthpops_clustered_withstaff_seed'
     date = '2020-08-03'
@@ -361,6 +363,12 @@ if __name__ == '__main__':
                     all_sims.append(sim)
 
     msim = cv.MultiSim(all_sims)
-    msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=True)
+    msim.run(reseed=False, par_args={'maxload': 0.5}, noise=0.0, keep_people=True)
     for sim in msim.sims:
         sdict[sim.label] = sim
+        sdict[sim.label].shrink()
+    cv.save('sdict.obj', sdict)
+
+
+    sc.toc(T)
+    print('Done.')
