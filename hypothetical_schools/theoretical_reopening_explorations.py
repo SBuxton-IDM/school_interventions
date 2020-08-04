@@ -4,7 +4,6 @@ import covasim as cv
 import sciris as sc
 import pandas as pd
 
-
 def school_dict(msims, day_schools_reopen):
     school_results = dict()
     for i, sim in enumerate(msims):
@@ -283,8 +282,9 @@ if __name__ == '__main__':
         trace_time=5.0,
     )
     sdict = sc.odict()
-    res = ['0.9']#, '1.1']
-    cases = ['20']#, '50', '110']
+    res = ['0.9', '1.1']
+    cases = ['20', '50', '110']
+    all_sims = []
     for re in res:
         for case in cases:
             jsonfile = f'optimization_school_reopening_re_{re}_cases_{case}.json'
@@ -302,7 +302,6 @@ if __name__ == '__main__':
                 if beta_layer:
                     analysis_name = analysis_name + '_3xschool_beta_layer'
 
-                all_sims = []
                 for j in range(n_seeds):
                     entry = json[j]
                     p = entry['pars']
@@ -314,7 +313,7 @@ if __name__ == '__main__':
                             'rescale_factor': 1.1,
                             'verbose': 0.1,
                             'start_day': '2020-07-01',
-                            'end_day': '2020-09-15',
+                            'end_day': '2020-12-01',
                             'rand_seed': int(entry['index']),
                             }
                     n_popfiles = 5
@@ -324,7 +323,7 @@ if __name__ == '__main__':
                         popfile = popfile
                     else:
                         popfile = popfile_new
-                    sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=scen)
+                    sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=analysis_name)
                     day_schools_reopen = sim.day('2020-09-01')
                     interventions = [
                         cv.test_prob(start_day='2020-07-01', **tp),
@@ -360,74 +359,8 @@ if __name__ == '__main__':
                     for interv in sim['interventions']:
                         interv.do_plot = False
                     all_sims.append(sim)
-                msim = cv.MultiSim(all_sims)
-                msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=True)
-                msim.reduce()
-                msims.append(msim)
-                sdict[scen+f'_{re}_{case}'] = msim.sims[0]
-                es = []
-                ms = []
-                hs = []
-                df = []
-                for j in range(len(msim.sims)):
-                    # fig = msim.sims[j].people.plot()
-                    # fig.show()
-                    # staff_cases = msim.sims[j].school_info['num_teacher_cases']
-                    # staff_cases += msim.sims[j].school_info['num_staff_cases']
-                    # student_cases = msim.sims[j].school_info['num_student_cases']
-                    # print(f'Re = {re}, cases = {case}')
-                    # print(f'number staff cases on 09/01 {staff_cases}')
-                    # print(f'number student cases on 09/01 {student_cases}')
-                    filename = f'results/{analysis_name}_param{j}_results_{date}.csv'
-                    results = pd.DataFrame(msim.sims[j].results)
-                    results.to_csv(filename, header=True)
-                    df.append(results)
-                    es.append(pd.DataFrame(msim.sims[j].school_info['es_with_a_case']))
-                    ms.append(pd.DataFrame(msim.sims[j].school_info['ms_with_a_case']))
-                    hs.append(pd.DataFrame(msim.sims[j].school_info['hs_with_a_case']))
-                    msim.sims[j].school_info = msim.sims[j].school_info
-                sc.checkmem(msim, descend=1)
-                msim.save(filename=f'{analysis_name}.msim')
-                df_concat = pd.concat(df)
-                by_row_index = df_concat.groupby(df_concat.index)
-                df_means = by_row_index.mean()
-                filename = f'results/{analysis_name}_results_{date}.csv'
-                df_means.to_csv(filename, header=True)
 
-                es_concat = pd.concat(es)
-                by_row_index = es_concat.groupby(es_concat.index)
-                es_means = by_row_index.mean()
-                es_means.columns = [scen]
-                es_with_a_case.append(es_means)
-
-                ms_concat = pd.concat(ms)
-                by_row_index = ms_concat.groupby(ms_concat.index)
-                ms_means = by_row_index.mean()
-                ms_means.columns = [scen]
-                ms_with_a_case.append(ms_means)
-
-                hs_concat = pd.concat(hs)
-                by_row_index = hs_concat.groupby(hs_concat.index)
-                hs_means = by_row_index.mean()
-                hs_means.columns = [scen]
-                hs_with_a_case.append(hs_means)
-
-            es_with_a_case = pd.concat(es_with_a_case, ignore_index=True, axis=1)
-            es_with_a_case.columns = schools_reopening_scenarios_label
-            ms_with_a_case = pd.concat(ms_with_a_case, ignore_index=True, axis=1)
-            ms_with_a_case.columns = schools_reopening_scenarios_label
-            hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
-            hs_with_a_case.columns = schools_reopening_scenarios_label
-            with pd.ExcelWriter(f'results/schools_with_a_case_{case}_{date}.xlsx') as writer:
-                es_with_a_case.to_excel(writer, sheet_name='ES')
-                ms_with_a_case.to_excel(writer, sheet_name='MS')
-                hs_with_a_case.to_excel(writer, sheet_name='HS')
-
-            school_results = school_dict(msims, day_schools_reopen)
-            filename = f'results/school_reopening_analysis_output_{case}_cases_re_{re}_{date}.csv'
-            if rel_trans:
-                filename = f'results/school_reopening_analysis_output_{case}_cases_re_{re}_under10_0.5trans_{date}.csv'
-            if beta_layer:
-                filename = f'results/school_reopening_analysis_output_{case}_cases_re_{re}_3xschool_beta_layer_{date}.csv'
-
-            school_results.to_csv(filename, header=True)
+    msim = cv.MultiSim(all_sims)
+    msim.run(reseed=False, par_args={'maxload': 0.8}, noise=0.0, keep_people=True)
+    for sim in msim.sims:
+        sdict[sim.label] = sim
