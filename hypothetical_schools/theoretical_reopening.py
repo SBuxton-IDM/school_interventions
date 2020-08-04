@@ -191,9 +191,9 @@ if __name__ == '__main__':
 
     popfile_stem = 'inputs/kc_synthpops_normal_withstaff_seed'
     popfile_stem_change = 'inputs/kc_synthpops_clustered_withstaff_seed'
-    date = '2020-08-03'
+    date = '2020-08-04'
 
-    n_seeds = 1
+    n_seeds = 20
 
     rel_trans = False
     beta_layer = False
@@ -283,10 +283,16 @@ if __name__ == '__main__':
         trace_time=5.0,
     )
     res = ['0.9', '1.1']
-    cases = ['20', '50', '110']
+    if rel_trans or beta_layer:
+        cases = ['50']
+    else:
+        cases = ['20', '50', '110']
     for re in res:
         for case in cases:
-            jsonfile = f'optimization_school_reopening_re_{re}_cases_{case}.json'
+            if rel_trans:
+                jsonfile = f'optimization_school_reopening_re_{re}_cases_{case}_reltrans.json'
+            else:
+                jsonfile = f'optimization_school_reopening_re_{re}_cases_{case}.json'
             json = sc.loadjson(jsonfile)
             msims = []
             es_with_a_case = []
@@ -383,7 +389,8 @@ if __name__ == '__main__':
                     ms.append(pd.DataFrame(msim.sims[j].school_info['ms_with_a_case']))
                     hs.append(pd.DataFrame(msim.sims[j].school_info['hs_with_a_case']))
                     msim.sims[j].school_info = msim.sims[j].school_info
-                sc.checkmem(msim, descend=1)
+
+                del msim.orig_base_sim
                 msim.save(filename=f'{analysis_name}.msim')
                 df_concat = pd.concat(df)
                 by_row_index = df_concat.groupby(df_concat.index)
@@ -415,7 +422,7 @@ if __name__ == '__main__':
             ms_with_a_case.columns = schools_reopening_scenarios_label
             hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
             hs_with_a_case.columns = schools_reopening_scenarios_label
-            with pd.ExcelWriter(f'results/schools_with_a_case_{case}_{date}.xlsx') as writer:
+            with pd.ExcelWriter(f'results/schools_with_a_case_{case}_cases_re_{re}_{date}.xlsx') as writer:
                 es_with_a_case.to_excel(writer, sheet_name='ES')
                 ms_with_a_case.to_excel(writer, sheet_name='MS')
                 hs_with_a_case.to_excel(writer, sheet_name='HS')

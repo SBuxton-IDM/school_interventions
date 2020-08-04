@@ -53,7 +53,7 @@ def run_sim(params):
             'rescale_factor': 1.1,
             'verbose': 0,
             'start_day': '2020-07-01',
-            'end_day': '2020-09-02',
+            'end_day': '2020-12-01',
             'rand_seed': p.rand_seed,
             }
     n_popfiles = 5
