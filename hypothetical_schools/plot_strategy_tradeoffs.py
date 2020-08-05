@@ -63,12 +63,12 @@ closure_strategy_labels = {
 }
 
 strategy_labels_2 = {
-    'as_normal': 'All in person, no\ncountermeasures',
-    'with_screening': 'All in person with \n countermeasures \n(NPI, cohorting, \nscreening)',
-    'with_hybrid_scheduling': 'All in person with \ncountermeasures, \n A/B scheduling',
-    'ES_MS_inperson_HS_remote': 'Elementary & \nmiddle in \nperson with \ncountermeasures, \nhigh remote',
-    'ES_inperson_MS_HS_remote': 'Elementary in \nperson, with \n countermeasures, \nmiddle & \nhigh remote',
-    'ES_hybrid': 'Elementary with \ncountermeasures, \nA/B scheduling, \n middle & high \nremote',
+    'as_normal':                'All in person, no\ncountermeasures',
+    'with_screening':           'All in person with \n countermeasures \n(NPI, cohorting, \nscreening)',
+    'with_hybrid_scheduling':   'All in person with \ncountermeasures, \n A/B scheduling',
+    'ES_MS_inperson_HS_remote': 'Elementary & middle\nin person with \ncountermeasures, \nhigh remote',
+    'ES_inperson_MS_HS_remote': 'Elementary in\nperson with\ncountermeasures, \nmiddle & high\nremote',
+    'ES_hybrid':                'Elementary with \ncountermeasures, \nA/B scheduling, \nmiddle & high\nremote',
     # 'all_remote': 'All Remote',
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
