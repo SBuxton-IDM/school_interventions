@@ -838,8 +838,8 @@ if __name__ == '__main__':
         # for i, case in enumerate(cases):
         #     inc_labels[case] = round(comm_inc[i], 0)
         #
-        print(comm_inc)
-        print(comm_re)
+        print('Incidence rates:', comm_inc)
+        print('R_e rates:', comm_re)
 
         if sens is not None:
             for val in cases:
