@@ -5,13 +5,13 @@ look at tradeoffs.
 
 import numpy as np
 import pandas as pd
-import sciris as sc
+# import sciris as sc
 import matplotlib as mplt
 import matplotlib.pyplot as plt
-import math
+# import math
 import os
 import datetime as dt
-import palettable
+# import palettable
 
 
 strats = [
@@ -215,8 +215,12 @@ def transform_x(x, xmax, xmin, ymax, ymin):
     return slope * x + intercept
 
 
-def plot_attack_rate(date_of_file, cases, sens):
+def plot_attack_rate(date_of_file, cases, sens, re=None, re_choice=None):
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
+
+    # Set defaults if not supplied
+    if re is None: re = '0.9'
+    if re_choice is None: re_choice = 'falling'
 
     name = 'Cases per 100k in last 14 days'
     if '1.1' in cases[0]:
@@ -266,9 +270,21 @@ def plot_attack_rate(date_of_file, cases, sens):
 
     width = [-.2, 0, .2]
 
-    fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
+    prefix = ''
+    suffix = ''
+    if re_choice == 'both_together': # We're plotting both on one plot
+        if '0.9' in re: # It's the first time, create the plot
+            fig, ax_array = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=False, figsize=(20, 9))
+            axs = [fig.axes[0], fig.axes[2]]
+            suffix = ' '*100
+        else: # It's the second time, reuse them
+            fig = plt.gcf()
+            axs = [fig.axes[1], fig.axes[3]] # Pull out the right axes
+            prefix = ' '*130
+    else: # Normal case, just one plot
+        fig, axs = plt.subplots(nrows=2, sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=0.9)
-    fig.suptitle(f'COVID-19 Attack Rate in Schools {subtitle}', size=24, horizontalalignment='center')
+    fig.text(0.5, 0.95, prefix + f'COVID-19 Attack Rate in Schools {subtitle}' + suffix, size=24, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
         for j, case in enumerate(cases):
@@ -792,42 +808,46 @@ if __name__ == '__main__':
     num_seeds = 20
 
     by_case = True
+    re_choice = ['falling', 'rising', 'both_separate', 'both_together'][3] # Choose how to plot r_e
 
-    if by_case:
-        cases = ['20_cases', '50_cases', '110_cases']
-        cases_rising = False
-        if cases_rising:
-            re = 're_1.1'
-        else:
-            re = 're_0.9'
-
-        for i, case in enumerate(cases):
-            cases[i] = case + '_' + re
+    if re_choice == 'falling':
+        re_list = ['re_0.9']
+    elif re_choice == 'rising':
+        re_list = ['re_1.1']
     else:
-        cases = ['50_cases_re_0.9', '50_cases_re_1.1']
+        re_list = ['re_0.9', 're_1.1']
 
-    rel_trans = 'under10_0.5trans'
-    beta_layer = '3xschool_beta_layer'
-    # sens = beta_layer
-    # sens = rel_trans
-    sens = None
-    date = '2020-08-04'
+    for re in re_list:
 
-    comm_inc = get_inc(cases, num_seeds, date, sens)
-    comm_re = get_re(cases, num_seeds, date, sens)
-    # for i, case in enumerate(cases):
-    #     inc_labels[case] = round(comm_inc[i], 0)
-    #
-    print(comm_inc)
-    print(comm_re)
+        if by_case:
+            cases = ['20_cases', '50_cases', '110_cases']
+            for i, case in enumerate(cases):
+                cases[i] = case + '_' + re
+        else:
+            cases = ['50_cases_re_0.9', '50_cases_re_1.1']
 
-    if sens is not None:
-        for val in cases:
-            plot_reff_by_sens(val, num_seeds, date, sens)
-            plot_attack_rate_by_sens(date, val, sens)
+        rel_trans = 'under10_0.5trans'
+        beta_layer = '3xschool_beta_layer'
+        # sens = beta_layer
+        # sens = rel_trans
+        sens = None
+        date = '2020-08-04'
 
-    # plot_reff(cases, num_seeds, date, sens)
-    plot_attack_rate(date, cases, sens)
-    # plot_dimensions(date, cases, sens)
+        comm_inc = get_inc(cases, num_seeds, date, sens)
+        comm_re = get_re(cases, num_seeds, date, sens)
+        # for i, case in enumerate(cases):
+        #     inc_labels[case] = round(comm_inc[i], 0)
+        #
+        print('Incidence rates:', comm_inc)
+        print('R_e rates:', comm_re)
+
+        if sens is not None:
+            for val in cases:
+                plot_reff_by_sens(val, num_seeds, date, sens)
+                plot_attack_rate_by_sens(date, val, sens)
+
+        # plot_reff(cases, num_seeds, date, sens)
+        plot_attack_rate(date, cases, sens, re, re_choice)
+        # plot_dimensions(date, cases, sens)
 
     print('done')
