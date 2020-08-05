@@ -5,13 +5,11 @@ look at tradeoffs.
 
 import numpy as np
 import pandas as pd
-# import sciris as sc
 import matplotlib as mplt
 import matplotlib.pyplot as plt
-# import math
 import os
 import datetime as dt
-# import palettable
+import covasim as cv
 
 
 strats = [
@@ -68,7 +66,7 @@ strategy_labels_2 = {
     'with_hybrid_scheduling':   'All in person with \ncountermeasures, \n A/B scheduling',
     'ES_MS_inperson_HS_remote': 'Elementary & middle\nin person with \ncountermeasures, \nhigh remote',
     'ES_inperson_MS_HS_remote': 'Elementary in\nperson with\ncountermeasures, \nmiddle & high\nremote',
-    'ES_hybrid':                'Elementary with \ncountermeasures, \nA/B scheduling, \nmiddle & high\nremote',
+    'ES_hybrid':                'Elementary with \ncountermeasures and \nA/B scheduling, \nmiddle & high\nremote',
     # 'all_remote': 'All Remote',
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
@@ -289,7 +287,7 @@ def plot_attack_rate(date_of_file, cases, sens):
         #ax.legend(fontsize=16, title=name)
 
 
-    fig.savefig(f'attack_rate_{prev}_{date_of_file}.png', format='png')
+    cv.savefig(f'attack_rate_{prev}_{date_of_file}.png')
 
 
 def plot_attack_rate_all_re(date_of_file, sens):
