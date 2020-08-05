@@ -5,13 +5,13 @@ look at tradeoffs.
 
 import numpy as np
 import pandas as pd
-import sciris as sc
+# import sciris as sc
 import matplotlib as mplt
 import matplotlib.pyplot as plt
-import math
+# import math
 import os
 import datetime as dt
-import palettable
+# import palettable
 
 
 strats = [
