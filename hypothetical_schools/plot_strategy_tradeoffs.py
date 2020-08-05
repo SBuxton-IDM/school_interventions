@@ -46,13 +46,13 @@ closure_strategies = [
 ]
 
 strategy_labels = {
-    'as_normal': 'As Normal',
-    'with_screening': 'All In Person \n with Screening, \nNPI, Cohorting',
-    'with_hybrid_scheduling': 'All Hybrid \nScheduling',
-    'ES_MS_inperson_HS_remote': 'Elementary & \nMiddle In Person, \nHigh Remote',
-    'ES_inperson_MS_HS_remote': 'Elementary In \nPerson, Middle \n& High Remote',
-    'ES_hybrid': 'Elementary Hybrid, \n Middle & High \nRemote',
-    'all_remote': 'All Remote',
+    'as_normal': 'In person, no\ncountermeasures',
+    'with_screening': 'In person with \n countermeasures \n(NPI, cohorting, \nscreening)',
+    'with_hybrid_scheduling': 'In person with \ncountermeasures, \n A/B scheduling',
+    'ES_MS_inperson_HS_remote': 'Elementary & \nmiddle in \nperson with \ncountermeasures, \nhigh remote',
+    'ES_inperson_MS_HS_remote': 'Elementary in \nperson, with \n countermeasures, \nmiddle & \nhigh remote',
+    'ES_hybrid': 'Elementary with \ncountermeasures, \nA/B scheduling, \n middle & high \nremote',
+    'all_remote': 'All remote',
 # 'with_perf_testing_close_on_1': 'With Perfect \nTesting, Tracing & \nSchool Closure on \n1 COVID+'
 }
 
@@ -430,6 +430,100 @@ def plot_attack_rate_by_sens(date_of_file, case, sens):
         ax.legend(fontsize=14, title=name)
 
     fig.savefig(f'attack_rate_{prev}_{re_labels[case]}_{date_of_file}.png', format='png')
+
+
+def plot_reff_combined(num_param_set, date_of_file):
+
+    colors = ['lightseagreen', 'lightsteelblue', 'lightcoral']
+
+    case = '50_cases_re_0.9'
+    rel_trans = 'under10_0.5trans'
+    beta_layer = '3xschool_beta_layer'
+    sens = [rel_trans, None, beta_layer]
+
+    name = 'Infectivity Assumptions'
+    sens_labels = {
+        None: 'Baseline: children under 10 as infectious as adults; '
+              '\nper-contact infectivity in school 20% relative to households',
+        rel_trans: '50% reduced transmission in children under 10',
+        beta_layer: 'Same infectivity per contact in schools as households'
+    }
+
+    df_by_prev = []
+    df_by_prev_std = []
+
+    for sen in sens:
+        df_mean = []
+        df_std = []
+        for strat in strategies:
+            df_mean.append(combine_results_dfs(strat, num_param_set, 'r_eff', True, date_of_file, case, sen))
+            df_std.append(combine_results_dfs(strat, num_param_set, 'r_eff', False, date_of_file, case, sen))
+
+        scenario_strategies = strats
+
+        df_comb = pd.DataFrame(df_mean).transpose()
+        df_comb.columns = scenario_strategies
+
+        df_comb_std = pd.DataFrame(df_std).transpose()
+        df_comb_std.columns = scenario_strategies
+
+        df_by_prev.append(df_comb)
+        df_by_prev_std.append(df_comb_std)
+
+    base = dt.datetime(2020, 7, 1)
+    date_list = [base + dt.timedelta(days=x) for x in range(len(df_comb))]
+    x = []
+    for date in date_list:
+        x.append(date.strftime('%b %d'))
+
+    date_to_x = {d: i for i, d in enumerate(x)}
+
+    min_x = date_to_x['Aug 30']
+    max_x = date_to_x['Dec 01']
+
+    for i, _ in enumerate(sens):
+        df_by_prev[i] = df_by_prev[i].iloc[min_x:max_x,]
+        df_by_prev[i] = df_by_prev[i].mean(axis=0)
+        df_by_prev_std[i] = df_by_prev_std[i].iloc[min_x:max_x, ]
+        df_by_prev_std[i] = df_by_prev_std[i].mean(axis=0)
+
+    x = np.arange(len(strategy_labels))
+
+    width = [-.2, 0, .2]
+
+    left = 0.07
+    right = 0.9
+    # right = 0.63
+    bottom = 0.10
+    top = 0.85
+
+    fig, ax = plt.subplots(figsize=(13,9))
+    for i, sen in enumerate(sens):
+        ax.bar(x + width[i], df_by_prev[i].values, yerr = df_by_prev_std[i].values/2, width=0.2,
+               label=sens_labels[sen], color=colors[i], alpha = 0.87)
+    # ax.bar(x, df_comb.values, yerr=df_comb_std.values / 2, width=0.4, alpha=0.87)
+    ax.axhline(y=1, xmin=0, xmax=1, color='black', ls='--')
+
+    ax.set_ylabel('Effective Reproductive Number', size=16)
+    ax.set_title(f'Effective Reproductive Number by School Reopening Strategy', size=18, horizontalalignment='center')
+    ax.set_ylim(0.7, 1.5)
+    leg_i = ax.legend(fontsize=12, title=name)
+    leg_i.set_title(name, prop={'size': 12})
+    ax.set_xticks(x)
+    ax.set_xticklabels(strategy_labels.values(), fontsize=10)
+
+    # Strategies Legend
+    ax_left = right + 0.04
+    ax_bottom = bottom + 0.02
+    ax_right = 0.95
+    ax_width = ax_right - ax_left
+    ax_height = top - bottom
+    ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+    leg = ax_leg.legend(loc=10, fontsize=14)
+    leg.draw_frame(False)
+    ax_leg.axis('off')
+
+    fig.savefig(f'r_eff_{date_of_file}.png', format='png')
 
 
 def plot_reff(cases, num_param_set, date_of_file, sens):
@@ -830,13 +924,19 @@ if __name__ == '__main__':
     print(comm_inc)
     print(comm_re)
 
-    if sens is not None:
-        for val in cases:
-            plot_reff_by_sens(val, num_seeds, date, sens)
-            plot_attack_rate_by_sens(date, val, sens)
+    # if sens is not None:
+    #     for val in cases:
+    #         plot_reff_by_sens(val, num_seeds, date, sens)
+    #         plot_attack_rate_by_sens(date, val, sens)
+    #
+    # plot_reff(cases, num_seeds, date, sens)
+    # plot_attack_rate(date, cases, sens)
+    # plot_dimensions(date, cases, sens)
+
 
     # plot_reff(cases, num_seeds, date, sens)
     plot_attack_rate(date, cases, sens)
     # plot_dimensions(date, cases, sens)
+    plot_reff_combined(num_seeds, date)
 
     print('done')
