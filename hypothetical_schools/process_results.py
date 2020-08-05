@@ -29,10 +29,11 @@ schools_reopening_scenarios_label = [
     ]
 
 
-# res = ['0.9', '1.1']
 res = ['0.9']
 cases = ['20', '50', '110']
-
+es_by_scen = []
+ms_by_scen = []
+hs_by_scen = []
 for re in res:
     for case in cases:
         es_with_a_case = []
@@ -42,7 +43,6 @@ for re in res:
             analysis_name = f'{scen}_{case}_cases_re_{re}'
             filename = f'msims/{analysis_name}.msim'
             msim = cv.load(filename)
-            del msim.orig_base_sim
             es = []
             ms = []
             hs = []
@@ -50,9 +50,9 @@ for re in res:
             for j in range(len(msim.sims)):
                 results = pd.DataFrame(msim.sims[j].results)
                 df.append(results)
-                num_es = msim.sims[j].school_info['num_es']
-                num_ms = msim.sims[j].school_info['num_ms']
-                num_hs = msim.sims[j].school_info['num_hs']
+                num_es = msim.sims[j].school_info['num_es']*msim.sims[j]['pop_scale']
+                num_ms = msim.sims[j].school_info['num_ms']*msim.sims[j]['pop_scale']
+                num_hs = msim.sims[j].school_info['num_hs']*msim.sims[j]['pop_scale']
                 es.append(pd.DataFrame(msim.sims[j].school_info['es_with_a_case']))
                 ms.append(pd.DataFrame(msim.sims[j].school_info['ms_with_a_case']))
                 hs.append(pd.DataFrame(msim.sims[j].school_info['hs_with_a_case']))
@@ -77,9 +77,12 @@ for re in res:
 
         es_with_a_case = pd.concat(es_with_a_case, ignore_index=True, axis=1)
         es_with_a_case.columns = schools_reopening_scenarios_label
+        es_by_scen.append(es_with_a_case)
         ms_with_a_case = pd.concat(ms_with_a_case, ignore_index=True, axis=1)
         ms_with_a_case.columns = schools_reopening_scenarios_label
+        ms_by_scen.append(ms_with_a_case)
         hs_with_a_case = pd.concat(hs_with_a_case, ignore_index=True, axis=1)
         hs_with_a_case.columns = schools_reopening_scenarios_label
+        hs_by_scen.append(hs_with_a_case)
 
-
+print(es_by_scen)
