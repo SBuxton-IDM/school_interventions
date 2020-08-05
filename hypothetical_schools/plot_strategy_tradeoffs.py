@@ -5,13 +5,13 @@ look at tradeoffs.
 
 import numpy as np
 import pandas as pd
-# import sciris as sc
+import sciris as sc
 import matplotlib as mplt
 import matplotlib.pyplot as plt
-# import math
+import math
 import os
 import datetime as dt
-# import palettable
+import palettable
 
 
 strats = [
@@ -106,8 +106,8 @@ rel_trans_labels = {
 }
 
 beta_layer_labels = {
-    True: 'Equivalent',
-    False: '20% as infectious'
+    True: 'Same as households',
+    False: '20% as infectious \nas households'
 }
 
 sens_label = {
@@ -215,14 +215,10 @@ def transform_x(x, xmax, xmin, ymax, ymin):
     return slope * x + intercept
 
 
-def plot_attack_rate(date_of_file, cases, sens, re=None, re_choice=None):
+def plot_attack_rate(date_of_file, cases, sens):
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
 
-    # Set defaults if not supplied
-    if re is None: re = '0.9'
-    if re_choice is None: re_choice = 'falling'
-
-    name = 'Cases per 100k in last 14 days'
+    name = 'Expected cases per 100k in \n2 weeks prior to school reopening'
     if '1.1' in cases[0]:
         prev = 'by_cases_rising'
         subtitle = '(Re > 1)'
@@ -249,15 +245,15 @@ def plot_attack_rate(date_of_file, cases, sens, re=None, re_choice=None):
         num_staff += df[df['Unnamed: 0'] == 'num_teachers']['as_normal'].values
         num_students = df[df['Unnamed: 0'] == 'num_students']['as_normal'].values
         for n, strategy in enumerate(scenario_strategies):
-            # num_staff = df[df['Unnamed: 0'] == 'num_staff'][strategy].values
-            # num_staff += df[df['Unnamed: 0'] == 'num_teachers'][strategy].values
+            #num_staff = df[df['Unnamed: 0'] == 'num_staff'][strategy].values
+            #num_staff += df[df['Unnamed: 0'] == 'num_teachers'][strategy].values
 
             num_staff_cases = df[df['Unnamed: 0'] == 'num_staff_cases'][strategy].values
             num_staff_cases += df[df['Unnamed: 0'] == 'num_teacher_cases'][strategy].values
 
             staff.append(100 * num_staff_cases[0] / num_staff[0])
 
-            # num_students = df[df['Unnamed: 0'] == 'num_students'][strategy].values
+            #num_students = df[df['Unnamed: 0'] == 'num_students'][strategy].values
             num_student_cases = df[df['Unnamed: 0'] == 'num_student_cases'][strategy].values
             students.append(100 * num_student_cases[0] / num_students[0])
 
@@ -270,34 +266,22 @@ def plot_attack_rate(date_of_file, cases, sens, re=None, re_choice=None):
 
     width = [-.2, 0, .2]
 
-    prefix = ''
-    suffix = ''
-    if re_choice == 'both_together': # We're plotting both on one plot
-        if '0.9' in re: # It's the first time, create the plot
-            fig, ax_array = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=False, figsize=(20, 9))
-            axs = [fig.axes[0], fig.axes[2]]
-            suffix = ' '*100
-        else: # It's the second time, reuse them
-            fig = plt.gcf()
-            axs = [fig.axes[1], fig.axes[3]] # Pull out the right axes
-            prefix = ' '*130
-    else: # Normal case, just one plot
-        fig, axs = plt.subplots(nrows=2, sharex=True, sharey=False, figsize=(13, 9))
+    fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=0.9)
-    fig.text(0.5, 0.95, prefix + f'COVID-19 Attack Rate in Schools {subtitle}' + suffix, size=24, horizontalalignment='center')
+    fig.suptitle(f'Expected percent of students, teachers, staff with COVID-19 in schools (Sep - Dec)', size=22, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
         for j, case in enumerate(cases):
             if i == 0:
                 ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
-                ax.set_title('Teachers and Staff', size=16, horizontalalignment='center')
+                ax.set_title('Teachers and Staff', size=18, horizontalalignment='center')
             else:
                 ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
-                ax.set_title('Students', size=16, horizontalalignment='center')
-        ax.set_ylabel('Attack Rate (%)', size=14)
+                ax.set_title('Students', size=18, horizontalalignment='center')
+        ax.set_ylabel('Percent with COVID-19', size=16)
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
-        ax.legend(fontsize=14, title=name)
+        ax.legend(fontsize=16, title=name)
 
     fig.savefig(f'attack_rate_{prev}_{date_of_file}.png', format='png')
 
@@ -426,7 +410,7 @@ def plot_attack_rate_by_sens(date_of_file, case, sens):
 
     fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.6, right=0.9)
-    fig.suptitle(f'COVID-19 Attack Rate in Schools (Community Re = {re_labels[case]})', size=20, horizontalalignment='center')
+    fig.suptitle(f'Percent of students, teachers and staff with COVID-19 in schools', size=20, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
         for j, val in enumerate(sensitivity):
@@ -436,7 +420,7 @@ def plot_attack_rate_by_sens(date_of_file, case, sens):
             else:
                 ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=label[val], color=colors[j])
                 ax.set_title('Students', size=16, horizontalalignment='center')
-        ax.set_ylabel('Attack Rate (%)', size=14)
+        ax.set_ylabel('Percent with COVID-19 in school (%)', size=14)
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
         ax.legend(fontsize=14, title=name)
@@ -498,9 +482,9 @@ def plot_reff(cases, num_param_set, date_of_file, sens):
     bottom = 0.10
     top = 0.85
 
-    name = 'Community Reff in 14 days \nprior to school reopening'
-    prev = 'by_comm_re'
-    label = re_labels
+    name = 'Cases per 100k in last 14 days'
+    prev = 'by_cases'
+    label = inc_labels
 
     fig, ax = plt.subplots(figsize=(13,9))
     for i, rate in enumerate(cases):
@@ -604,7 +588,7 @@ def plot_reff_by_sens(cases, num_param_set, date_of_file, sens):
     ax.axhline(y=1, xmin=0, xmax=1, color='black', ls='--')
 
     ax.set_ylabel('Effective Reproductive Number', size=16)
-    ax.set_title(f'Effective Reproductive Number by School Reopening Strategy (Community Re = {re_labels[cases]})', size=16, horizontalalignment='center')
+    ax.set_title(f'Effective Reproductive Number by School Reopening Strategy', size=16, horizontalalignment='center')
     ax.set_ylim(0.7, 1.4)
 
     ax.legend(fontsize=12, title=name)
@@ -638,8 +622,8 @@ def get_re(cases, num_param_set, date_of_file, sens):
         x.append(date.strftime('%b %d'))
 
     date_to_x = {d: i for i, d in enumerate(x)}
-    min_x = date_to_x['Aug 14']
-    max_x = date_to_x['Aug 30']
+    min_x = date_to_x['Sep 01']
+    max_x = date_to_x['Dec 01']
     df_mean = df_mean.iloc[min_x:max_x, ]
     df_mean = df_mean.mean(axis=0)
 
@@ -694,6 +678,10 @@ def plot_dimensions(date_of_file, cases, sens):
         scenario_strategies = scenario_strategies.tolist()
         scenario_strategies.remove('all_remote')
         perc_school_days_lost = []
+        # perc_school_days_lost = [0,	0,	60.76923077,	34.72494893,	59.94845764,	84.83944482]
+        # total = df[df['Unnamed: 0'] == 'num_staff']['as_normal'].values
+        # total += df[df['Unnamed: 0'] == 'num_teachers']['as_normal'].values
+        # total = df[df['Unnamed: 0'] == 'num_students']['as_normal'].values
         attack_rate = []
         efficient_y = []
         efficient_x = []
@@ -800,7 +788,7 @@ def plot_dimensions(date_of_file, cases, sens):
     ax_leg_2.set_xlim(left=0, right=20)
     ax_leg_2.set_ylim(bottom=ybase * 0.9, top=ytop * 1.0)
 
-    ax.set_title(f'Trade-Offs with School Reopening \n {subtitle}', fontsize=20)
+    ax.set_title(f'Trade-Offs with School Reopening', fontsize=20)
     fig.savefig(f'tradeoffs_{prev}_{date_of_file}.png', format='png')
 
 
@@ -808,46 +796,43 @@ if __name__ == '__main__':
     num_seeds = 20
 
     by_case = True
-    re_choice = ['falling', 'rising', 'both_separate', 'both_together'][3] # Choose how to plot r_e
 
-    if re_choice == 'falling':
-        re_list = ['re_0.9']
-    elif re_choice == 'rising':
-        re_list = ['re_1.1']
+    if by_case:
+        cases = ['20_cases', '50_cases', '110_cases']
+        re = 're_0.9'
+        # cases_rising = False
+        # if cases_rising:
+        #     re = 're_1.1'
+        # else:
+        #     re = 're_0.9'
+
+        for i, case in enumerate(cases):
+            cases[i] = case + '_' + re
     else:
-        re_list = ['re_0.9', 're_1.1']
+        cases = ['50_cases_re_0.9']
 
-    for re in re_list:
+    rel_trans = 'under10_0.5trans'
+    beta_layer = '3xschool_beta_layer'
+    #sens = beta_layer
+    #sens = rel_trans
+    sens = None
+    date = '2020-08-05'
 
-        if by_case:
-            cases = ['20_cases', '50_cases', '110_cases']
-            for i, case in enumerate(cases):
-                cases[i] = case + '_' + re
-        else:
-            cases = ['50_cases_re_0.9', '50_cases_re_1.1']
+    comm_inc = get_inc(cases, num_seeds, date, sens)
+    comm_re = get_re(cases, num_seeds, date, sens)
+    # for i, case in enumerate(cases):
+    #     inc_labels[case] = round(comm_inc[i], 0)
+    #
+    print(comm_inc)
+    print(comm_re)
 
-        rel_trans = 'under10_0.5trans'
-        beta_layer = '3xschool_beta_layer'
-        # sens = beta_layer
-        # sens = rel_trans
-        sens = None
-        date = '2020-08-04'
+    if sens is not None:
+        for val in cases:
+            plot_reff_by_sens(val, num_seeds, date, sens)
+            plot_attack_rate_by_sens(date, val, sens)
 
-        comm_inc = get_inc(cases, num_seeds, date, sens)
-        comm_re = get_re(cases, num_seeds, date, sens)
-        # for i, case in enumerate(cases):
-        #     inc_labels[case] = round(comm_inc[i], 0)
-        #
-        print('Incidence rates:', comm_inc)
-        print('R_e rates:', comm_re)
-
-        if sens is not None:
-            for val in cases:
-                plot_reff_by_sens(val, num_seeds, date, sens)
-                plot_attack_rate_by_sens(date, val, sens)
-
-        # plot_reff(cases, num_seeds, date, sens)
-        plot_attack_rate(date, cases, sens, re, re_choice)
-        # plot_dimensions(date, cases, sens)
+    plot_reff(cases, num_seeds, date, sens)
+    plot_attack_rate(date, cases, sens)
+    plot_dimensions(date, cases, sens)
 
     print('done')
