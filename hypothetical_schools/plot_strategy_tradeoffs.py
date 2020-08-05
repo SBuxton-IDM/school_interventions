@@ -5,13 +5,11 @@ look at tradeoffs.
 
 import numpy as np
 import pandas as pd
-import sciris as sc
 import matplotlib as mplt
 import matplotlib.pyplot as plt
-import math
 import os
 import datetime as dt
-import palettable
+import covasim as cv
 
 
 strats = [
@@ -63,12 +61,12 @@ closure_strategy_labels = {
 }
 
 strategy_labels_2 = {
-    'as_normal': 'In person, no\ncountermeasures',
-    'with_screening': 'In person with \n countermeasures \n(NPI, cohorting, \nscreening)',
-    'with_hybrid_scheduling': 'In person with \ncountermeasures, \n A/B scheduling',
-    'ES_MS_inperson_HS_remote': 'Elementary & \nmiddle in \nperson with \ncountermeasures, \nhigh remote',
-    'ES_inperson_MS_HS_remote': 'Elementary in \nperson, with \n countermeasures, \nmiddle & \nhigh remote',
-    'ES_hybrid': 'Elementary with \ncountermeasures, \nA/B scheduling, \n middle & high \nremote',
+    'as_normal':                'All in person, no\ncountermeasures',
+    'with_screening':           'All in person with \n countermeasures \n(NPI, cohorting, \nscreening)',
+    'with_hybrid_scheduling':   'All in person with \ncountermeasures, \n A/B scheduling',
+    'ES_MS_inperson_HS_remote': 'Elementary & middle\nin person with \ncountermeasures, \nhigh remote',
+    'ES_inperson_MS_HS_remote': 'Elementary in\nperson with\ncountermeasures, \nmiddle & high\nremote',
+    'ES_hybrid':                'Elementary with \ncountermeasures and \nA/B scheduling, \nmiddle & high\nremote',
     # 'all_remote': 'All Remote',
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
@@ -117,10 +115,11 @@ sens_label = {
 
 
 # Global plotting styles
-font_size = 30
+font_size = 16
 font_style = 'Roboto Condensed'
 # font_style = 'Barlow Condensed'
 # font_style = 'Source Sans Pro'
+mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
 colors = []
@@ -216,9 +215,9 @@ def transform_x(x, xmax, xmin, ymax, ymin):
 
 
 def plot_attack_rate(date_of_file, cases, sens):
-    colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
+    colors = ['lightseagreen', 'lightsteelblue', 'lightcoral']
 
-    name = 'Expected cases per 100k in \n2 weeks prior to school reopening'
+    name = 'Cases per 100k people during the\ntwo weeks prior to school reopening'
     if '1.1' in cases[0]:
         prev = 'by_cases_rising'
         subtitle = '(Re > 1)'
@@ -266,33 +265,35 @@ def plot_attack_rate(date_of_file, cases, sens):
 
     width = [-.2, 0, .2]
 
-    fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
-    fig.subplots_adjust(hspace=0.6, right=0.9)
-    fig.suptitle(f'Expected percent of students, teachers, staff with COVID-19 in schools (Sep - Dec)', size=22, horizontalalignment='center')
+    fig, axs = plt.subplots(nrows=2, sharex=True, sharey=False, figsize=(13, 9))
+    fig.subplots_adjust(hspace=0.3, right=0.9, bottom=0.15)
+    fig.suptitle(f'Predicted cumulative COVID-19 infection rate from Sep. 1 to Dec. 1 for people in schools', size=24, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
         for j, case in enumerate(cases):
             if i == 0:
                 ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
-                ax.set_title('Teachers and Staff', size=18, horizontalalignment='center')
+                ax.set_title('Teachers and staff', size=20, horizontalalignment='center')
             else:
                 ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
-                ax.set_title('Students', size=18, horizontalalignment='center')
-        ax.set_ylabel('Percent with COVID-19', size=16)
+                ax.set_title('Students', size=20, horizontalalignment='center')
+        ax.set_ylabel('COVID-19 infection rate (%)', size=20)
+        ax.set_ylim([0,25])
         ax.set_xticks(x)
-        ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
-        leg_i = ax.legend(fontsize=14, title=name)
-        leg_i.set_title(name, prop={'size': 14})
+        ax.set_xticklabels(strategy_labels_2.values(), fontsize=14)
+        if i == 0:
+            leg_i = ax.legend(fontsize=16, title=name)
+            leg_i.set_title(name, prop={'size': 16})
         #ax.legend(fontsize=16, title=name)
 
 
-    fig.savefig(f'attack_rate_{prev}_{date_of_file}.png', format='png')
+    cv.savefig(f'attack_rate_{prev}_{date_of_file}.png')
 
 
 def plot_attack_rate_all_re(date_of_file, sens):
     colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
 
-    re = ['re_0.9', 're_1.1']
+    # re = ['re_0.9', 're_1.1']
     cases = ['20_cases', '50_cases', '110_cases']
 
     name = 'Cases per 100k in last 14 days'
@@ -932,6 +933,10 @@ if __name__ == '__main__':
     # plot_attack_rate(date, cases, sens)
     # plot_dimensions(date, cases, sens)
 
+
+    # plot_reff(cases, num_seeds, date, sens)
+    plot_attack_rate(date, cases, sens)
+    # plot_dimensions(date, cases, sens)
     plot_reff_combined(num_seeds, date)
 
     print('done')
