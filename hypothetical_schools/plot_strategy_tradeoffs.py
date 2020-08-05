@@ -63,12 +63,12 @@ closure_strategy_labels = {
 }
 
 strategy_labels_2 = {
-    'as_normal': 'As Normal',
-    'with_screening': 'All In Person \n with Screening, \nNPI, Cohorting',
-    'with_hybrid_scheduling': 'All Hybrid \nScheduling',
-    'ES_MS_inperson_HS_remote': 'Elementary & \nMiddle In Person, \nHigh Remote',
-    'ES_inperson_MS_HS_remote': 'Elementary In \nPerson, Middle \n& High Remote',
-    'ES_hybrid': 'Elementary Hybrid, \n Middle & High \nRemote',
+    'as_normal': 'In person, no\ncountermeasures',
+    'with_screening': 'In person with \n countermeasures \n(NPI, cohorting, \nscreening)',
+    'with_hybrid_scheduling': 'In person with \ncountermeasures, \n A/B scheduling',
+    'ES_MS_inperson_HS_remote': 'Elementary & \nmiddle in \nperson with \ncountermeasures, \nhigh remote',
+    'ES_inperson_MS_HS_remote': 'Elementary in \nperson, with \n countermeasures, \nmiddle & \nhigh remote',
+    'ES_hybrid': 'Elementary with \ncountermeasures, \nA/B scheduling, \n middle & high \nremote',
     # 'all_remote': 'All Remote',
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
@@ -281,7 +281,10 @@ def plot_attack_rate(date_of_file, cases, sens):
         ax.set_ylabel('Percent with COVID-19', size=16)
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
-        ax.legend(fontsize=16, title=name)
+        leg_i = ax.legend(fontsize=14, title=name)
+        leg_i.set_title(name, prop={'size': 14})
+        #ax.legend(fontsize=16, title=name)
+
 
     fig.savefig(f'attack_rate_{prev}_{date_of_file}.png', format='png')
 
