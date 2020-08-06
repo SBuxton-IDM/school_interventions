@@ -249,7 +249,7 @@ if __name__ == '__main__':
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
-        {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': '2020-09-01', 'uv': None}, # TEMP
+        {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
         None,
     ]
@@ -268,7 +268,7 @@ if __name__ == '__main__':
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': '2020-09-01', 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': '2020-09-01', 'hs': None, 'uv': None},
-        {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': '2020-09-01', 'uv': None},# TEMP
+        {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
         {'pk': None, 'es': '2020-09-01', 'ms': None, 'hs': None, 'uv': None},
         None,
     ]
@@ -325,8 +325,8 @@ if __name__ == '__main__':
                             'end_day': '2020-12-01',
                             'rand_seed': int(entry['index']),
                             }
-                    pars['beta'] = 0
-                    print('TEMPPPP')
+                    # pars['beta'] = 0
+                    # print('TEMP BETA')
                     n_popfiles = 5
                     popfile = popfile_stem_change + str(pars['rand_seed'] % n_popfiles) + '.ppl'
                     popfile_new = popfile_stem_change + str(pars['rand_seed'] % n_popfiles) + '.ppl'
