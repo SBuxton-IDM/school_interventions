@@ -285,7 +285,7 @@ if __name__ == '__main__':
     )
     sdict = sc.odict()
     res = ['0.9']#, '1.1']
-    cases = ['20', '50', '110']
+    cases = ['110']# ['20', '50', '110']
     all_sims = []
 
     max_scens = 7 # Run a subset
@@ -369,7 +369,7 @@ if __name__ == '__main__':
                     all_sims.append(sim)
 
     msim = cv.MultiSim(all_sims)
-    msim.run(reseed=False, par_args={'ncpus': 6}, noise=0.0, keep_people=True)
+    msim.run(reseed=False, par_args={'ncpus': 7}, noise=0.0, keep_people=True)
     for sim in msim.sims:
         sdict[sim.label] = sim
         sdict[sim.label].shrink()
