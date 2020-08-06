@@ -319,7 +319,7 @@ if __name__ == '__main__':
                             'pop_infected': p['pop_infected'],
                             'rescale': True,
                             'rescale_factor': 1.1,
-                            'verbose': 0.0,
+                            'verbose': 0.01,
                             'start_day': '2020-07-01',
                             'end_day': '2020-12-01',
                             'rand_seed': int(entry['index']),
