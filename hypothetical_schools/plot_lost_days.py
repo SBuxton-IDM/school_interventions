@@ -1,5 +1,5 @@
 '''
-Run after theoretical_reopening
+Run after theoretical_reopening_explorations. Does not plot. Sorry for the misinformation
 '''
 
 import covasim as cv
