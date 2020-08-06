@@ -284,9 +284,14 @@ if __name__ == '__main__':
         trace_time=5.0,
     )
     sdict = sc.odict()
-    res = ['0.9', '1.1']
-    cases = ['20', '50', '110']
+    res = ['0.9']#, '1.1']
+    cases = ['110']# ['20', '50', '110']
     all_sims = []
+
+    max_scens = 7 # Run a subset
+    total_sims = len(res)*len(cases)*max_scens
+
+    count = 0
     for re in res:
         for case in cases:
             jsonfile = f'optimization_school_reopening_re_{re}_cases_{case}.json'
@@ -295,9 +300,10 @@ if __name__ == '__main__':
             es_with_a_case = []
             ms_with_a_case = []
             hs_with_a_case = []
-            for i, scen in enumerate(schools_reopening_scenarios):
+            for i, scen in enumerate(schools_reopening_scenarios[:max_scens]):
+                count += 1
                 analysis_name = f'{scen}_{case}_cases_re_{re}'
-                print(f'Running {analysis_name}')
+                print(f'Running {count}/{total_sims}: {analysis_name}')
                 if rel_trans:
                     analysis_name = analysis_name + '_under10_0.5trans'
 
@@ -307,17 +313,20 @@ if __name__ == '__main__':
                 for j in range(n_seeds):
                     entry = json[j]
                     p = entry['pars']
+
                     pars = {'pop_size': 225e3,
                             'pop_scale': 10,
                             'pop_type': 'synthpops',
                             'pop_infected': p['pop_infected'],
                             'rescale': True,
                             'rescale_factor': 1.1,
-                            'verbose': 0.1,
+                            'verbose': 0.01,
                             'start_day': '2020-07-01',
                             'end_day': '2020-12-01',
                             'rand_seed': int(entry['index']),
                             }
+                    # pars['beta'] = 0
+                    # print('TEMP BETA')
                     n_popfiles = 5
                     popfile = popfile_stem_change + str(pars['rand_seed'] % n_popfiles) + '.ppl'
                     popfile_new = popfile_stem_change + str(pars['rand_seed'] % n_popfiles) + '.ppl'
@@ -363,7 +372,7 @@ if __name__ == '__main__':
                     all_sims.append(sim)
 
     msim = cv.MultiSim(all_sims)
-    msim.run(reseed=False, par_args={'maxload': 0.5}, noise=0.0, keep_people=True)
+    msim.run(reseed=False, par_args={'ncpus': 7}, noise=0.0, keep_people=True)
     for sim in msim.sims:
         sdict[sim.label] = sim
         sdict[sim.label].shrink()
