@@ -71,6 +71,17 @@ strategy_labels_2 = {
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
 
+strategy_labels_3 = {
+    'as_normal':                'All in person, no countermeasures',
+    'with_screening':           'All in person with countermeasures \n(NPI, cohorting, screening)',
+    'with_hybrid_scheduling':   'All in person with countermeasures, \n A/B scheduling',
+    'ES_MS_inperson_HS_remote': 'Elementary & middle in person with \ncountermeasures, high remote',
+    'ES_inperson_MS_HS_remote': 'Elementary in person with\ncountermeasures, middle & high\nremote',
+    'ES_hybrid':                'Elementary with countermeasures & \nA/B scheduling, middle & high\nremote',
+    # 'all_remote': 'All Remote',
+    # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
+}
+
 measure_labels = {
     'num_staff': 'Total Staff',
     'num_teachers': 'Total Teachers',
@@ -264,6 +275,8 @@ def plot_attack_rate(date_of_file, cases, sens):
     x = np.arange(len(scenario_strategies))
 
     width = [-.2, 0, .2]
+    width_text = [-.28, -.09, .12]
+
 
     fig, axs = plt.subplots(nrows=2, sharex=True, sharey=False, figsize=(13, 9))
     fig.subplots_adjust(hspace=0.3, right=0.9, bottom=0.15)
@@ -273,12 +286,16 @@ def plot_attack_rate(date_of_file, cases, sens):
         for j, case in enumerate(cases):
             if i == 0:
                 ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
+                for h in range(len(x)):
+                    ax.text(h + width_text[j], 0.5 + staff_by_case[j][h].values, round(staff_by_case[j][h].values[0], 1), fontsize=10)
                 ax.set_title('Teachers and staff', size=20, horizontalalignment='center')
             else:
                 ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
+                for h in range(len(x)):
+                    ax.text(h + width_text[j], 0.5 + students_by_case[j][h].values, round(students_by_case[j][h].values[0], 1), fontsize=10)
                 ax.set_title('Students', size=20, horizontalalignment='center')
         ax.set_ylabel('COVID-19 infection rate (%)', size=20)
-        ax.set_ylim([0,25])
+        ax.set_ylim([0,27])
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels_2.values(), fontsize=14)
         if i == 0:
@@ -287,7 +304,7 @@ def plot_attack_rate(date_of_file, cases, sens):
         #ax.legend(fontsize=16, title=name)
 
 
-    cv.savefig(f'attack_rate_{prev}_{date_of_file}.png')
+    cv.savefig(f'attack_rate_{date_of_file}.png')
 
 
 def plot_attack_rate_all_re(date_of_file, sens):
@@ -750,20 +767,10 @@ def get_inc(cases, num_seeds, date, sens):
     return (df_sum)
 
 
-def plot_dimensions(date_of_file, cases, sens):
+def plot_dimensions(date_of_file, cases):
 
     name = 'Cases per 100k in last 14 days'
-    if '1.1' in cases[0]:
-        prev = 'by_cases_rising'
-        subtitle = '(Re > 1)'
-    else:
-        prev = 'by_cases_falling'
-        subtitle = '(Re < 1)'
     label = inc_labels
-
-    if sens is not None:
-        prev = prev + '_' + sens
-        subtitle += f'\n ({sens_label[sens]})'
 
     attack_rate_by_case = []
     perc_school_days_lost_by_case = []
@@ -776,15 +783,11 @@ def plot_dimensions(date_of_file, cases, sens):
         scenario_strategies = scenario_strategies.tolist()
         scenario_strategies.remove('all_remote')
         perc_school_days_lost = []
-        # perc_school_days_lost = [0,	0,	60.76923077,	34.72494893,	59.94845764,	84.83944482]
-        # total = df[df['Unnamed: 0'] == 'num_staff']['as_normal'].values
-        # total += df[df['Unnamed: 0'] == 'num_teachers']['as_normal'].values
-        # total = df[df['Unnamed: 0'] == 'num_students']['as_normal'].values
         attack_rate = []
         efficient_y = []
         efficient_x = []
-        weekend_days = df[df['Unnamed: 0'] == 'school_days_lost']['with_screening'].values
-        total_school_days = df[df['Unnamed: 0'] == 'student_school_days']['with_screening'].values
+        # weekend_days = df[df['Unnamed: 0'] == 'school_days_lost']['with_screening'].values
+        # total_school_days = df[df['Unnamed: 0'] == 'student_school_days']['with_screening'].values
         for n, strategy in enumerate(scenario_strategies):
             total = df[df['Unnamed: 0'] == 'num_staff'][strategy].values
             total += df[df['Unnamed: 0'] == 'num_teachers'][strategy].values
@@ -795,13 +798,14 @@ def plot_dimensions(date_of_file, cases, sens):
             num_cases += df[df['Unnamed: 0'] == 'num_student_cases'][strategy].values
 
             attack_rate.append(100 * num_cases[0] / total[0])
-
+            total_school_days = df[df['Unnamed: 0'] == 'student_school_days'][strategy].values
             school_days_lost = df[df['Unnamed: 0'] == 'school_days_lost'][strategy].values
-            if strategy != 'as_normal':
-                school_days_lost = school_days_lost[0] - weekend_days[0]
-                perc_school_days_lost.append(100 * school_days_lost/total_school_days[0])
-            else:
-                perc_school_days_lost.append(100 * school_days_lost[0] / total_school_days[0])
+            # if strategy != 'as_normal':
+            #     school_days_lost = school_days_lost[0] - weekend_days[0]
+            #     perc_school_days_lost.append(100 * school_days_lost/total_school_days[0])
+            # else:
+            #     perc_school_days_lost.append(100 * school_days_lost[0] / total_school_days[0])
+            perc_school_days_lost.append(100 * school_days_lost[0] / total_school_days[0])
 
             if strategy != 'with_hybrid_scheduling':
                 efficient_y.append(attack_rate[n])
@@ -842,8 +846,8 @@ def plot_dimensions(date_of_file, cases, sens):
                     markeredgewidth=0,
                     )
 
-        ax.set_xlabel('Days of Distance Learning (% of Total School Days)', fontsize=16)
-        ax.set_ylabel('Within-School Attack Rate (%)', fontsize=16)
+        ax.set_xlabel('School days at home (% of total school days)', fontsize=16)
+        ax.set_ylabel('Cumulative COVID-19 infection rate for people in schools (%)', fontsize=16)
         # ax.set_ylim(0, 15)
         # ax.set_xlim(0, 10)
     ax.tick_params(labelsize=16)
@@ -856,7 +860,7 @@ def plot_dimensions(date_of_file, cases, sens):
     ax_height = (top - bottom) / 2.
     ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
     for s, strat in enumerate(scenario_strategies):
-        ax_leg.plot(-5, -5, color=colors[s], label=strategy_labels_2[strat])
+        ax_leg.plot(-5, -5, color=colors[s], label=strategy_labels_3[strat])
 
     leg = ax_leg.legend(loc=10, fontsize=14)
     # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
@@ -887,7 +891,7 @@ def plot_dimensions(date_of_file, cases, sens):
     ax_leg_2.set_ylim(bottom=ybase * 0.9, top=ytop * 1.0)
 
     ax.set_title(f'Trade-Offs with School Reopening', fontsize=20)
-    fig.savefig(f'tradeoffs_{prev}_{date_of_file}.png', format='png')
+    fig.savefig(f'tradeoffs_{date_of_file}.png', format='png')
 
 
 if __name__ == '__main__':
@@ -914,29 +918,25 @@ if __name__ == '__main__':
     #sens = beta_layer
     #sens = rel_trans
     sens = None
-    date = '2020-08-05'
+    date = '2020-08-06'
 
-    comm_inc = get_inc(cases, num_seeds, date, sens)
-    comm_re = get_re(cases, num_seeds, date, sens)
+    # comm_inc = get_inc(cases, num_seeds, date, sens)
+    # comm_re = get_re(cases, num_seeds, date, sens)
     # for i, case in enumerate(cases):
     #     inc_labels[case] = round(comm_inc[i], 0)
     #
-    print(comm_inc)
-    print(comm_re)
+    # print(comm_inc)
+    # print(comm_re)
 
     # if sens is not None:
     #     for val in cases:
     #         plot_reff_by_sens(val, num_seeds, date, sens)
     #         plot_attack_rate_by_sens(date, val, sens)
-    #
-    # plot_reff(cases, num_seeds, date, sens)
-    # plot_attack_rate(date, cases, sens)
-    # plot_dimensions(date, cases, sens)
 
 
     # plot_reff(cases, num_seeds, date, sens)
     plot_attack_rate(date, cases, sens)
-    # plot_dimensions(date, cases, sens)
-    plot_reff_combined(num_seeds, date)
+    # plot_dimensions(date, cases)
+    # plot_reff_combined(num_seeds, date)
 
     print('done')
