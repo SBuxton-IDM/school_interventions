@@ -119,9 +119,15 @@ beta_layer_labels = {
     False: '20% as infectious \nas households'
 }
 
+rel_sus_labels = {
+    True: '< 20 as susceptible as >20',
+    False: '<20 less susceptible'
+}
+
 sens_label = {
     'under10_0.5trans': '50% reduced transmission in under 10s',
-    '3xschool_beta_layer': 'Infectivity in schools relative to households'
+    '3xschool_beta_layer': 'Infectivity in schools relative to households',
+    'rel_sus': 'Relative Susceptibility of <20s'
 }
 
 
@@ -307,30 +313,30 @@ def plot_attack_rate(date_of_file, cases, sens):
     cv.savefig(f'attack_rate_{date_of_file}.png')
 
 
-def plot_attack_rate_all_re(date_of_file, sens):
-    colors = ['lightcoral', 'lightseagreen', 'lightsteelblue', 'cornflowerblue']
+def plot_attack_rate_combined(date_of_file):
+    colors = ['forestgreen', 'mediumpurple', 'tab:orange', 'maroon']
 
-    # re = ['re_0.9', 're_1.1']
-    cases = ['20_cases', '50_cases', '110_cases']
+    case = '50_cases_re_0.9'
+    rel_trans = 'under10_0.5trans'
+    beta_layer = '3xschool_beta_layer'
+    rel_sus = 'rel_sus'
+    sens = [rel_trans, None, rel_sus, beta_layer]
 
-    name = 'Cases per 100k in last 14 days'
+    name = 'Infectivity/Susceptibility Assumptions'
+    sens_labels = {
+        None: 'Baseline: children under 10 as infectious as adults; '
+              '\nper-contact infectivity in school 20% relative to households;'
+              '0-20 year olds 33-66% less susceptible than 20+',
+        rel_trans: '50% reduced transmission in children under 10',
+        beta_layer: 'Same infectivity per contact in schools as households',
+        rel_sus: '0-20 year olds as susceptible as 20+'
+    }
 
-    if '1.1' in cases[0]:
-        prev = 'by_cases_rising'
-        subtitle = '(Re > 1)'
-    else:
-        prev = 'by_cases_falling'
-        subtitle = '(Re < 1)'
-    label = inc_labels
-
-    if sens is not None:
-        prev = prev + '_' + sens
-        subtitle += f'\n ({sens_label[sens]})'
 
     staff_by_case = []
     students_by_case = []
-    for _, case in enumerate(cases):
-        df = outputs_df(date_of_file, case, sens)
+    for _, sen in enumerate(sens):
+        df = outputs_df(date_of_file, case, sen)
         scenario_strategies = df.columns[1:]
         scenario_strategies = scenario_strategies.tolist()
         scenario_strategies.remove('all_remote')
@@ -360,26 +366,37 @@ def plot_attack_rate_all_re(date_of_file, sens):
 
     x = np.arange(len(scenario_strategies))
 
-    width = [-.2, 0, .2]
+    width = [-.3, -.1, .1, .3]
+    width_text = [-.38, -.18, .05, .24]
 
     fig, axs = plt.subplots(nrows = 2, sharex=True, sharey=False, figsize=(13, 9))
-    fig.subplots_adjust(hspace=0.6, right=0.9)
-    fig.suptitle(f'COVID-19 Attack Rate in Schools {subtitle}', size=24, horizontalalignment='center')
+    fig.subplots_adjust(hspace=0.3, right=0.95)
+    fig.suptitle(f'Predicted cumulative COVID-19 infection rate from Sep. 1 to Dec. 1 for people in schools', size=24, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
-        for j, case in enumerate(cases):
+        for j, sen in enumerate(sens):
             if i == 0:
-                ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
-                ax.set_title('Teachers and Staff', size=16, horizontalalignment='center')
+                ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=sens_labels[sen], color=colors[j])
+                for h in range(len(x)):
+                    ax.text(h + width_text[j], 0.5 + staff_by_case[j][h].values,
+                            round(staff_by_case[j][h].values[0], 1), fontsize=10)
+                ax.set_title('Teachers and staff', size=20, horizontalalignment='center')
             else:
-                ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
-                ax.set_title('Students', size=16, horizontalalignment='center')
-        ax.set_ylabel('Attack Rate (%)', size=14)
+                ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=sens_labels[sen], color=colors[j])
+                for h in range(len(x)):
+                    ax.text(h + width_text[j], 0.5 + students_by_case[j][h].values,
+                            round(students_by_case[j][h].values[0], 1), fontsize=10)
+                ax.set_title('Students', size=20, horizontalalignment='center')
+        ax.set_ylabel('COVID-19 infection rate (%)', size=20)
+        ax.set_ylim([0, 100])
         ax.set_xticks(x)
         ax.set_xticklabels(strategy_labels_2.values(), fontsize=12)
-        ax.legend(fontsize=14, title=name)
+        if i == 0:
+            leg_i = ax.legend(fontsize=12, title=name)
+            leg_i.set_title(name, prop={'size': 16})
+        # ax.legend(fontsize=16, title=name)
 
-    fig.savefig(f'attack_rate_{prev}_{date_of_file}.png', format='png')
+    fig.savefig(f'attack_rate_sens_{date_of_file}.png', format='png')
 
 
 def plot_attack_rate_by_sens(date_of_file, case, sens):
@@ -392,10 +409,14 @@ def plot_attack_rate_by_sens(date_of_file, case, sens):
         name = 'Relative Transmission in <10s'
         prev = 'rel_trans'
         label = rel_trans_labels
-    else:
+    elif sens == '3xschool_beta_layer':
         name = 'Relative Transmission in Schools'
         prev = 'beta_layer'
         label = beta_layer_labels
+    else:
+        name = 'Relative Transmission in Schools'
+        prev = 'rel_sus'
+        label = rel_sus_labels
 
     staff_by_case = []
     students_by_case = []
@@ -451,19 +472,22 @@ def plot_attack_rate_by_sens(date_of_file, case, sens):
 
 def plot_reff_combined(num_param_set, date_of_file):
 
-    colors = ['lightseagreen', 'lightsteelblue', 'lightcoral']
+    colors = ['forestgreen', 'mediumpurple', 'tab:orange', 'maroon']
 
     case = '50_cases_re_0.9'
     rel_trans = 'under10_0.5trans'
     beta_layer = '3xschool_beta_layer'
-    sens = [rel_trans, None, beta_layer]
+    rel_sus = 'rel_sus'
+    sens = [rel_trans, None, rel_sus, beta_layer]
 
-    name = 'Infectivity Assumptions'
+    name = 'Infectivity/Susceptibility Assumptions'
     sens_labels = {
         None: 'Baseline: children under 10 as infectious as adults; '
-              '\nper-contact infectivity in school 20% relative to households',
+              '\nper-contact infectivity in school 20% relative to households;'
+              '0-20 year olds 33-66% less susceptible than 20+',
         rel_trans: '50% reduced transmission in children under 10',
-        beta_layer: 'Same infectivity per contact in schools as households'
+        beta_layer: 'Same infectivity per contact in schools as households',
+        rel_sus: '0-20 year olds as susceptible as 20+'
     }
 
     df_by_prev = []
@@ -506,7 +530,7 @@ def plot_reff_combined(num_param_set, date_of_file):
 
     x = np.arange(len(strategy_labels))
 
-    width = [-.2, 0, .2]
+    width = [-.3, -.1, .1, .3]
 
     left = 0.07
     right = 0.9
@@ -897,7 +921,7 @@ def plot_dimensions(date_of_file, cases):
 if __name__ == '__main__':
     num_seeds = 20
 
-    by_case = True
+    by_case = False
 
     if by_case:
         cases = ['20_cases', '50_cases', '110_cases']
@@ -915,10 +939,12 @@ if __name__ == '__main__':
 
     rel_trans = 'under10_0.5trans'
     beta_layer = '3xschool_beta_layer'
+    rel_sus = 'rel_sus'
     #sens = beta_layer
     #sens = rel_trans
-    sens = None
-    date = '2020-08-06'
+    sens = 'rel_sus'
+    # sens = None
+    date = '2020-08-13'
 
     # comm_inc = get_inc(cases, num_seeds, date, sens)
     # comm_re = get_re(cases, num_seeds, date, sens)
@@ -928,15 +954,16 @@ if __name__ == '__main__':
     # print(comm_inc)
     # print(comm_re)
 
-    # if sens is not None:
-    #     for val in cases:
-    #         plot_reff_by_sens(val, num_seeds, date, sens)
-    #         plot_attack_rate_by_sens(date, val, sens)
+    if sens is not None:
+        for val in cases:
+            # plot_reff_by_sens(val, num_seeds, date, sens)
+            plot_attack_rate_by_sens(date, val, sens)
 
 
     # plot_reff(cases, num_seeds, date, sens)
-    plot_attack_rate(date, cases, sens)
+    # plot_attack_rate(date, cases, sens)
     # plot_dimensions(date, cases)
-    # plot_reff_combined(num_seeds, date)
+    plot_reff_combined(num_seeds, date)
+    plot_attack_rate_combined(date)
 
     print('done')
