@@ -19,8 +19,59 @@ Test 3: Each school type (ES, MS, HS) has its own schedule
 Configuration:
 •	Beta set to 0 
 •	Symptomatic period is the whole simulation (same number of infected people at all times)
-•	0 people infected at start, infect an entire school (just student?) population on day 1, school year starts day 2
 •	Loop through school closure options which are applied to other schools (if you are infecting an ES, modify HS and MS)
+Verification
+•	Ensure that more and more schools are opened as the simulator steps through the days
+Test 4: Number needed to close schools boundaries
+Configuation: 
+•	pop_infected: 0/school_size
+•	"No flu like illness"
+•	Enable school closure intervention
+Verification:
+•	assert that all schools are closed with a pop_infected of 0
+•	assert that when num_pos = school_size the school shuts down if all students are infected
+Test 5: Determine that iliprev has reasonable boundaries
+Configuration:
+•	pop_infected = 0
+•	Enable school closure intervention
+•	Set ili_prev to 0 and -1
+Verification:
+•	Ensure that both ili_prev values throw appropriate exceptions
+Test 6: Test frequency and accuracy should observe all infections when perfect
+Configuration
+•	pop_infected: 1000
+•	"No flu like illness"
+•	Set test_freq and test to 1
+Verification:
+•	num_diagnosed should be equal to cum_infected
+Test 7: Raising ili_prev should increase the number of school days lost
+•	pop_infected: 1000
+•	Set test_freq and test to random but consistent values
+Verification:
+•	changing ili_prev from .15 to .4 should increase the total number of schools days lost
+Test 8: Raising ili_prev should 
+•	pop_infected: 1000
+•	"No flu like illness"
+•	Set test_freq and test to 1
+Verification:
+•	num_diagnosed should be equal to cum_infected
+Test 9: Raising num_pos should lead to same or fewer days lost due to school closures
+•	pop_infected: 100
+•	"No flu like illness"
+•	Set num_pos from 1 to 10 to 100
+Verification:
+•	As num_pos increases ensure that days lost are either decreasing or the same
+•	Test that there is a difference between num_pos=1 and num_pos=100
+Test 10: Raising num_pos should lead to same or fewer days lost due to school closures
+•	pop_infected: 100
+•	"No flu like illness"
+•	Set num_pos from 1 to 10 to 100
+Verification:
+•	As num_pos increases ensure that days lost are either decreasing or the same
+•	Test that there is a difference between num_pos=1 and num_pos=100
+
+
+
 """
 import covasim as cv
 import unittest
@@ -219,7 +270,7 @@ class SchoolParameters():
         sim.run()
         self.assertEqual(reopen_schools.close_school.count(False), 0)
 
-    def iliprevExceptions:
+    def iliprevExceptions(self):
         make_population()
 
         pars = {'pop_size': 20e3,
@@ -271,6 +322,197 @@ class SchoolParameters():
             ]
         sim['interventions'] = interventions
         self.assertRaises(AttributeError, sim.run())
+
+
+    def testingParams(self):
+        pars = {'pop_size': 1000,
+                'pop_scale': 10,
+                'pop_type': 'synthpops',
+                'pop_infected': 20,
+                'rescale': True,
+                'verbose': 1,
+                'start_day': '2020-08-01',
+                'end_day': '2020-09-01',
+                'rand_seed': 0,
+                }
+        popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
+        sim = cv.Sim(pars, popfile=popfile, load_pop=True)
+
+        reopen_schools = cv.reopen_schools(
+                start_day= '2020-08-01',
+                test=0.8,
+                test_freq=0.5,
+                ili_prev=0.25,
+                num_pos=None, 
+                label='reopen_schools'
+            )
+        interventions = [
+            cv.close_schools(
+                    day_schools_closed='2020-08-01',
+                    start_day='2020-08-01',
+                    label='close_schools'
+                ),
+            reopen_schools
+            ]
+
+        sim['interventions'] = interventions
+
+        sim.run()
+        # No students should be left undiagnosed
+        self.assertEqual(reopen_schools.num_undiagnosed, 0)
+
+    def testingIliSchoolDays(self):
+        pars = {'pop_size': 1000,
+                'pop_scale': 10,
+                'pop_type': 'synthpops',
+                'pop_infected': 20,
+                'rescale': True,
+                'verbose': 1,
+                'start_day': '2020-08-01',
+                'end_day': '2020-09-01',
+                'rand_seed': 0,
+                }
+        popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
+        sim = cv.Sim(pars, popfile=popfile, load_pop=True)
+
+        reopen_schools = cv.reopen_schools(
+                start_day= '2020-08-01',
+                test=0.8,
+                test_freq=0.5,
+                ili_prev=0.15,
+                num_pos=None, 
+                label='reopen_schools'
+            )
+        interventions = [
+            cv.close_schools(
+                    day_schools_closed='2020-08-01',
+                    start_day='2020-08-01',
+                    label='close_schools'
+                ),
+            reopen_schools
+            ]
+
+        sim['interventions'] = interventions
+
+        sim.run()
+        # No students should be left undiagnosed
+        num_school_days_lost_i = sim.school_info['school_days_lost']
+
+        reopen_schools = cv.reopen_schools(
+                start_day= '2020-08-01',
+                test=0.8,
+                test_freq=0.5,
+                ili_prev=0.5,
+                num_pos=None, 
+                label='reopen_schools'
+            )
+        interventions = [
+            cv.close_schools(
+                    day_schools_closed='2020-08-01',
+                    start_day='2020-08-01',
+                    label='close_schools'
+                ),
+            reopen_schools
+            ]
+
+        sim['interventions'] = interventions
+
+        sim.run()
+        # Can add more cases for greater granularity of testing
+        num_school_days_lost_f = sim.school_info['school_days_lost']
+        self.assertEqual(num_school_days_lost_i, num_school_days_lost_f)
+
+
+    def numPosDays(self):
+        make_population()
+
+        pars = {'pop_size': 20e3,
+                'pop_scale': 10,
+                'pop_type': 'synthpops',
+                'pop_infected': 20e3,
+                'rescale': True,
+                'verbose': 1,
+                'start_day': '2020-08-01',
+                'end_day': '2020-08-30',
+                'rand_seed': 0,
+                }
+        popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
+        sim = cv.Sim(pars, popfile=popfile, load_pop=True)
+        reopen_schools = cv.reopen_schools(
+                start_day= '2020-08-05',
+                test=0.99,
+                ili_prev=0,
+                num_pos=1, 
+                label='reopen_schools'
+            )
+
+        interventions = [
+            cv.close_schools(
+                    day_schools_closed='2020-08-01',
+                    start_day='2020-08-05',
+                    label='close_schools'
+                ),
+            reopen_schools
+            ]
+
+        sim['interventions'] = interventions
+
+        sim.run()
+        num_school_days_lost_a = sim.school_info['school_days_lost']
+
+        reopen_schools = cv.reopen_schools(
+                start_day= '2020-08-05',
+                test=0.99,
+                ili_prev=0,
+                num_pos=20, 
+                label='reopen_schools'
+            )
+
+        interventions = [
+            cv.close_schools(
+                    day_schools_closed='2020-08-01',
+                    start_day='2020-08-05',
+                    label='close_schools'
+                ),
+            reopen_schools
+            ]
+        sim['interventions'] = interventions
+
+        sim.run()
+        num_school_days_lost_b = sim.school_info['school_days_lost']      
+        
+        reopen_schools = cv.reopen_schools(
+                start_day= '2020-08-05',
+                test=0.99,
+                ili_prev=0,
+                num_pos=100, 
+                label='reopen_schools'
+            )
+
+        interventions = [
+            cv.close_schools(
+                    day_schools_closed='2020-08-01',
+                    start_day='2020-08-05',
+                    label='close_schools'
+                ),
+            reopen_schools
+            ]
+        sim['interventions'] = interventions
+
+        # This requires a bit of fenegling and testing to determine reasonable relative 
+        # values
+        self.assertGreater(num_school_days_lost_a, num_school_days_lost_b)
+        self.assertGreater(num_school_days_lost_b, num_school_days_lost_c)
+
+    @unittest.skip("NYI")
+    def testDial(self):
+            #Increasing test frequency and accuracy should increase diagnoses
+
+
+
+    
+
+    
 
 
 
