@@ -205,7 +205,6 @@ class SchoolParameters():
         for i in range(1, 26):
             sim.step()
             if i % 5 == 0:
-                sim.step()
                 newOpening = len(num for num in reopen_schools.close_school if num is False)
                 if newOpening > openedCounter:
                     openedCounter = newOpening
