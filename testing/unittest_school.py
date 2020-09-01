@@ -183,7 +183,7 @@ class SchoolParameters():
         popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
         sim = cv.Sim(pars, popfile=popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
-                start_day= '2020-08-05',
+                start_day= day_schools_open,
                 test=0.99,
                 ili_prev=0,
                 num_pos=None, 
@@ -205,12 +205,12 @@ class SchoolParameters():
         for i in range(1, 26):
             sim.step()
             if i % 5 == 0:
-                sim.step():
-                    newOpening = len(num for num in reopen_schools.close_school if num is False)
-                    if newOpening > openedCounter:
-                        openedCounter = newOpening
-                    else:
-                        self.assertGreater(newOpening, openedCounter)
+                sim.step()
+                newOpening = len(num for num in reopen_schools.close_school if num is False)
+                if newOpening > openedCounter:
+                    openedCounter = newOpening
+                else:
+                    self.assertGreater(newOpening, openedCounter)
     
     def numposLimit(self):
         make_population()
@@ -340,8 +340,8 @@ class SchoolParameters():
 
         reopen_schools = cv.reopen_schools(
                 start_day= '2020-08-01',
-                test=0.8,
-                test_freq=0.5,
+                test=1,
+                test_freq=1,
                 ili_prev=0.25,
                 num_pos=None, 
                 label='reopen_schools'
