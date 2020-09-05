@@ -103,29 +103,43 @@ popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
 class SchoolParameters(unittest.TestCase):
 
     def noinfected(self):
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        SIM_PARAMS2 = pars = {'pop_size': 20e3,
+                'pop_type': 'synthpops',
+                'pop_infected': 0,
+                'verbose': 1,
+                'start_day': '2020-08-01',
+                'end_day': '2020-09-01',
+                'rand_seed': 0,
+                }
+    popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
 
-        interventions = [
-            cv.close_schools(
-                    day_schools_closed='2020-08-01',
-                    start_day='2020-08-15',
-                    label='close_schools'
-                ),
-            cv.reopen_schools(
-                start_day= '2020-08-15',
-                test=0.99,
-                ili_prev=0,
-                num_pos=None, 
-                label='reopen_schools'
-            )
-            ]
+    sim = cv.Sim(SIM_PARAMS2, popfile=popfile, load_pop=True)
 
-        sim['interventions'] = interventions
 
-        sim.run()
-        cum_infected = sim.results['cum_infections']
+    interventions = [
+        cv.close_schools(
+                day_schools_closed='2020-08-01',
+                label='close_schools'
+            ),
+        cv.reopen_schools(
+            start_day= {'pk': '2020-08-01', 'es': '2020-08-01', 'ms': '2020-08-01', 'hs': '2020-08-01', 'uv': '2020-08-01'},
+            test=0.99,
+            ili_prev=0,
+            num_pos=None, 
+            label='reopen_schools'
+        ),
+        cv.change_beta(1, 0)
+        ]
 
-        assert cum_infected[-1] == 0
+    sim['interventions'] = interventions
+
+    sim.run()
+    num_school_days_lost = sim.school_info['school_days_lost']
+    num_student_school_days = sim.school_info['total_student_school_days']
+
+    #assertinhg that all school days are lost
+    self.assertEqual(num_school_days_lost, num_student_school_days)
+    self.assertGreater(num_school_days, 0)
 
     def allInfected(self):
 
