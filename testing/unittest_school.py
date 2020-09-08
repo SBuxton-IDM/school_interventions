@@ -111,41 +111,49 @@ class SchoolParameters(unittest.TestCase):
                 'end_day': '2020-09-01',
                 'rand_seed': 0,
                 }
-    popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
+        popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
 
-    sim = cv.Sim(SIM_PARAMS2, popfile=popfile, load_pop=True)
+        sim = cv.Sim(SIM_PARAMS2, popfile=popfile, load_pop=True)
 
 
-    interventions = [
-        cv.close_schools(
-                day_schools_closed='2020-08-01',
-                label='close_schools'
+        interventions = [
+            cv.close_schools(
+                    day_schools_closed='2020-08-01',
+                    label='close_schools'
+                ),
+            cv.reopen_schools(
+                start_day= {'pk': '2020-08-01', 'es': '2020-08-01', 'ms': '2020-08-01', 'hs': '2020-08-01', 'uv': '2020-08-01'},
+                test=0.99,
+                ili_prev=0,
+                num_pos=None, 
+                label='reopen_schools'
             ),
-        cv.reopen_schools(
-            start_day= {'pk': '2020-08-01', 'es': '2020-08-01', 'ms': '2020-08-01', 'hs': '2020-08-01', 'uv': '2020-08-01'},
-            test=0.99,
-            ili_prev=0,
-            num_pos=None, 
-            label='reopen_schools'
-        ),
-        cv.change_beta(1, 0)
-        ]
+            cv.change_beta(1, 0)
+            ]
 
-    sim['interventions'] = interventions
+        sim['interventions'] = interventions
 
-    sim.run()
-    num_school_days_lost = sim.school_info['school_days_lost']
-    num_student_school_days = sim.school_info['total_student_school_days']
+        sim.run()
+        num_school_days_lost = sim.school_info['school_days_lost']
+        num_student_school_days = sim.school_info['total_student_school_days']
 
-    #assertinhg that all school days are lost
-    self.assertEqual(num_school_days_lost, num_student_school_days)
-    self.assertGreater(num_school_days, 0)
+        #assertinhg that all school days are lost
+        self.assertEqual(num_school_days_lost, num_student_school_days)
+        self.assertGreater(num_student_school_days, 0)
 
     def allInfected(self):
+        SIM_PARAMS3 = pars = {'pop_size': 20e3,
+                'pop_type': 'synthpops',
+                'pop_infected': 20e3,
+                'verbose': 1,
+                'start_day': '2020-08-01',
+                'end_day': '2020-08-10',
+                'rand_seed': 0,
+                }
 
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        sim = cv.Sim(SIM_PARAMS3, popfile=popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
-                start_day= '2020-08-10',
+                start_day= '2020-08-05',
                 test=0.99,
                 ili_prev=0,
                 num_pos=None, 
@@ -155,7 +163,7 @@ class SchoolParameters(unittest.TestCase):
         interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
-                    start_day='2020-08-10',
+                    start_day='2020-08-05',
                     label='close_schools'
                 ),
             reopen_schools
@@ -175,7 +183,7 @@ class SchoolParameters(unittest.TestCase):
 
     def differentSchedules(self):
         # Setting up different schedules and ensuring that the simulation closes schools on right days
-        day_schools_open = {'pk': '2020-08-05', 'es': '2020-08-10', 'ms': '2020-08-15', 'hs': '2020-08-20', 'uv': '2020-08-25'},
+        day_schools_open = {'pk': '2020-08-05', 'es': '2020-08-10', 'ms': '2020-08-15', 'hs': '2020-08-20', 'uv': '2020-08-25'}
 
 
         sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
@@ -209,8 +217,16 @@ class SchoolParameters(unittest.TestCase):
                     self.assertGreater(newOpening, openedCounter)
     
     def numposLimit(self):
+        SIM_PARAMS4 = pars = {'pop_size': 20e3,
+                'pop_type': 'synthpops',
+                'pop_infected': 100,
+                'verbose': 1,
+                'start_day': '2020-08-01',
+                'end_day': '2020-08-10',
+                'rand_seed': 0,
+                }
 
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        sim = cv.Sim(SIM_PARAMS4, popfile=popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
                 start_day= '2020-08-05',
                 test=0.99,
@@ -231,7 +247,7 @@ class SchoolParameters(unittest.TestCase):
         sim.run()
         self.assertEqual(list(reopen_schools.close_school).count(False), 0) # Will figure out this weird list issue promptly
 
-        sim2 = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        sim2 = cv.Sim(SIM_PARAMS4, popfile=popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
                 start_day= '2020-08-05',
                 test=0.99,
