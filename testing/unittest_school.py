@@ -85,10 +85,14 @@ import covasim as cv
 import unittest
 from for_testing import make_population
 import sciris as sc
+import os
 
 # This test suite tests the parameters of the two school related interventions in covid-schools
 # Must run make_population first
-make_population()
+popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
+if not os.path.exists(popfile):
+    make_population()
+    
 SIM_PARAMS = pars = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 100,
@@ -97,10 +101,9 @@ SIM_PARAMS = pars = {'pop_size': 20e3,
                 'end_day': '2020-09-01',
                 'rand_seed': 0,
                 }
-popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
 class SchoolParameters(unittest.TestCase):
 
-    def noinfected(self):
+    def test_no_infected(self):
         SIM_PARAMS2 = pars = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 0,
@@ -139,7 +142,7 @@ class SchoolParameters(unittest.TestCase):
         self.assertEqual(num_school_days_lost, num_student_school_days)
         self.assertGreater(num_student_school_days, 0)
 
-    def allInfected(self):
+    def test_all_infected(self):
         SIM_PARAMS3 = pars = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 20e3,
@@ -179,7 +182,7 @@ class SchoolParameters(unittest.TestCase):
         #assertinhg that all school days are lost
         self.assertEqual(num_school_days_lost, num_student_school_days)
 
-    def differentSchedules(self):
+    def test_different_schedules(self):
         day_schools_open1 = {'pk': '2020-08-05', 'es': '2020-09-05', 'ms': '2020-09-05', 'hs': '2020-09-05', 'uv': '2020-09-05'}
         day_schools_open2 = {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-09-05', 'hs': '2020-09-05', 'uv': '2020-09-05'}
         day_schools_open3 = {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-09-05', 'hs': '2020-09-05', 'uv': '2020-09-05'}
@@ -226,7 +229,7 @@ class SchoolParameters(unittest.TestCase):
             self.assertGreater(opened_initial, new_opened)
             opened_initial = new_opened
     
-    def numposLimit(self):
+    def test_numpos_limit(self):
         SIM_PARAMS6 = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 100,
@@ -256,7 +259,7 @@ class SchoolParameters(unittest.TestCase):
         sim.run()
         self.assertEqual(reopen_schools.num_schools, reopen_schools.closed.count(True)) # Ensuring that all schools are closed
 
-    def iliprevExceptions(self):
+    def test_iliprev_exceptions(self):
         SIM_PARAMS6 = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 100,
@@ -303,7 +306,7 @@ class SchoolParameters(unittest.TestCase):
         self.assertRaises(ValueError, sim.run())
 
 
-    def testingParams(self):
+    def test_testing_params(self):
         SIM_PARAMS = pars = {'pop_size': 20e3,
                         'pop_type': 'synthpops',
                         'pop_infected': 100,
@@ -335,7 +338,7 @@ class SchoolParameters(unittest.TestCase):
         # No students should be left undiagnosed
         self.assertEqual(reopen_schools.num_undiagnosed == 0)
 
-    def testingIliSchoolDays(self):
+    def test_ili_schooldays(self):
 
         SIM_PARAMS = pars = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
@@ -390,7 +393,7 @@ class SchoolParameters(unittest.TestCase):
         self.assertGreater(num_students_screen_pos_final, num_screen_positive_initial)
 
 
-    def numPosDays(self):
+    def test_numpos_days(self):
 
         sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
@@ -458,7 +461,7 @@ class SchoolParameters(unittest.TestCase):
         self.assertGreater(num_school_days_lost_a, num_school_days_lost_b)
         self.assertGreater(num_school_days_lost_b, num_school_days_lost_c)
 
-    def testDial(self):
+    def test_testing_dial(self):
         sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
         # Setting test to 0.1, trace to 0 so that trace doesn't mess up validation
         reopen_schools = cv.reopen_schools(
@@ -529,7 +532,8 @@ class SchoolParameters(unittest.TestCase):
         self.assertGreater(diagnoses_b, diagnoses_c)
 
     
-    def testFreqDial(self):
+    def test_freq_dial(self):
+        is_debugging = False
         SIM_PARAMS8 = pars = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 5e3,
@@ -542,73 +546,46 @@ class SchoolParameters(unittest.TestCase):
         # Testing daily, bidaily, and every third day testing, trace set to 0 so it doesn't mess with validation
         # since if you have teachers tested and traced then infectious kiddos would be sent home and the infection rate would
         # be substantially lower
-        reopen_schools = cv.reopen_schools(
-                start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
-                test_freq=1,
-                trace=0,
-                ili_prev=0,
-                label='reopen_schools'
-            )
+        results = []
+        for i in range(1, 3):
+            reopen_schools = cv.reopen_schools(
+                    start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
+                    test_freq=i,
+                    trace=0,
+                    ili_prev=0,
+                    label='reopen_schools'
+                )
 
-        interventions = [
-            cv.close_schools(
-                    day_schools_closed='2020-08-01',
-                    label='close_schools'
-                ),
-            reopen_schools
-            ]
+            interventions = [
+                cv.close_schools(
+                        day_schools_closed='2020-08-01',
+                        label='close_schools'
+                    ),
+                reopen_schools
+                ]
 
-        sim['interventions'] = interventions
+            sim['interventions'] = interventions
 
-        sim.run()
-        diagnoses_a = reopen_schools.num_diagnosed
+            sim.run()
+            
+            # May want to load school_info from differently saved json
+            sim.to_json(output_filename=f"DEBUG_test_freq_{i}.json")
+            with open(f"json_test_allinfected.json") as f:
+                json_format = json.load(f)
+            
+            results.append(sim.school_info['num_teachers_tested'])
 
-        reopen_schools = cv.reopen_schools(
-                start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
-                test_freq=2,
-                ili_prev=0,
-                trace=0, 
-                label='reopen_schools'
-            )
+           
 
-        interventions = [
-            cv.close_schools(
-                    day_schools_closed='2020-08-01',
-                    label='close_schools'
-                ),
-            reopen_schools
-            ]
-        sim['interventions'] = interventions
-
-        sim.run()
-        diagnoses_b = reopen_schools.num_diagnosed   
-        
-        reopen_schools = cv.reopen_schools(
-                start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
-                test_freq=3,
-                ili_prev=0,
-                trace=0, 
-                label='reopen_schools'
-            )
-        interventions = [
-            cv.close_schools(
-                    day_schools_closed='2020-08-01',
-                    label='close_schools'
-                ),
-            reopen_schools
-            ]
-        
-        sim['interventions'] = interventions
-
-        diagnoses_c = reopen_schools.num_diagnosed
+            
 
         # This requires a bit of fenegling and testing to determine reasonable relative 
-        # values
-        self.assertGreater(diagnoses_c, diagnoses_b)
-        self.assertGreater(diagnoses_b, diagnoses_a)
+        # values, but more frequent testing should lead to more diagnoses in absence of tracing
+        self.assertGreater(results[0], results[1])
+        self.assertGreater(results[1], results[2])
 
     @unittest.skip("Still need to mess with relative values to get it to be reasonable")
-    def tracingDial(self):
+    def test_tracing_dial(self):
 
         sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
 
@@ -677,7 +654,7 @@ class SchoolParameters(unittest.TestCase):
 
     # Takes a long time to run so probably best skipped in most cases
     @unittest.skip("Not yet tested and takes a long time to run")
-    def lostDaysStartDay(self):
+    def test_lost_days_startday(self):
         day_schools_open1 = {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'}
         day_schools_open2 = {'pk': '2020-08-25', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'}
         day_schools_open3 = {'pk': '2020-08-25', 'es': '2020-08-25', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'}
@@ -719,42 +696,66 @@ class SchoolParameters(unittest.TestCase):
             cum_infected_prev = cum_infected_current
             num_school_days_lost_prev = num_school_days_lost
 
+def make_population(seed=1, popfile=None):
+    ''' Pre-generate the synthpops population '''
 
+    pars = sc.objdict(
+        pop_size = 20e3,
+        pop_type = 'synthpops',
+        rand_seed = seed,
+    )
 
-        
+    use_two_group_reduction = True
+    average_LTCF_degree = 20
+    ltcf_staff_age_min = 20
+    ltcf_staff_age_max = 60
 
+    with_school_types = True
+    average_class_size = 20
+    inter_grade_mixing = 0.1
+    average_student_teacher_ratio = 20
+    average_teacher_teacher_degree = 3
+    teacher_age_min = 25
+    teacher_age_max = 75
 
+    with_non_teaching_staff = True
+    # if with_non_teaching_staff is False, but generate is True, then average_all_staff_ratio should be average_student_teacher_ratio or 0
+    average_student_all_staff_ratio = 11
+    average_additional_staff_degree = 20
+    staff_age_min = 20
+    staff_age_max = 75
 
+    school_mixing_type = {'pk': 'age_clustered', 'es': 'age_clustered', 'ms': 'age_clustered', 'hs': 'random', 'uv': 'random'}
 
+    popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
 
+    T = sc.tic()
+    print(f'Making "{popfile}"...')
+    sim = cv.Sim(pars)
+    cv.make_people(sim,
+                popfile=popfile,
+                save_pop=True,
+                generate=True,
+                with_facilities=True, # dependent on "school_mixing_type" and "with_school_types"
+                    use_two_group_reduction=use_two_group_reduction,
+                    average_LTCF_degree=average_LTCF_degree,
+                    ltcf_staff_age_min=ltcf_staff_age_min,
+                    ltcf_staff_age_max=ltcf_staff_age_max,
+                    with_school_types=with_school_types,
+                    school_mixing_type=school_mixing_type,
+                    average_class_size=average_class_size,
+                    inter_grade_mixing=inter_grade_mixing,
+                    average_student_teacher_ratio=average_student_teacher_ratio,
+                    average_teacher_teacher_degree=average_teacher_teacher_degree,
+                    teacher_age_min=teacher_age_min,
+                    teacher_age_max=teacher_age_max,
+                    with_non_teaching_staff=with_non_teaching_staff,
+                    average_student_all_staff_ratio=average_student_all_staff_ratio,
+                    average_additional_staff_degree=average_additional_staff_degree,
+                    staff_age_min=staff_age_min,
+                    staff_age_max=staff_age_max
+                )
+    sc.toc(T)
 
-    
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
+    print('Done')
+    return
