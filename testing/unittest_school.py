@@ -89,22 +89,25 @@ import os
 
 # This test suite tests the parameters of the two school related interventions in covid-schools
 # Must run make_population first
-popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
-if not os.path.exists(popfile):
-    make_population()
+
     
-SIM_PARAMS = pars = {'pop_size': 20e3,
-                'pop_type': 'synthpops',
-                'pop_infected': 100,
-                'verbose': 1,
-                'start_day': '2020-08-01',
-                'end_day': '2020-09-01',
-                'rand_seed': 0,
-                }
+
 class SchoolParameters(unittest.TestCase):
 
+    def setUp(self):
+        self.is_debugging = False
+        self.popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
+        if not os.path.exists(popfile):
+            make_population()
+        self.sim_parameters = None
+        self.sim_interventions = None
+        self.sim = None
+
+
+
     def test_no_infected(self):
-        SIM_PARAMS2 = pars = {'pop_size': 20e3,
+        self.label="no_infected"
+        self.sim_parameters = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 0,
                 'verbose': 1,
@@ -112,12 +115,12 @@ class SchoolParameters(unittest.TestCase):
                 'end_day': '2020-09-01',
                 'rand_seed': 0,
                 }
-        popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
+        self.popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
 
-        sim = cv.Sim(SIM_PARAMS2, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
 
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
@@ -132,18 +135,19 @@ class SchoolParameters(unittest.TestCase):
             cv.change_beta(1, 0)
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
-        num_school_days_lost = sim.school_info['school_days_lost']
-        num_student_school_days = sim.school_info['total_student_school_days']
+        self.sim.run()
+        num_school_days_lost = self.sim.school_info['school_days_lost']
+        num_student_school_days = self.sim.school_info['total_student_school_days']
 
         #assertinhg that all school days are lost
         self.assertEqual(num_school_days_lost, num_student_school_days)
         self.assertGreater(num_student_school_days, 0)
 
     def test_all_infected(self):
-        SIM_PARAMS3 = pars = {'pop_size': 20e3,
+        self.label="all_infected"
+        self.sim_parameters = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 20e3,
                 'verbose': 1,
@@ -152,7 +156,7 @@ class SchoolParameters(unittest.TestCase):
                 'rand_seed': 0,
                 }
 
-        sim = cv.Sim(SIM_PARAMS3, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
                 start_day= '2020-08-05',
                 test=0.99,
@@ -161,7 +165,7 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     start_day='2020-08-05',
@@ -170,19 +174,20 @@ class SchoolParameters(unittest.TestCase):
             reopen_schools
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
+        self.sim.run()
         #asserting that all schools are closed 
         self.assertEqual(reopen_schools.num_schools, reopen_schools.school_closures)
         
-        num_school_days_lost = sim.school_info['school_days_lost']
-        num_student_school_days = sim.school_info['total_student_school_days']
+        num_school_days_lost = self.sim.school_info['school_days_lost']
+        num_student_school_days = self.sim.school_info['total_student_school_days']
 
         #assertinhg that all school days are lost
         self.assertEqual(num_school_days_lost, num_student_school_days)
 
     def test_different_schedules(self):
+        self.label="different_schedules"
         day_schools_open1 = {'pk': '2020-08-05', 'es': '2020-09-05', 'ms': '2020-09-05', 'hs': '2020-09-05', 'uv': '2020-09-05'}
         day_schools_open2 = {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-09-05', 'hs': '2020-09-05', 'uv': '2020-09-05'}
         day_schools_open3 = {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-09-05', 'hs': '2020-09-05', 'uv': '2020-09-05'}
@@ -192,8 +197,7 @@ class SchoolParameters(unittest.TestCase):
         school_types = ['pk', 'es', 'ms', 'hs', 'uv']
 
         schedules = [day_schools_open1, day_schools_open2, day_schools_open3, day_schools_open4, day_schools_open5]
-        popfile = f'inputs/kc_synthpops_clustered_withstaff_10e3.ppl'
-        SIM_PARAMS5 = pars = {'pop_size': 20e3,
+        self.sim_parameters = {'pop_size': 20e3,
                         'pop_type': 'synthpops',
                         'pop_infected': 100,
                         'verbose': 1,
@@ -203,7 +207,7 @@ class SchoolParameters(unittest.TestCase):
                         }
 
 
-        sim = cv.Sim(SIM_PARAMS5, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
 
         opened_initial = 10000 #arbitrarily large number
         for i, schedule in enumerate(schedules):
@@ -215,7 +219,7 @@ class SchoolParameters(unittest.TestCase):
                     label='reopen_schools'
                 )
 
-            interventions = [
+            self.interventions = [
                 cv.close_schools(
                         day_schools_closed='2020-08-01',
                         label='close_schools'
@@ -223,14 +227,15 @@ class SchoolParameters(unittest.TestCase):
                 reopen_schools
                 ]
 
-            sim['interventions'] = interventions
-            sim.run()
+            self.sim['interventions'] = self.interventions
+            self.sim.run()
             new_opened = reopen_schools.closed.count(True) #ensuring that fewer and fewer schools closed
             self.assertGreater(opened_initial, new_opened)
             opened_initial = new_opened
     
     def test_numpos_limit(self):
-        SIM_PARAMS6 = {'pop_size': 20e3,
+        self.label="numpos_limit"
+        self.sim_parameters = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 100,
                 'verbose': 1,
@@ -239,7 +244,7 @@ class SchoolParameters(unittest.TestCase):
                 'rand_seed': 0,
                 }
 
-        sim = cv.Sim(SIM_PARAMS6, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
                 test=0.99,
@@ -248,19 +253,20 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
                 ),
             reopen_schools
             ]
-        sim['interventions'] = interventions
-        sim.run()
+        self.sim['interventions'] = self.interventions
+        self.sim.run()
         self.assertEqual(reopen_schools.num_schools, reopen_schools.closed.count(True)) # Ensuring that all schools are closed
 
     def test_iliprev_exceptions(self):
-        SIM_PARAMS6 = {'pop_size': 20e3,
+        self.label="iliprev_exceptions"
+        self.sim_parameters = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 100,
                 'verbose': 1,
@@ -268,7 +274,7 @@ class SchoolParameters(unittest.TestCase):
                 'end_day': '2020-08-10',
                 'rand_seed': 0,
                 }
-        sim = cv.Sim(SIM_PARAMS6, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
                 start_day= '2020-08-05',
                 test=0.99,
@@ -276,7 +282,7 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     start_day='2020-08-05',
@@ -284,8 +290,8 @@ class SchoolParameters(unittest.TestCase):
                 ),
             reopen_schools
             ]
-        sim['interventions'] = interventions
-        self.assertRaises(ValueError, sim.run()) # Need to either skip this test or fine tune error message
+        self.sim['interventions'] = self.interventions
+        self.assertRaises(ValueError, self.sim.run()) # Need to either skip this test or fine tune error message
 
         reopen_schools = cv.reopen_schools(
                 start_day= '2020-08-05',
@@ -294,7 +300,7 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     start_day='2020-08-05',
@@ -302,12 +308,14 @@ class SchoolParameters(unittest.TestCase):
                 ),
             reopen_schools
             ]
-        sim['interventions'] = interventions
-        self.assertRaises(ValueError, sim.run())
+        self.sim['interventions'] = self.interventions
+        self.assertRaises(ValueError, self.sim.run())
 
 
     def test_testing_params(self):
-        SIM_PARAMS = pars = {'pop_size': 20e3,
+        self.label="testing_params"
+
+        self.sim_parameters = pars = {'pop_size': 20e3,
                         'pop_type': 'synthpops',
                         'pop_infected': 100,
                         'verbose': 1,
@@ -315,7 +323,7 @@ class SchoolParameters(unittest.TestCase):
                         'end_day': '2020-08-30',
                         'rand_seed': 0,
                         }
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
 
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
@@ -324,7 +332,7 @@ class SchoolParameters(unittest.TestCase):
                 ili_prev=0,
                 label='reopen_schools'
             )
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
@@ -332,15 +340,16 @@ class SchoolParameters(unittest.TestCase):
             reopen_schools
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
+        self.sim.run()
         # No students should be left undiagnosed
         self.assertEqual(reopen_schools.num_undiagnosed == 0)
 
     def test_ili_schooldays(self):
+        self.label="ili_schooldays"
 
-        SIM_PARAMS = pars = {'pop_size': 20e3,
+        self.sim_parameters = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 100,
                 'verbose': 1,
@@ -348,7 +357,7 @@ class SchoolParameters(unittest.TestCase):
                 'end_day': '2020-08-30',
                 'rand_seed': 0,
                 }
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
 
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
@@ -356,7 +365,7 @@ class SchoolParameters(unittest.TestCase):
                 ili_prev=0.15, 
                 label='reopen_schools'
             )
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
@@ -364,11 +373,11 @@ class SchoolParameters(unittest.TestCase):
             reopen_schools
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
+        self.sim.run()
         # No students should be left undiagnosed
-        num_screen_positive_initial = sim.school_info['num_teachers_screen_pos']
+        num_screen_positive_initial = self.sim.school_info['num_teachers_screen_pos']
 
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
@@ -376,7 +385,7 @@ class SchoolParameters(unittest.TestCase):
                 ili_prev=0.8,
                 label='reopen_schools'
             )
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
@@ -384,18 +393,18 @@ class SchoolParameters(unittest.TestCase):
             reopen_schools
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
+        self.sim.run()
         # Can add more cases for greater granularity of testing
-        num_students_screen_pos_final = sim.school_info['num_teachers_screen_pos']
+        num_students_screen_pos_final = self.sim.school_info['num_teachers_screen_pos']
 
         self.assertGreater(num_students_screen_pos_final, num_screen_positive_initial)
 
 
     def test_numpos_days(self):
-
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        self.label="numpos_days"
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
                 test=0.99,
@@ -403,7 +412,7 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
@@ -411,10 +420,10 @@ class SchoolParameters(unittest.TestCase):
             reopen_schools
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
-        num_school_days_lost_a = sim.school_info['school_days_lost']
+        self.sim.run()
+        num_school_days_lost_a = self.sim.school_info['school_days_lost']
 
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
@@ -424,17 +433,17 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
                 ),
             reopen_schools
             ]
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
-        num_school_days_lost_b = sim.school_info['school_days_lost']      
+        self.sim.run()
+        num_school_days_lost_b = self.sim.school_info['school_days_lost']      
         
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
@@ -444,17 +453,17 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
                 ),
             reopen_schools
             ]
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
-        num_school_days_lost_c = sim.school_info['school_days_lost']  
+        self.sim.run()
+        num_school_days_lost_c = self.sim.school_info['school_days_lost']  
 
         # This will require a bit of fenegling and testing to determine reasonable relative 
         # values
@@ -462,7 +471,16 @@ class SchoolParameters(unittest.TestCase):
         self.assertGreater(num_school_days_lost_b, num_school_days_lost_c)
 
     def test_testing_dial(self):
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        sim.label="testing_dial"
+        self.sim_parameters = {'pop_size': 20e3,
+                'pop_type': 'synthpops',
+                'pop_infected': 100,
+                'verbose': 1,
+                'start_day': '2020-08-01',
+                'end_day': '2020-09-01',
+                'rand_seed': 0,
+                }
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
         # Setting test to 0.1, trace to 0 so that trace doesn't mess up validation
         reopen_schools = cv.reopen_schools(
                 start_day= {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'},
@@ -472,7 +490,7 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     label='close_schools'
@@ -480,9 +498,9 @@ class SchoolParameters(unittest.TestCase):
             reopen_schools
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
+        self.sim.run()
         diagnoses_a = reopen_schools.num_diagnosed
 
         reopen_schools = cv.reopen_schools(
@@ -493,7 +511,7 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     start_day='2020-08-05',
@@ -501,9 +519,9 @@ class SchoolParameters(unittest.TestCase):
                 ),
             reopen_schools
             ]
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
+        self.sim.run()
         diagnoses_b = reopen_schools.num_diagnosed   
         
         reopen_schools = cv.reopen_schools(
@@ -514,7 +532,7 @@ class SchoolParameters(unittest.TestCase):
                 label='reopen_schools'
             )
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     start_day='2020-08-05',
@@ -522,7 +540,7 @@ class SchoolParameters(unittest.TestCase):
                 ),
             reopen_schools
             ]
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
         diagnoses_c = reopen_schools.num_diagnosed
 
@@ -533,8 +551,8 @@ class SchoolParameters(unittest.TestCase):
 
     
     def test_freq_dial(self):
-        is_debugging = False
-        SIM_PARAMS8 = pars = {'pop_size': 20e3,
+        self.label = "freq_dial"
+        self.sim_parameters  = {'pop_size': 20e3,
                 'pop_type': 'synthpops',
                 'pop_infected': 5e3,
                 'verbose': 1,
@@ -542,7 +560,7 @@ class SchoolParameters(unittest.TestCase):
                 'end_day': '2020-08-30',
                 'rand_seed': 0,
                 }
-        sim = cv.Sim(SIM_PARAMS8, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
         # Testing daily, bidaily, and every third day testing, trace set to 0 so it doesn't mess with validation
         # since if you have teachers tested and traced then infectious kiddos would be sent home and the infection rate would
         # be substantially lower
@@ -556,7 +574,7 @@ class SchoolParameters(unittest.TestCase):
                     label='reopen_schools'
                 )
 
-            interventions = [
+            self.interventions = [
                 cv.close_schools(
                         day_schools_closed='2020-08-01',
                         label='close_schools'
@@ -564,16 +582,11 @@ class SchoolParameters(unittest.TestCase):
                 reopen_schools
                 ]
 
-            sim['interventions'] = interventions
+            self.sim['interventions'] = self.interventions
 
-            sim.run()
+            self.sim.run()
             
-            # May want to load school_info from differently saved json
-            sim.to_json(output_filename=f"DEBUG_test_freq_{i}.json")
-            with open(f"json_test_allinfected.json") as f:
-                json_format = json.load(f)
-            
-            results.append(sim.school_info['num_teachers_tested'])
+            results.append(self.sim.school_info['num_teachers_tested'])
 
            
 
@@ -586,10 +599,10 @@ class SchoolParameters(unittest.TestCase):
 
     @unittest.skip("Still need to mess with relative values to get it to be reasonable")
     def test_tracing_dial(self):
+        self.label="tracing_dial"
+        self.sim = cv.Sim(self.sim_parameters, popfile=self.popfile, load_pop=True)
 
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
-
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     start_day='2020-08-05',
@@ -604,10 +617,10 @@ class SchoolParameters(unittest.TestCase):
             )
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
-        cum_infected_a = sim.results['cum_infections']
+        self.sim.run()
+        cum_infected_a = self.sim.results['cum_infections']
 
         interventions = [
             cv.close_schools(
@@ -624,12 +637,12 @@ class SchoolParameters(unittest.TestCase):
             )
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
-        cum_infected_b = sim.results['cum_infections']
+        self.sim.run()
+        cum_infected_b = self.sim.results['cum_infections']
 
-        interventions = [
+        self.interventions = [
             cv.close_schools(
                     day_schools_closed='2020-08-01',
                     start_day='2020-08-05',
@@ -644,10 +657,10 @@ class SchoolParameters(unittest.TestCase):
             )
             ]
 
-        sim['interventions'] = interventions
+        self.sim['interventions'] = self.interventions
 
-        sim.run()
-        cum_infected_c = sim.results['cum_infections']
+        self.sim.run()
+        cum_infected_c = self.sim.results['cum_infections']
 
         self.assertGreater(cum_infected_c, cum_infected_b)
         self.assertGreater(cum_infected_b, cum_infected_a)
@@ -655,6 +668,7 @@ class SchoolParameters(unittest.TestCase):
     # Takes a long time to run so probably best skipped in most cases
     @unittest.skip("Not yet tested and takes a long time to run")
     def test_lost_days_startday(self):
+        self.label="lost_days_startday"
         day_schools_open1 = {'pk': '2020-08-05', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'}
         day_schools_open2 = {'pk': '2020-08-25', 'es': '2020-08-05', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'}
         day_schools_open3 = {'pk': '2020-08-25', 'es': '2020-08-25', 'ms': '2020-08-05', 'hs': '2020-08-05', 'uv': '2020-08-05'}
@@ -664,12 +678,12 @@ class SchoolParameters(unittest.TestCase):
         day_schools_open = [day_schools_open1, day_schools_open2, day_schools_open3, day_schools_open4, day_schools_open5, day_schools_open6]
         
 
-        sim = cv.Sim(SIM_PARAMS, popfile=popfile, load_pop=True)
+        self.sim = cv.Sim(self.sim, popfile=self.popfile, load_pop=True)
 
         cum_infected_prev = -1
         num_school_days_lost_prev = 10000000
         for schedule in day_schools_open:
-            interventions = [
+            self.interventions = [
                 cv.close_schools(
                         day_schools_closed='2020-08-01',
                         start_day='2020-08-05',
@@ -684,11 +698,11 @@ class SchoolParameters(unittest.TestCase):
                 )
                 ]
 
-            sim['interventions'] = interventions
+            self.sim['interventions'] = self.interventions
 
-            sim.run()
-            cum_infected_current = sim.results['cum_infections']
-            num_school_days_lost = sim.school_info['school_days_lost']
+            self.sim.run()
+            cum_infected_current = self.sim.results['cum_infections']
+            num_school_days_lost = self.sim.school_info['school_days_lost']
 
             self.assertGreater(cum_infected_current, cum_infected_prev)
             self.assertGreater(num_school_days_lost_prev, num_school_days_lost)
@@ -757,5 +771,25 @@ def make_population(seed=1, popfile=None):
                 )
     sc.toc(T)
 
+
     print('Done')
     return
+
+    def tearDown(self):
+        filename = "test_{self.label}"
+        if self.is_debugging:
+            self.sim.to_json(filename=filename)
+            if self.verbose:
+                print(f"Sim results stored at: {filename}")
+                print(f"Interventions included with sim: {self.interventions}")
+                print(f"Parameters of this sim: {self.sim_parameters}")
+
+
+
+# make a self.label variable for the name of the test
+# make sim into self.sim
+# make popfile into self.popfile
+# make interventions into self.interventions
+# make parameters into self.sim_parameters
+
+
