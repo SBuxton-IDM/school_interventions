@@ -71,6 +71,31 @@ strategy_labels_2 = {
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
 
+strategy_labels_brief = {
+    'as_normal':                'All in person, no\n' +
+                                'countermeasures',
+
+    'with_screening':           'All in person',
+
+    'with_hybrid_scheduling':   'All in person,\n' +
+                                'A/B scheduling',
+
+    'ES_MS_inperson_HS_remote': 'Elem. & middle\n' +
+                                'in person,\n' +
+                                'high remote',
+
+    'ES_inperson_MS_HS_remote': 'Elem. in person,\n' +
+                                'middle & high\n' +
+                                'remote',
+
+    'ES_hybrid':                'Elem. with\n' +
+                                'A/B scheduling,\n' +
+                                'middle & high\n' +
+                                'remote',
+    # 'all_remote': 'All Remote',
+    # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
+}
+
 measure_labels = {
     'num_staff': 'Total Staff',
     'num_teachers': 'Total Teachers',
@@ -266,33 +291,34 @@ def plot_attack_rate(date_of_file, cases, sens):
     width = [-.2, 0, .2]
     width_text = [-.28, -.09, .12]
 
-    fig, axs = plt.subplots(nrows=2, sharex=True, sharey=False, figsize=(13, 9))
+    fig, axs = plt.subplots(nrows=2, sharex=True, sharey=False, figsize=(13, 10)) # 13 x 9
     fig.subplots_adjust(hspace=0.3, right=0.9, bottom=0.15)
-    fig.suptitle(f'Predicted cumulative COVID-19 infection rate from Sep. 1 to Dec. 1 for people in schools', size=24, horizontalalignment='center')
+    #fig.suptitle(f'Predicted cumulative COVID-19 infection rate from Sep. 1 to Dec. 1 for people in schools', size=24, horizontalalignment='center')
 
     for i, ax in enumerate(axs):
         for j, case in enumerate(cases):
             if i == 0:
                 ax.bar(x + width[j], staff_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
                 for h in range(len(x)):
-                    ax.text(h + width_text[j], 0.5 + staff_by_case[j][h].values, round(staff_by_case[j][h].values[0], 1), fontsize=10)
+                    ax.text(h + width_text[j], 0.5 + staff_by_case[j][h].values, round(staff_by_case[j][h].values[0], 1), fontsize=13)
                 ax.set_title('Teachers and staff', size=20, horizontalalignment='center')
             else:
                 ax.bar(x + width[j], students_by_case[j].values[0], width=0.2, label=label[case], color=colors[j])
                 for h in range(len(x)):
-                    ax.text(h + width_text[j], 0.5 + students_by_case[j][h].values, round(students_by_case[j][h].values[0], 1), fontsize=10)
+                    ax.text(h + width_text[j], 0.5 + students_by_case[j][h].values, round(students_by_case[j][h].values[0], 1), fontsize=13)
                 ax.set_title('Students', size=20, horizontalalignment='center')
         ax.set_ylabel('COVID-19 infection rate (%)', size=20)
         ax.set_ylim([0,27])
         ax.set_xticks(x)
-        ax.set_xticklabels(strategy_labels_2.values(), fontsize=14)
+        ax.set_xticklabels(strategy_labels_brief.values(), fontsize=17) # 14
         if i == 0:
-            leg_i = ax.legend(fontsize=16, title=name)
-            leg_i.set_title(name, prop={'size': 16})
+            leg_i = ax.legend(fontsize=20, title=name)
+            leg_i.set_title(name, prop={'size': 20})
         #ax.legend(fontsize=16, title=name)
 
 
     cv.savefig(f'attack_rate_{prev}_{date_of_file}.png')
+    plt.savefig(f'attack_rate_{prev}_{date_of_file}.pdf')
 
 
 def plot_attack_rate_all_re(date_of_file, sens):
