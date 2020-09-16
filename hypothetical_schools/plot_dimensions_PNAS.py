@@ -98,6 +98,27 @@ strategy_labels_2 = {
     # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
 }
 
+strategy_labels_brief2 = {
+    'as_normal':                'All in person,\n' +
+                                'no countermeasures',
+
+    'with_screening':           'All in person',
+
+    'with_hybrid_scheduling':   'All in person, A/B scheduling',
+
+    'ES_MS_inperson_HS_remote': 'Elem. & middle in person,\n' +
+                                'high remote',
+
+    'ES_inperson_MS_HS_remote': 'Elem. in person,\n' +
+                                'middle & high remote',
+
+    'ES_hybrid':                'Elem. with A/B scheduling,\n' +
+                                'middle & high remote',
+    # 'all_remote': 'All Remote',
+    # 'with_perf_testing_close_on_1': 'With Perfect Testing, Tracing & School Closure on 1 COVID+'
+}
+
+
 strategy_labels_3 = {
     'as_normal':                'All in person, no countermeasures',
     'with_screening':           'All in person with countermeasures \n(NPI, cohorting, screening)',
@@ -875,13 +896,15 @@ def plot_dimensions(date_of_file, cases):
     intervals = (size_max - size_min) / num_sizes
     sizes = np.arange(size_min, size_max, step=intervals).tolist()
 
-    right = 0.63
+    left = 0.09
+    right = 0.62
     bottom = 0.10
-    top = 0.85
+    top = 0.95
     fig = plt.figure(figsize=(13, 9))
-    fig.subplots_adjust(right=right, top=top, bottom=bottom)
+    fig.subplots_adjust(left=left, right=right, top=top, bottom=bottom)
     ax = fig.add_subplot(111)
     alpha = 0.67
+    fs = 24
 
     for j, rate in enumerate(cases):
         ax.plot(efficient_x_by_case[j].iloc[0, :].values, efficient_y_by_case[j].iloc[0, :].values, linewidth=3, alpha=0.33, color='grey', linestyle='-')
@@ -891,11 +914,11 @@ def plot_dimensions(date_of_file, cases):
                     markeredgewidth=0,
                     )
 
-        ax.set_xlabel('School days at home (% of total school days)', fontsize=16)
-        ax.set_ylabel('Cumulative COVID-19 infection rate for people in schools (%)', fontsize=16)
+        ax.set_xlabel('School days at home (% of total school days)', fontsize=fs)
+        ax.set_ylabel('Cumulative COVID-19 infection rate for people in schools (%)', fontsize=fs)
         # ax.set_ylim(0, 15)
         # ax.set_xlim(0, 10)
-    ax.tick_params(labelsize=16)
+    ax.tick_params(labelsize=fs)
 
     # Strategies Legend
     ax_left = right + 0.04
@@ -903,11 +926,12 @@ def plot_dimensions(date_of_file, cases):
     ax_right = 0.95
     ax_width = ax_right - ax_left
     ax_height = (top - bottom) / 2.
-    ax_leg = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+    ax_leg = fig.add_axes([ax_left+0.01, ax_bottom, ax_width, ax_height])
     for s, strat in enumerate(scenario_strategies):
-        ax_leg.plot(-5, -5, color=colors[s], label=strategy_labels_3[strat])
+        ax_leg.plot(25, 25, color=colors[s], marker='o', lw=0, ms=15, label=strategy_labels_brief2[strat]) # strategy_labels_3
+    ax_leg.set_xlim(0,1) # ensure dot is not visible
 
-    leg = ax_leg.legend(loc=10, fontsize=14)
+    leg = ax_leg.legend(loc='center', fontsize=fs)
     # leg = ax.legend(loc=4, fontsize=15, bbox_to_anchor=(0.65, -0.05, 1, 0.2))
     leg.draw_frame(False)
     ax_leg.axis('off')
@@ -916,9 +940,9 @@ def plot_dimensions(date_of_file, cases):
     ax_bottom_2 = ax_bottom + ax_height + 0.0
     ax_leg_2 = fig.add_axes([ax_left, ax_bottom_2, ax_width, ax_height])
 
-    ybase = 0.5
+    ybase = 0.8
     ytop = 1
-    yinterval = (ytop - ybase) / len(sizes)
+    yinterval = 0.7*(ytop - ybase) / len(sizes)
 
     for i in range(len(sizes)):
         xi = 1
@@ -927,16 +951,18 @@ def plot_dimensions(date_of_file, cases):
 
         ax_leg_2.plot(xi * 1.5, yi, linestyle=None, marker='o', markersize=si, markerfacecolor='white',
                       markeredgecolor='black')
-        ax_leg_2.text(xi * 4, yi, (label[cases[i]]), verticalalignment='center', fontsize=16)
+        ax_leg_2.text(xi * 4, yi, (label[cases[i]]), verticalalignment='center', fontsize=fs)
 
-        ax_leg_2.text(xi * 7, 0.985, f'{name}', horizontalalignment='center', fontsize=18)
+        ax_leg_2.text(xi * 7 + 1.5, 0.95, name, horizontalalignment='center', fontsize=fs)
+        ax_leg_2.text(xi * 7 + 0.3, 0.75, 'School reopening scenario', horizontalalignment='center', fontsize=fs)
 
     ax_leg_2.axis('off')
     ax_leg_2.set_xlim(left=0, right=20)
     ax_leg_2.set_ylim(bottom=ybase * 0.9, top=ytop * 1.0)
 
-    ax.set_title(f'Trade-Offs with School Reopening', fontsize=20)
-    fig.savefig(f'tradeoffs_{date_of_file}.png', format='png')
+    #ax.set_title(f'Trade-Offs with School Reopening', fontsize=20)
+    cv.savefig(f'tradeoffs_{date_of_file}.png')
+    plt.savefig(f'tradeoffs_{date_of_file}.pdf')
 
 
 if __name__ == '__main__':

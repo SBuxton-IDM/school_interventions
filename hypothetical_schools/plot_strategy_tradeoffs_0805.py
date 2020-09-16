@@ -986,7 +986,7 @@ if __name__ == '__main__':
     #
     # plot_reff(cases, num_seeds, date, sens)
     # plot_attack_rate(date, cases, sens)
-    plot_dimensions(date, cases, sens)
+    #plot_dimensions(date, cases, sens)
 
 
     # plot_reff(cases, num_seeds, date, sens)
