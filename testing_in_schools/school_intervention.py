@@ -16,7 +16,7 @@ class Scenario():
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
-                'ili':        0.002
+                'daily_ili_prob':        0.002
             },
             'ms': {
                 'start_day':  '2020-09-01',
@@ -25,7 +25,7 @@ class Scenario():
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
-                'ili':        0.002,
+                'daily_ili_prob':        0.002,
             },
             'hs': {
                 'start_day':  '2020-09-01',
@@ -34,7 +34,7 @@ class Scenario():
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
-                'ili':        0.002,
+                'daily_ili_prob':        0.002,
             },
             'uv': None,
         }
