@@ -107,6 +107,9 @@ class School():
     def update(self):
         # Process the day, return in school layer
 
+        print(self.sim.t)
+        exit()
+
         # First check if school is open
         if not self.is_open:
             if self.sim.t == self.sim.day(self.start_day):
@@ -125,11 +128,6 @@ class School():
         # Let's pretend to put some uids at home
         self.uids_at_home = self.uids[:2]
 
-        # Remove individuals at home from the network
-        self.ct_mgr.remove_individual(self.uids_at_home)
-        exit()
-
-
         # If any individuals are done with quarantine, return them to school
 
         # Perform symptom screening
@@ -145,6 +143,13 @@ class School():
         # Identify school contacts
 
         # Quarantine school contacts
+
+
+        # Remove individuals at home from the network
+        self.ct_mgr.remove_individual(self.uids_at_home)
+        exit()
+
+
 
 
         # Return what is left of the layer
