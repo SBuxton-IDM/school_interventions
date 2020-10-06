@@ -1,15 +1,17 @@
 '''Show optimized runs'''
 
 # %Imports
+import os
 import sciris as sc
-from SPS_analysis import create_sim as cs
+#from SPS_analysis import create_sim as cs
+import create_sim as cs
 import covasim as cv
 import numpy as np
 from covasim import utils as cvu
 import pandas as pd
 import random
 
-cv.check_save_version('1.5.0', die=True)
+cv.check_save_version('1.7.2', die=False) # Initial analysis conducted using v1.5.0
 
 
 def school_dict(sim, school_dicts):
@@ -167,7 +169,7 @@ if __name__ == "__main__":
     }
 
     indices = range(n_params)
-    jsonfile = 'optimization_v12_safegraph_070120.json'
+    jsonfile = os.path.join('..', 'calibration', 'optimization_v12_safegraph_070120.json')
     json = sc.loadjson(jsonfile)
 
     school_dicts = dict()

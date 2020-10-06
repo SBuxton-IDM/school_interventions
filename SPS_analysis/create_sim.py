@@ -12,7 +12,7 @@ import sciris as sc
 import covasim as cv
 
 
-cv.check_save_version('1.5.0', die=True)
+cv.check_save_version('1.7.2', die=False) # was 1.5.0
 
 # Define the input files
 inputs         = 'inputs'
@@ -231,7 +231,7 @@ def create_sim(pars=None, label=None, use_safegraph=True, show_intervs=False, pe
     mobility_file = school_reopening_pars['mobility_file']
 
     interventions += [cv.close_schools(day_schools_closed='2020-03-12', start_day=school_start_day,
-                                        pop_file=popfile_new)]
+                                        pop_file=popfile_new, label='close_schools')]
 
     test_freq = teacher_test_scen['test_freq']
 
