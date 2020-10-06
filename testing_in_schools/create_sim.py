@@ -23,7 +23,7 @@ def define_pars(which='best', kind='default', ):
 
     return output
 
-def run_sim(params):
+def run_sim(params, run=True):
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
     if 'rand_seed' not in p:
@@ -45,8 +45,9 @@ def run_sim(params):
         trace_time=5.0,
     )
 
-    pars = {'pop_size': 225e3,
-            'pop_scale': 10,
+    print('TEMP: SMALL POPULATION FOR TESTING!')
+    pars = {'pop_size': 225e2, # TEMP: restore to 225e3
+            'pop_scale': 100,   # TEMP: restore to 10
             'pop_type': 'synthpops',
             'pop_infected': p.pop_infected,
             'rescale': True,
@@ -71,7 +72,8 @@ def run_sim(params):
     sim['interventions'] = interventions
     for interv in sim['interventions']:
         interv.do_plot = False
-    sim.run()
+    if run:
+        sim.run()
     return(sim)
 
 

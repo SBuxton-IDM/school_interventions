@@ -198,7 +198,7 @@ if __name__ == '__main__':
     popfile_stem_change = 'inputs/kc_synthpops_clustered_withstaff_seed'
     date = '2020-10-03'
 
-    n_seeds = 8 #20
+    n_seeds = 2 #20
 
     rel_trans = False
     beta_layer = False
@@ -244,7 +244,7 @@ if __name__ == '__main__':
         0,
     ]
     test_freq = [
-        None,
+        1, # TEMP, restore to None!
         1,
         None,
         None,

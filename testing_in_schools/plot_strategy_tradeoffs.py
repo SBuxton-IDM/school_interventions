@@ -14,6 +14,7 @@ import covasim as cv
 
 strats = [
     'As Normal',
+    'Daily Testing',
     'With Screening',
     'All Hybrid',
     'ES/MS in Person, HS Remote',
@@ -79,8 +80,8 @@ strategy_labels_brief = {
                                 'countermeasures',
 
     'as_normal_dailytesting':   'All in person, no\n' +
-                                'countermeasures\n', +
-                                'Daily testing'
+                                'countermeasures\n' +
+                                'Daily testing',
 
     'with_screening':           'All in person',
 
@@ -108,8 +109,8 @@ strategy_labels_brief2 = {
                                 'no countermeasures',
 
     'as_normal_dailytesting':   'All in person, no\n' +
-                                'countermeasures\n', +
-                                'Daily testing'
+                                'countermeasures\n' +
+                                'Daily testing',
 
     'with_screening':           'All in person',
 
@@ -1062,7 +1063,7 @@ if __name__ == '__main__':
     by_case = True
 
     if by_case:
-        cases = ['20_cases', '50_cases', '110_cases']
+        cases = ['20_cases', '110_cases'] # , '50_cases'
         re = 're_0.9'
         # cases_rising = False
         # if cases_rising:
