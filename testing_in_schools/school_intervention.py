@@ -44,18 +44,22 @@ class new_schools(Intervention):
 
         for school_type, scids in self.school_types.items():
             for school_id in scids:
+                uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
+                students = [u for u in uids if sim.people.student_flag[u]]
+                staff = [u for u in uids if sim.people.staff_flag[u]]
+                teachers = [u for u in uids if sim.people.teacher_flag[u]]
+
                 stats = {
-                    'type': school_type,
-                    'n_students': 0,
-                    'n_staff': 1,
-                    'n_teachers': 2,
-                    'scenario': self.scenario[school_type],
+                    'type':         school_type,
+                    'n_students':   len(students),
+                    'n_staff':      len(staff),
+                    'n_teachers':   len(teachers),
+                    'scenario':     self.scenario[school_type],
                 }
                 sim.school_stats[school_id] = stats
 
                 if self.scenario[school_type] is not None:
                     # Extract 's'-layer associated with this school
-                    uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
                     rows = (sdf['p1'].isin(uids)) | (sdf['p2'].isin(uids))
                     s_subset = sdf.loc[ rows ]
                     sdf = sdf.loc[ ~rows ] # Remove rows from the 's' contacts

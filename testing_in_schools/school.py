@@ -125,30 +125,49 @@ class HybridContactManager():
 
 
 class SchoolStats():
+    # TODO: rescale weighting!
     def __init__(self, school):
         self.school = school
 
         self.students_at_school_while_infectious = set()
         self.teacherstaff_at_school_while_infectious = set()
 
-        self.n_students_at_school_while_infectious = [0] * len(self.school.sim.tvec)
-        self.n_teacherstaff_at_school_while_infectious = [0] * len(self.school.sim.tvec)
+        self.n_students_at_school_while_infectious_first_day = -1
+        self.n_teacherstaff_at_school_while_infectious_first_day = -1
+
+        self.cum_unique_students_at_school_while_infectious = -1
+        self.cum_unique_teacherstaff_at_school_while_infectious = -1
+
+        # REMOVE:
+        #self.n_students_at_school_while_infectious = [0] * len(self.school.sim.tvec)
+        #self.n_teacherstaff_at_school_while_infectious = [0] * len(self.school.sim.tvec)
 
     def update(self):
         stu_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if self.school.sim.people.student_flag[uid]]
         students_at_school_while_infectious_today = cvu.itrue(self.school.sim.people.infectious[stu_at_sch_uids], np.array(stu_at_sch_uids))
         self.students_at_school_while_infectious |= set(students_at_school_while_infectious_today)
-        self.n_students_at_school_while_infectious[self.school.sim.t] = len(self.students_at_school_while_infectious)
+        #self.n_students_at_school_while_infectious[self.school.sim.t] = len(self.students_at_school_while_infectious)
 
         teacherstaff_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if self.school.sim.people.teacher_flag[uid] or self.school.sim.people.staff_flag[uid]]
-        teacherstaff_at_school_while_infectious_today = cvu.itrue(self.school.sim.people.infectious[stu_at_sch_uids], np.array(stu_at_sch_uids))
+        teacherstaff_at_school_while_infectious_today = cvu.itrue(self.school.sim.people.infectious[teacherstaff_at_sch_uids], np.array(teacherstaff_at_sch_uids))
         self.teacherstaff_at_school_while_infectious |= set(teacherstaff_at_school_while_infectious_today)
-        self.n_teacherstaff_at_school_while_infectious[self.school.sim.t] = len(self.teacherstaff_at_school_while_infectious)
+        #self.n_teacherstaff_at_school_while_infectious[self.school.sim.t] = len(self.teacherstaff_at_school_while_infectious)
+
+        if self.school.sim.t == self.school.sim.day(self.school.start_day):
+            self.n_students_at_school_while_infectious_first_day = len(self.students_at_school_while_infectious)
+            self.n_teacherstaff_at_school_while_infectious_first_day = len(self.teacherstaff_at_school_while_infectious)
+        elif self.school.sim.t == self.school.sim.tvec[-1]:
+            self.cum_unique_students_at_school_while_infectious = len(self.students_at_school_while_infectious)
+            self.cum_unique_teacherstaff_at_school_while_infectious = len(self.teacherstaff_at_school_while_infectious)
 
     def get(self):
         return {
-            'n_students_at_school_while_infectious': self.n_students_at_school_while_infectious,
-            'n_teacherstaff_at_school_while_infectious': self.n_teacherstaff_at_school_while_infectious,
+            'n_students_at_school_while_infectious_first_day': self.n_students_at_school_while_infectious_first_day,
+            'n_teacherstaff_at_school_while_infectious_first_day': self.n_teacherstaff_at_school_while_infectious_first_day,
+            'cum_unique_students_at_school_while_infectious': self.cum_unique_students_at_school_while_infectious,
+            'cum_unique_teacherstaff_at_school_while_infectious': self.cum_unique_teacherstaff_at_school_while_infectious,
+            #'n_students_at_school_while_infectious': self.n_students_at_school_while_infectious,
+            #'n_teacherstaff_at_school_while_infectious': self.n_teacherstaff_at_school_while_infectious,
         }
 
 
