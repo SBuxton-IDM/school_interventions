@@ -1,4 +1,5 @@
 import covasim.base as cvb
+import covasim.utils as cvu
 import numpy as np
 import sciris as sc
 
@@ -65,7 +66,7 @@ self.schedule = {
 class School():
 
     def __init__(self, sim, school_id, school_type, uids, layer,
-                start_day, test_frac, trace_frac, test_freq, is_hybrid, npi, daily_ili_prob, verbose=False, **kwargs):
+                start_day, test_prob, trace_prob, test_freq, is_hybrid, npi, daily_ili_prob, verbose=False, **kwargs):
 
         self.sim = sim
         self.sid = school_id
@@ -73,8 +74,8 @@ class School():
         self.uids = uids
         self.is_hybrid = is_hybrid
         self.start_day = start_day
-        self.test_frac = test_frac
-        self.trace_frac = trace_frac
+        self.test_prob = test_prob
+        self.trace_prob = trace_prob
         self.test_freq = test_freq
         self.is_hybrid = is_hybrid
         self.npi = npi
@@ -105,7 +106,7 @@ class School():
             self.sim.people.dead[self.uids_at_school])
 
         screen_pos = np.logical_and(dx_or_sx, ~rec_or_dead)
-        screen_pos_uids = np.array(self.uids_at_school)[screen_pos] # list(compress(self.uids_at_school, screen_pos))
+        screen_pos_uids = np.array(self.uids_at_school)[screen_pos] # list(compress(self.uids_at_school, screen_pos)) # itruei
 
         # Add in screen positives from ILI
         if self.ili_prob is not None and self.ili_prob > 0:
@@ -117,7 +118,7 @@ class School():
 
         return screen_pos_uids
 
-    def test_undiagnosed(self, student_frac=0, staff_frac=0, teacher_frac=0):
+    def test_undiagnosed(self, student_prob=0, staff_prob=0, teacher_prob=0):
         # Administer diagnostic tests in individuals not already diagnosed
         # Exclude those home sick?
         return
@@ -156,15 +157,22 @@ class School():
         # Perform symptom screening
         screen_pos_ids = self.screen()
 
-        # Send the screen positives home (for 3 days...?)
-        for uid in screen_pos_ids:
-            self.uids_at_home[uid] = self.sim.t + 3 # Can come back tomorrow if test
+        if len(screen_pos_ids) > 0:
+            # Send the screen positives home
+            for uid in screen_pos_ids:
+                self.uids_at_home[uid] = self.sim.t + 2 # Can come back in a few days
 
+            # Perform follow-up testing on some
+            uids_to_test = cvu.binomial_filter(self.test_prob, screen_pos_ids)
+            self.sim.people.test(uids_to_test, test_delay=1) # one day test delay, TODO: Make a parameter!
 
-        # Perform follow-up testing on some
-        #covid_pos_ids = self.test(screen_pos_ids)
+        # Look for newly diagnosed people
+        #trace_from_inds = cvu.itruei(self.sim.people.date_diagnosed[self.uids] == self.sim.t, self.uids) # Diagnosed this time step, time to trace
+        newly_dx_inds = [uid for uid in self.uids if self.sim.people.date_diagnosed[uid] == self.sim.t] # faster with itruei?
 
-        # Isolate the positive ids
+        # Isolate the positives
+        for uid in newly_dx_inds:
+            self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
         # Identify school contacts
 

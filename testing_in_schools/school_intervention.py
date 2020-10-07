@@ -7,34 +7,36 @@ class Scenario():
         self.key = 'as_normal'
         self.label = 'As Normal'
 
+        ili_prob = 0.2 # <-- TEMP, real value is 0.002
+
         self.scenario = {
             'pk': None,
             'es': {
                 'start_day':  '2020-09-01',
-                'test_frac':  0,
-                'trace_frac': 0,
+                'test_prob':  0.5,
+                'trace_prob': 0.5,
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
-                'daily_ili_prob':        0.002
+                'daily_ili_prob': ili_prob
             },
             'ms': {
                 'start_day':  '2020-09-01',
-                'test_frac':  0,
-                'trace_frac': 0,
+                'test_prob':  0.5,
+                'trace_prob': 0.5,
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
-                'daily_ili_prob':        0.002,
+                'daily_ili_prob': ili_prob,
             },
             'hs': {
                 'start_day':  '2020-09-01',
-                'test_frac':  0,
-                'trace_frac': 0,
+                'test_prob':  0.5,
+                'trace_prob': 0.5,
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
-                'daily_ili_prob':        0.002,
+                'daily_ili_prob': ili_prob,
             },
             'uv': None,
         }
@@ -57,7 +59,7 @@ class new_schools(Intervention):
         TODO
     '''
 
-    #def __init__(self, start_day=None, ili_prev=None, test_freq=None, trace_frac=None, test_frac=None, is_hybrid=None, **kwargs):
+    #def __init__(self, start_day=None, ili_prev=None, test_freq=None, trace_prob=None, test_prob=None, is_hybrid=None, **kwargs):
     def __init__(self, scenario, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so that intervention can be recreated
@@ -67,8 +69,8 @@ class new_schools(Intervention):
         self.start_day  = start_day
         self.ili_prev   = ili_prev
         self.test_freq  = test_freq # int of frequency of diagnostic testing
-        self.trace_frac = trace_frac # whether or not you trace contacts of all diagnosed patients
-        self.test_frac  = test_frac # probability that anyone who screens positive is tested
+        self.trace_prob = trace_prob # whether or not you trace contacts of all diagnosed patients
+        self.test_prob  = test_prob # probability that anyone who screens positive is tested
         self.is_hybrid   = is_hybrid # dictionary
         '''
         self.scenario = scenario
