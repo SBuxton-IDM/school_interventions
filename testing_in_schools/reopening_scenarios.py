@@ -5,7 +5,7 @@ from school_intervention import new_schools
 
 res = [0.9]
 incs = [20, 50, 110]
-n_seeds = 20
+n_seeds = 2
 
 def scenario(es, ms, hs):
     return {
@@ -65,6 +65,9 @@ def generate_pars(res, incs):
             for entry in json[:n_seeds]:
                 p = entry['pars']
                 p['rand_seed'] = int(entry['index'])
+                # These are not model parameters, but useful for tracing
+                p['re'] = re
+                p['inc'] = inc
                 pars.append(p)
 
     return pars
@@ -76,7 +79,7 @@ if __name__ == '__main__':
 
     # Temp - make experiment smaller for testing
     scenarios = {s:v for s,v in scenarios.items() if s in ['As Normal', 'All Hybrid']} # , 'All Remote'
-    pars = pars[:2]
+    #pars = pars[:2]
 
     sims = []
     for skey, scen in scenarios.items():
