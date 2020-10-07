@@ -45,6 +45,10 @@ class FullTimeContactManager():
         pop = self.layer.pop_inds(rows)
 
 
+    def find_contacts(self, uids):
+        # Assumption: orig_layer is close enough, not adjusting for absenteeism
+        return self.orig_layer.find_contacts(uids)
+
     def get_layer(self):
         return self.layer
 
@@ -106,7 +110,8 @@ class School():
             self.sim.people.dead[self.uids_at_school])
 
         screen_pos = np.logical_and(dx_or_sx, ~rec_or_dead)
-        screen_pos_uids = np.array(self.uids_at_school)[screen_pos] # list(compress(self.uids_at_school, screen_pos)) # itruei
+        #screen_pos_uids = np.array(self.uids_at_school)[screen_pos] # list(compress(self.uids_at_school, screen_pos)) # itruei
+        screen_pos_uids = cvu.itrue(screen_pos, np.array(self.uids_at_school))
 
         # Add in screen positives from ILI
         if self.ili_prob is not None and self.ili_prob > 0:
@@ -117,14 +122,6 @@ class School():
                 screen_pos_uids = np.concatenate((screen_pos_uids, ili_pos_uids))
 
         return screen_pos_uids
-
-    def test_undiagnosed(self, student_prob=0, staff_prob=0, teacher_prob=0):
-        # Administer diagnostic tests in individuals not already diagnosed
-        # Exclude those home sick?
-        return
-
-    def _contact_trace(self, inds):
-        return
 
     def update(self):
         # Process the day, return in school layer
@@ -138,15 +135,10 @@ class School():
                 return cvb.Layer() # Might be faster to cache
 
         date = self.sim.date(self.sim.t)
-        self.ct_mgr.begin_day(date) # Do this first
+        self.ct_mgr.begin_day(date) # Do this at the beginning of the update
 
         if self.ct_mgr.group == 'no_school':
             return cvb.Layer() # No school today
-
-
-        # TEMP: Let's pretend to put some uids at home
-        self.uids_at_home[self.uids[0]] = self.sim.t
-        self.uids_at_home[self.uids[1]] = self.sim.t + self.sim.pars['quar_period']
 
         # If any individuals are done with quarantine, return them to school
         self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date > self.sim.t}
@@ -167,21 +159,24 @@ class School():
             self.sim.people.test(uids_to_test, test_delay=1) # one day test delay, TODO: Make a parameter!
 
         # Look for newly diagnosed people
-        #trace_from_inds = cvu.itruei(self.sim.people.date_diagnosed[self.uids] == self.sim.t, self.uids) # Diagnosed this time step, time to trace
-        newly_dx_inds = [uid for uid in self.uids if self.sim.people.date_diagnosed[uid] == self.sim.t] # faster with itruei?
+        newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
+        #newly_dx_inds = [uid for uid in self.uids if self.sim.people.date_diagnosed[uid] == self.sim.t] # faster with itruei?
 
         # Isolate the positives
-        for uid in newly_dx_inds:
-            self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
+        if len(newly_dx_inds) > 0:
+            for uid in newly_dx_inds:
+                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
-        # Identify school contacts
+            # Identify school contacts to quarantine
+            uids_to_trace = cvu.binomial_filter(self.trace_prob, newly_dx_inds)
+            uids_to_quar = self.ct_mgr.find_contacts(uids_to_trace)
 
-        # Quarantine school contacts
-
+            # Quarantine school contacts
+            for uid in uids_to_quar:
+                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
         # Remove individuals at home from the network
         self.ct_mgr.remove_individuals(list(self.uids_at_home.keys()))
-
 
         # Return what is left of the layer
         return self.ct_mgr.get_layer()

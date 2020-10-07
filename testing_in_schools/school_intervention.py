@@ -7,14 +7,16 @@ class Scenario():
         self.key = 'as_normal'
         self.label = 'As Normal'
 
-        ili_prob = 0.2 # <-- TEMP, real value is 0.002
+        test_prob = 1
+        trace_prob = 1
+        ili_prob = 0.002
 
         self.scenario = {
             'pk': None,
             'es': {
                 'start_day':  '2020-09-01',
-                'test_prob':  0.5,
-                'trace_prob': 0.5,
+                'test_prob':  test_prob,
+                'trace_prob': trace_prob,
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
@@ -22,8 +24,8 @@ class Scenario():
             },
             'ms': {
                 'start_day':  '2020-09-01',
-                'test_prob':  0.5,
-                'trace_prob': 0.5,
+                'test_prob':  test_prob,
+                'trace_prob': trace_prob,
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
@@ -31,8 +33,8 @@ class Scenario():
             },
             'hs': {
                 'start_day':  '2020-09-01',
-                'test_prob':  0.5,
-                'trace_prob': 0.5,
+                'test_prob':  test_prob,
+                'trace_prob': trace_prob,
                 'test_freq':  0,
                 'is_hybrid':  False,
                 'npi':        0.75,
