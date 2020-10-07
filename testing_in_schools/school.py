@@ -7,11 +7,8 @@ class FullTimeContactManager():
     ''' Contact manager for regular 5-day-per-week school '''
 
     def __init__(self, layer):
-        self.orig_layer = layer
-        #self.layer = layer
+        self.base_layer = layer
         self.group = 'closed'
-
-        self.removed_contacts = {} # Dictionary uid: contacts | group?
 
         self.schedule = {
             'Monday':    'all',
@@ -31,13 +28,12 @@ class FullTimeContactManager():
         # Could modify layer based on group
         if group == 'all':
             # Start with the original layer, will remove uids at home later
-            self.layer = self.orig_layer
+            self.layer = self.base_layer
         else:
             self.layer = cvb.Layer() # Empty
 
     def remove_individuals(self, uids):
         ''' Remove one or more individual from the contact network '''
-
         print(f'Removing {uids}')
         rows = np.concatenate((
             np.isin(self.layer['p1'], uids).nonzero()[0],
@@ -46,26 +42,92 @@ class FullTimeContactManager():
 
 
     def find_contacts(self, uids):
-        # Assumption: orig_layer is close enough, not adjusting for absenteeism
-        return self.orig_layer.find_contacts(uids)
+        # Assumption: base_layer is close enough, not adjusting for absenteeism
+        return self.base_layer.find_contacts(uids)
 
     def get_layer(self):
         return self.layer
 
 
+class HybridContactManager():
+    ''' Contact manager for hybrid school '''
 
-'''
-# For hybrid contact manager
-self.schedule = {
-    'Monday':    'A',
-    'Tuesday':   'A',
-    'Wednesday': 'distance',
-    'Thursday':  'B',
-    'Friday':    'B',
-    'Saturday':  'no_school',
-    'Sunday':    'no_school',
-}
-'''
+    def __init__(self, sim, uids, layer):
+        self.sim = sim
+        self.uids = uids
+        self.base_layer = layer
+        self.A_layer, self.B_layer = self.split_layer()
+
+        self.group = 'closed'
+
+        self.schedule = {
+            'Monday':    'A',
+            'Tuesday':   'A',
+            'Wednesday': 'distance',
+            'Thursday':  'B',
+            'Friday':    'B',
+            'Saturday':  'no_school',
+            'Sunday':    'no_school',
+        }
+
+    def split_layer(self):
+        students = [uid for uid in self.uids if self.sim.people.student_flag[uid]]
+        staff = [uid for uid in self.uids if self.sim.people.staff_flag[uid]]
+        teachers = [uid for uid in self.uids if self.sim.people.teacher_flag[uid]]
+
+        A_students = cvu.binomial_filter(0.5, np.array(students)).tolist()
+        B_students = [uid for uid in students if uid not in A_students]
+
+        A_group = A_students + teachers + staff
+        B_group = B_students + teachers + staff
+
+        A_layer = sc.dcp(self.base_layer)
+        rows = np.concatenate((
+                np.isin(A_layer['p1'], B_students).nonzero()[0],
+                np.isin(A_layer['p2'], B_students).nonzero()[0]))
+        pop = A_layer.pop_inds(rows)
+
+        B_layer = sc.dcp(self.base_layer)
+        rows = np.concatenate((
+                np.isin(B_layer['p1'], A_students).nonzero()[0],
+                np.isin(B_layer['p2'], A_students).nonzero()[0]))
+        pop = B_layer.pop_inds(rows)
+        return A_layer, B_layer
+
+    def begin_day(self, date):
+        # Update group
+        dayname = sc.readdate(date).strftime('%A')
+        group = self.schedule[dayname]
+
+        # Could modify layer based on group
+        if group == 'A':
+            self.layer = self.A_layer
+        elif group == 'B':
+            self.layer = self.B_layer
+        else:
+            self.layer = cvb.Layer() # Empty
+
+    def remove_individuals(self, uids):
+        ''' Remove one or more individual from the contact network '''
+
+        print(f'Removing {uids}')
+        for layer in [self.A_layer, self.B_layer]:
+            rows = np.concatenate((
+                np.isin(layer['p1'], uids).nonzero()[0],
+                np.isin(layer['p2'], uids).nonzero()[0]))
+            pop = layer.pop_inds(rows)
+
+    def find_contacts(self, uids):
+        # Assumption: base_layer is close enough, not adjusting for absenteeism
+
+        # Look in A layer for A layer friends, B for B layer friends
+        #A_uids = _____
+        #B_uids = _____
+        return self.base_layer.find_contacts(uids)
+
+    def get_layer(self):
+        return self.layer
+
 
 class School():
 
@@ -88,12 +150,10 @@ class School():
 
         self.is_open = False # Schools start closed
 
-
         self.uids_at_home = {} # Dict from uid to release date
 
         if self.is_hybrid:
-            print('Not implemented')
-            exit()
+            self.ct_mgr = HybridContactManager(sim, uids, layer)
         else:
             self.ct_mgr = FullTimeContactManager(layer)
 
@@ -136,7 +196,7 @@ class School():
         date = self.sim.date(self.sim.t)
         self.ct_mgr.begin_day(date) # Do this at the beginning of the update
 
-        if self.ct_mgr.group == 'no_school':
+        if self.ct_mgr.group in ['no_school', 'distance']:
             return cvb.Layer() # No school today
 
         # If any individuals are done with quarantine, return them to school
