@@ -61,7 +61,6 @@ class new_schools(Intervention):
         TODO
     '''
 
-    #def __init__(self, start_day=None, ili_prev=None, test_freq=None, trace_prob=None, test_prob=None, is_hybrid=None, **kwargs):
     def __init__(self, scenario, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so that intervention can be recreated

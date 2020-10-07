@@ -98,7 +98,7 @@ class School():
             self.ct_mgr = FullTimeContactManager(layer)
 
     def screen(self):
-        # Screen those at school
+        ''' Screen those at school '''
 
         # Inclusion criteria: diagnosed or symptomatic but not recovered and not dead
         dx_or_sx = np.logical_or(
@@ -110,7 +110,6 @@ class School():
             self.sim.people.dead[self.uids_at_school])
 
         screen_pos = np.logical_and(dx_or_sx, ~rec_or_dead)
-        #screen_pos_uids = np.array(self.uids_at_school)[screen_pos] # list(compress(self.uids_at_school, screen_pos)) # itruei
         screen_pos_uids = cvu.itrue(screen_pos, np.array(self.uids_at_school))
 
         # Add in screen positives from ILI
@@ -124,7 +123,7 @@ class School():
         return screen_pos_uids
 
     def update(self):
-        # Process the day, return in school layer
+        ''' Process the day, return the school layer '''
 
         # First check if school is open
         if not self.is_open:
@@ -160,7 +159,6 @@ class School():
 
         # Look for newly diagnosed people
         newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
-        #newly_dx_inds = [uid for uid in self.uids if self.sim.people.date_diagnosed[uid] == self.sim.t] # faster with itruei?
 
         # Isolate the positives
         if len(newly_dx_inds) > 0:
