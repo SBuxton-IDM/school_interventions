@@ -33,7 +33,6 @@ class new_schools(Intervention):
         self.is_hybrid   = is_hybrid # dictionary
         '''
         self.scenario = scenario
-
         self.schools = []
 
     def initialize(self, sim):
@@ -41,9 +40,19 @@ class new_schools(Intervention):
         self.school_types = sim.people.school_types # Dict with keys of school types (e.g. 'es') and values of list of school ids (e.g. [1,5])
 
         sdf = sim.people.contacts['s'].to_df()
+        sim.school_stats = {}
 
         for school_type, scids in self.school_types.items():
             for school_id in scids:
+                stats = {
+                    'type': school_type,
+                    'n_students': 0,
+                    'n_staff': 1,
+                    'n_teachers': 2,
+                    'scenario': self.scenario[school_type],
+                }
+                sim.school_stats[school_id] = stats
+
                 if self.scenario[school_type] is not None:
                     # Extract 's'-layer associated with this school
                     uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
@@ -69,4 +78,5 @@ class new_schools(Intervention):
         for school in self.schools:
             layer = school.update()
             sim.people.contacts[school.sid] = layer
+            sim.school_stats[school.sid].update( school.get_stats() )
 

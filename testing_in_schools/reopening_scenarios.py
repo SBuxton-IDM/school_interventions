@@ -62,12 +62,9 @@ def generate_pars(res, incs):
                 jsonfile = f'optimization_school_reopening_re_{re}_cases_{inc}.json'
             json = sc.loadjson(jsonfile)
 
-            #for s in range(n_seeds):
             for entry in json[:n_seeds]:
-                #entry = json[s]
                 p = entry['pars']
                 p['rand_seed'] = int(entry['index'])
-                print(p)
                 pars.append(p)
 
     return pars
@@ -78,14 +75,18 @@ if __name__ == '__main__':
     pars = generate_pars(res, incs)
 
     # Temp - make experiment smaller for testing
-    #scenarios = {s:v for s,v in scenarios.items() if s in ['As Normal', 'All Remote']}
-    pars = pars[:5]
+    scenarios = {s:v for s,v in scenarios.items() if s in ['As Normal', 'All Hybrid']} # , 'All Remote'
+    pars = pars[:2]
 
     sims = []
     for skey, scen in scenarios.items():
         for idx, par in enumerate(pars):
             sim = cs.create_sim(par)
+
             sim.label = f'scen={skey}; idx={idx}; ' + '; '.join(f'{k}={v}' for k,v in par.items()) + ';'
+            sim.scen = scen
+            sim.par = par
+
             ns = new_schools(scen) # Not sure if need new mem for each
             sim['interventions'] += [ns]
             sims.append(sim)

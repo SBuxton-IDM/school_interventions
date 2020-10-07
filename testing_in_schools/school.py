@@ -124,6 +124,34 @@ class HybridContactManager():
         return self.layer
 
 
+class SchoolStats():
+    def __init__(self, school):
+        self.school = school
+
+        self.students_at_school_while_infectious = set()
+        self.teacherstaff_at_school_while_infectious = set()
+
+        self.n_students_at_school_while_infectious = [0] * len(self.school.sim.tvec)
+        self.n_teacherstaff_at_school_while_infectious = [0] * len(self.school.sim.tvec)
+
+    def update(self):
+        stu_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if self.school.sim.people.student_flag[uid]]
+        students_at_school_while_infectious_today = cvu.itrue(self.school.sim.people.infectious[stu_at_sch_uids], np.array(stu_at_sch_uids))
+        self.students_at_school_while_infectious |= set(students_at_school_while_infectious_today)
+        self.n_students_at_school_while_infectious[self.school.sim.t] = len(self.students_at_school_while_infectious)
+
+        teacherstaff_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if self.school.sim.people.teacher_flag[uid] or self.school.sim.people.staff_flag[uid]]
+        teacherstaff_at_school_while_infectious_today = cvu.itrue(self.school.sim.people.infectious[stu_at_sch_uids], np.array(stu_at_sch_uids))
+        self.teacherstaff_at_school_while_infectious |= set(teacherstaff_at_school_while_infectious_today)
+        self.n_teacherstaff_at_school_while_infectious[self.school.sim.t] = len(self.teacherstaff_at_school_while_infectious)
+
+    def get(self):
+        return {
+            'n_students_at_school_while_infectious': self.n_students_at_school_while_infectious,
+            'n_teacherstaff_at_school_while_infectious': self.n_teacherstaff_at_school_while_infectious,
+        }
+
+
 class School():
 
     def __init__(self, sim, school_id, school_type, uids, layer,
@@ -142,6 +170,8 @@ class School():
         self.npi = npi
         self.ili_prob = ili_prob
         self.verbose = verbose
+
+        self.stats = SchoolStats(self)
 
         self.is_open = False # Schools start closed
 
@@ -237,5 +267,10 @@ class School():
         # Remove individuals at home from the network
         self.ct_mgr.remove_individuals(list(self.uids_at_home.keys()))
 
+        self.stats.update()
+
         # Return what is left of the layer
         return self.ct_mgr.get_layer()
+
+    def get_stats(self):
+        return self.stats.get()
