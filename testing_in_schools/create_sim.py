@@ -23,7 +23,7 @@ def define_pars(which='best', kind='default', ):
 
     return output
 
-def run_sim(params, run=True):
+def create_sim(params):
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
     if 'rand_seed' not in p:
@@ -72,8 +72,12 @@ def run_sim(params, run=True):
     sim['interventions'] = interventions
     for interv in sim['interventions']:
         interv.do_plot = False
-    if run:
-        sim.run()
-    return(sim)
+
+    return sim
+
+def run_sim(params):
+    sim = create_sim()
+    sim.run()
+    return sim
 
 

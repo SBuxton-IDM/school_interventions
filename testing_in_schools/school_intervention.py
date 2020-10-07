@@ -2,48 +2,6 @@ from covasim.interventions import Intervention
 import covasim.base as cvb
 from school import School
 
-class Scenario():
-    def __init__(self):
-        self.key = 'as_normal'
-        self.label = 'As Normal'
-
-        test_prob = 1
-        trace_prob = 1
-        ili_prob = 0.002
-
-        self.scenario = {
-            'pk': None,
-            'es': {
-                'start_day':  '2020-09-01',
-                'test_prob':  test_prob,
-                'trace_prob': trace_prob,
-                'test_freq':  0,
-                'is_hybrid':  True,
-                'npi':        0.75,
-                'daily_ili_prob': ili_prob
-            },
-            'ms': {
-                'start_day':  '2020-09-01',
-                'test_prob':  test_prob,
-                'trace_prob': trace_prob,
-                'test_freq':  0,
-                'is_hybrid':  True,
-                'npi':        0.75,
-                'daily_ili_prob': ili_prob,
-            },
-            'hs': {
-                'start_day':  '2020-09-01',
-                'test_prob':  test_prob,
-                'trace_prob': trace_prob,
-                'test_freq':  0,
-                'is_hybrid':  True,
-                'npi':        0.75,
-                'daily_ili_prob': ili_prob,
-            },
-            'uv': None,
-        }
-
-
 class new_schools(Intervention):
     '''
     Specifies reopening strategy.
@@ -78,7 +36,6 @@ class new_schools(Intervention):
 
         self.schools = []
 
-
     def initialize(self, sim):
         # Create schools
         self.school_types = sim.people.school_types # Dict with keys of school types (e.g. 'es') and values of list of school ids (e.g. [1,5])
@@ -88,7 +45,6 @@ class new_schools(Intervention):
         for school_type, scids in self.school_types.items():
             for school_id in scids:
                 if self.scenario[school_type] is not None:
-                    print(f'Createating school {school_id} of type {school_type}')
                     # Extract 's'-layer associated with this school
                     uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
                     rows = (sdf['p1'].isin(uids)) | (sdf['p2'].isin(uids))
@@ -103,25 +59,14 @@ class new_schools(Intervention):
                     sim['beta_layer'][sch.sid] = self.scenario[school_type]['npi'] * sim['beta_layer']['s']
                     sim['iso_factor'][sch.sid] = sim['iso_factor']['s']
                     sim['quar_factor'][sch.sid] = sim['quar_factor']['s']
-                else:
-                    print(f'Skipping school {school_id} of type {school_type}')
 
         # Delete remaining entries in sim.people.contacts['s'], these were associated with schools that will not open, e.g. pk and uv
-        print(f'Removing remaining {sdf.shape[0]} school contacts as they are in schools that will not open')
         sim.people.contacts['s'] = cvb.Layer()
 
         self.initialized = True
-        return
-
 
     def apply(self, sim):
-
-        #t = sim.t
-        #self.rescale = sim.rescale_vec[t] # Current rescaling factor for counts
-
         for school in self.schools:
             layer = school.update()
             sim.people.contacts[school.sid] = layer
-
-        return
 

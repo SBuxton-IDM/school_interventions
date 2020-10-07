@@ -5,7 +5,7 @@ from school_intervention import new_schools, Scenario
 
 if __name__ == '__main__':
     params = { 'rand_seed':0 }
-    sim = cs.run_sim(params, run=False)
+    sim = cs.create_sim(params)
 
     s = Scenario()
 

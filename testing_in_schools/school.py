@@ -34,7 +34,7 @@ class FullTimeContactManager():
 
     def remove_individuals(self, uids):
         ''' Remove one or more individual from the contact network '''
-        print(f'Removing {uids}')
+        #print(f'Removing {uids}')
         rows = np.concatenate((
             np.isin(self.layer['p1'], uids).nonzero()[0],
             np.isin(self.layer['p2'], uids).nonzero()[0]))
@@ -109,7 +109,6 @@ class HybridContactManager():
     def remove_individuals(self, uids):
         ''' Remove one or more individual from the contact network '''
 
-        #print(f'Removing {uids}')
         rows = np.concatenate((
             np.isin(self.layer['p1'], uids).nonzero()[0],
             np.isin(self.layer['p2'], uids).nonzero()[0]))
@@ -128,7 +127,7 @@ class HybridContactManager():
 class School():
 
     def __init__(self, sim, school_id, school_type, uids, layer,
-                start_day, test_prob, trace_prob, test_freq, is_hybrid, npi, daily_ili_prob, verbose=False, **kwargs):
+                start_day, screen_prob, test_prob, trace_prob, is_hybrid, npi, ili_prob, verbose=False, **kwargs):
 
         self.sim = sim
         self.sid = school_id
@@ -136,12 +135,12 @@ class School():
         self.uids = uids
         self.is_hybrid = is_hybrid
         self.start_day = start_day
+        self.screen_prob = screen_prob
         self.test_prob = test_prob
         self.trace_prob = trace_prob
-        self.test_freq = test_freq
         self.is_hybrid = is_hybrid
         self.npi = npi
-        self.ili_prob = daily_ili_prob
+        self.ili_prob = ili_prob
         self.verbose = verbose
 
         self.is_open = False # Schools start closed
@@ -157,20 +156,24 @@ class School():
         ''' Screen those at school '''
 
         # Inclusion criteria: diagnosed or symptomatic but not recovered and not dead
+        inds_to_screen = cvu.binomial_filter(self.screen_prob, np.array(self.uids_arriving_at_school))
+        if len(inds_to_screen) == 0:
+            return []
+
         dx_or_sx = np.logical_or(
-            self.sim.people.diagnosed[self.uids_arriving_at_school],
-            self.sim.people.symptomatic[self.uids_arriving_at_school])
+            self.sim.people.diagnosed[inds_to_screen],
+            self.sim.people.symptomatic[inds_to_screen])
 
         rec_or_dead = np.logical_or(
-            self.sim.people.recovered[self.uids_arriving_at_school],
-            self.sim.people.dead[self.uids_arriving_at_school])
+            self.sim.people.recovered[inds_to_screen],
+            self.sim.people.dead[inds_to_screen])
 
         screen_pos = np.logical_and(dx_or_sx, ~rec_or_dead)
-        screen_pos_uids = cvu.itrue(screen_pos, np.array(self.uids_arriving_at_school))
+        screen_pos_uids = cvu.itrue(screen_pos, np.array(inds_to_screen))
 
-        # Add in screen positives from ILI
+        # Add in screen positives from ILI amongst those who were screened negative
         if self.ili_prob is not None and self.ili_prob > 0:
-            screen_neg_uids = np.array(self.uids_arriving_at_school)[~screen_pos]
+            screen_neg_uids = np.array(inds_to_screen)[~screen_pos]
             n_ili = np.random.binomial(len(screen_neg_uids), self.ili_prob) # Poisson
             if n_ili > 0:
                 ili_pos_uids = np.random.choice(screen_neg_uids, n_ili, replace=False)
@@ -219,6 +222,7 @@ class School():
         self.uids_arriving_at_school = [u for u in self.uids if u not in self.uids_at_home.keys()]
 
         # Perform symptom screening
+        # TODO: screen_prob
         screen_pos_ids = self.screen()
 
         if len(screen_pos_ids) > 0:
