@@ -51,9 +51,6 @@ class new_schools(Intervention):
 
                 stats = {
                     'type':         school_type,
-                    'n_students':   len(students),
-                    'n_staff':      len(staff),
-                    'n_teachers':   len(teachers),
                     'scenario':     self.scenario[school_type],
                 }
                 sim.school_stats[school_id] = stats

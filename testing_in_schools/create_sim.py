@@ -23,7 +23,9 @@ def define_pars(which='best', kind='default', ):
 
     return output
 
-def create_sim(params):
+def create_sim(params, pop_size=2.25e5):
+
+    pop_scale = 2.25e6 / pop_size
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
     if 'rand_seed' not in p:
@@ -31,7 +33,7 @@ def create_sim(params):
         print(f'Note, could not find random seed in {params}! Setting to {seed}')
         p['rand_seed'] = seed  # Ensure this exists
 
-    popfile_stem = f'inputs/kc_synthpops_clustered_withstaff_seed'
+    popfile_stem = f'inputs/kc_synthpops_clustered_{int(pop_size)}_withstaff_seed'
 
     tp = sc.objdict(
         symp_prob=0.03,
@@ -45,9 +47,8 @@ def create_sim(params):
         trace_time=5.0,
     )
 
-    print('TEMP: SMALL POPULATION FOR TESTING!')
-    pars = {'pop_size': 225e2, # TEMP: restore to 225e3
-            'pop_scale': 100,   # TEMP: restore to 10
+    pars = {'pop_size': pop_size,
+            'pop_scale': pop_scale,
             'pop_type': 'synthpops',
             'pop_infected': p.pop_infected,
             'rescale': True,

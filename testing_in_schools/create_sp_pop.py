@@ -13,7 +13,7 @@ def cache_populations(seed=0, popfile=None):
 
     pars = sc.objdict(
         # pop_size = 2.25e6,
-        pop_size = 225e3,
+        pop_size = 2.25e5,
         pop_type = 'synthpops',
         rand_seed = seed,
     )
@@ -54,8 +54,7 @@ def cache_populations(seed=0, popfile=None):
                               'hs': 'random', 'uv': 'random'}
 
     if popfile is None:
-        popfile = f'inputs/kc_synthpops_{strategy}_withstaff_seed{pars.rand_seed}.ppl'
-        # popfile = f'inputs/kc_synthpops_{strategy}_withstaff_1m_seed{pars.rand_seed}.ppl'
+        popfile = f'inputs/kc_synthpops_{strategy}_{int(pars.pop_size)}_withstaff_seed{pars.rand_seed}.ppl'
 
     T = sc.tic()
     print(f'Making "{popfile}"...')

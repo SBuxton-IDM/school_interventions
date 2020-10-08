@@ -3,15 +3,26 @@ import optuna as op
 import pandas as pd
 import numpy as np
 import create_sim as cs
+from school_intervention import new_schools
 
-cases_to_fit = 110
+pop_size = 2.25e5
+cases_to_fit = 50 #20, 50, 110
 re_to_fit = 0.9
 
-name      = f'optimization_school_reopening_re_{re_to_fit}_cases_{cases_to_fit}'
+name      = f'optimization_school_reopening_re_{re_to_fit}_cases_{cases_to_fit}_{int(pop_size)}'
 storage   = f'sqlite:///{name}.db'
-n_trials  = 61
-n_workers = 16
+n_workers = 8
+n_trials  = 20 # Each worker does n_trials
 save_json = True
+
+def scenario(es, ms, hs):
+    return {
+        'pk': None,
+        'es': es,
+        'ms': ms,
+        'hs': hs,
+        'uv': None,
+    }
 
 
 def objective(trial, kind='default'):
@@ -21,12 +32,31 @@ def objective(trial, kind='default'):
     for key, bound in bounds.items():
         pars[key] = trial.suggest_uniform(key, *bound)
     pars['rand_seed'] = trial.number
-    sim = cs.run_sim(pars)
+
+    sim = cs.create_sim(pars, pop_size=pop_size)
+
+    remote = {
+        'start_day': '2020-09-01',
+        'is_hybrid': False,
+        'screen_prob': 0,
+        'test_prob': 0,
+        'trace_prob': 0,
+        'ili_prob': 0,
+        'npi': 0 # This turns off transmission in this layer
+    }
+    scen = scenario(es=remote, ms=remote, hs=remote)
+    ns = new_schools(scen)
+    sim['interventions'] += [ns]
+    sim.run()
+
+    first = sim.day('2020-09-01')
+    last = sim.day('2020-12-01')
+
     results = pd.DataFrame(sim.results)
-    re = results['r_eff'].iloc[62:sim.day('2020-12-01'), ].mean(axis=0)
-    cases = results['new_diagnoses'].iloc[48:62, ].sum(axis=0) * 100e3 / 2.25e6
-    re_mismatch = ((re_to_fit - re)**2)/re
-    cases_mismatch = ((cases_to_fit - cases)**2)/cases
+    re = results['r_eff'].iloc[first:last, ].mean(axis=0)
+    cases = results['new_diagnoses'].iloc[(first-14):first, ].sum(axis=0) * 100e3 / 2.25e6
+    re_mismatch = (re_to_fit - re)**2 / re_to_fit**2
+    cases_mismatch = (cases_to_fit - cases)**2 / cases_to_fit**2
     mismatch = re_mismatch + cases_mismatch
     return mismatch
 

@@ -125,10 +125,42 @@ class HybridContactManager():
 
 
 class SchoolStats():
-    # TODO: rescale weighting!
+    ''' Reporter for tracking statistics associated with a school '''
+
     def __init__(self, school):
         self.school = school
 
+        zero_vec = [0] * self.school.sim.npts
+
+        ppl = self.school.sim.people
+        pop_scale = self.school.sim.pars['pop_scale']
+        student_uids = [uid for uid in self.school.uids if ppl.student_flag[uid]]
+        teacher_uids = [uid for uid in self.school.uids if ppl.teacher_flag[uid]]
+        staff_uids = [uid for uid in self.school.uids if ppl.staff_flag[uid]]
+        self.num = {
+            'students':   len(student_uids) * pop_scale,
+            'teachers':   len(teacher_uids) * pop_scale,
+            'staff':      len(staff_uids) * pop_scale,
+        }
+
+        self.infectious = {
+            'students': sc.dcp(zero_vec),
+            'teachers': sc.dcp(zero_vec),
+            'staff':    sc.dcp(zero_vec),
+        }
+
+        self.newly_exposed = {
+            'students': sc.dcp(zero_vec),
+            'teachers': sc.dcp(zero_vec),
+            'staff':    sc.dcp(zero_vec),
+        }
+
+        # To reproduce results from previous work:
+        self.num_cases = {
+            'students': [],
+            'teachers': [],
+            'staff':    [],
+        }
         self.students_at_school_while_infectious = set()
         self.teacherstaff_at_school_while_infectious = set()
 
@@ -138,20 +170,43 @@ class SchoolStats():
         self.cum_unique_students_at_school_while_infectious = -1
         self.cum_unique_teacherstaff_at_school_while_infectious = -1
 
-        # REMOVE:
-        #self.n_students_at_school_while_infectious = [0] * len(self.school.sim.tvec)
-        #self.n_teacherstaff_at_school_while_infectious = [0] * len(self.school.sim.tvec)
+        # screened
+        # tested
+        # traced
+        # diagnosed
+        # at school
+
 
     def update(self):
-        stu_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if self.school.sim.people.student_flag[uid]]
-        students_at_school_while_infectious_today = cvu.itrue(self.school.sim.people.infectious[stu_at_sch_uids], np.array(stu_at_sch_uids))
-        self.students_at_school_while_infectious |= set(students_at_school_while_infectious_today)
-        #self.n_students_at_school_while_infectious[self.school.sim.t] = len(self.students_at_school_while_infectious)
+        t = self.school.sim.t
+        ppl = self.school.sim.people
+        rescale = self.school.sim.rescale_vec[t]
 
-        teacherstaff_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if self.school.sim.people.teacher_flag[uid] or self.school.sim.people.staff_flag[uid]]
-        teacherstaff_at_school_while_infectious_today = cvu.itrue(self.school.sim.people.infectious[teacherstaff_at_sch_uids], np.array(teacherstaff_at_sch_uids))
+        student_uids = [uid for uid in self.school.uids if ppl.student_flag[uid]]
+        teacher_uids = [uid for uid in self.school.uids if ppl.teacher_flag[uid]]
+        staff_uids = [uid for uid in self.school.uids if ppl.staff_flag[uid]]
+
+        for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
+            self.infectious[group][t] = len(cvu.true(ppl.infectious[ids])) * rescale
+            self.newly_exposed[group][t] = len(cvu.true(ppl.date_exposed[ids] == t-1)) * rescale
+
+
+        # From previous work:
+        if len(self.school.uids_arriving_at_school) > 0:
+            school_infectious = cvu.itrue(ppl.infectious[np.array(self.school.uids_arriving_at_school)], np.array(self.school.uids_arriving_at_school))
+        else:
+            school_infectious = []
+
+        for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
+            self.num_cases[group] += [uid for uid in school_infectious if uid in ids]
+
+        stu_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.student_flag[uid]]
+        students_at_school_while_infectious_today = cvu.itrue(ppl.infectious[stu_at_sch_uids], np.array(stu_at_sch_uids))
+        self.students_at_school_while_infectious |= set(students_at_school_while_infectious_today)
+
+        teacherstaff_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.teacher_flag[uid] or ppl.staff_flag[uid]]
+        teacherstaff_at_school_while_infectious_today = cvu.itrue(ppl.infectious[teacherstaff_at_sch_uids], np.array(teacherstaff_at_sch_uids))
         self.teacherstaff_at_school_while_infectious |= set(teacherstaff_at_school_while_infectious_today)
-        #self.n_teacherstaff_at_school_while_infectious[self.school.sim.t] = len(self.teacherstaff_at_school_while_infectious)
 
         if self.school.sim.t == self.school.sim.day(self.school.start_day):
             self.n_students_at_school_while_infectious_first_day = len(self.students_at_school_while_infectious)
@@ -160,14 +215,25 @@ class SchoolStats():
             self.cum_unique_students_at_school_while_infectious = len(self.students_at_school_while_infectious)
             self.cum_unique_teacherstaff_at_school_while_infectious = len(self.teacherstaff_at_school_while_infectious)
 
+    def finalize(self):
+        ''' Called once on the final time step '''
+        t = self.school.sim.t
+        rescale = self.school.sim.rescale_vec[t]
+        for group in ['students', 'teachers', 'staff']:
+            self.num_cases[group] = rescale * len(list(dict.fromkeys(self.num_cases[group]))) # Not scaled correctly!
+
     def get(self):
         return {
+            'num': self.num,
+            'infectious': self.infectious,
+            'newly_exposed': self.newly_exposed,
+
+            # From previous work:
+            'num_cases': self.num_cases,
             'n_students_at_school_while_infectious_first_day': self.n_students_at_school_while_infectious_first_day,
             'n_teacherstaff_at_school_while_infectious_first_day': self.n_teacherstaff_at_school_while_infectious_first_day,
             'cum_unique_students_at_school_while_infectious': self.cum_unique_students_at_school_while_infectious,
             'cum_unique_teacherstaff_at_school_while_infectious': self.cum_unique_teacherstaff_at_school_while_infectious,
-            #'n_students_at_school_while_infectious': self.n_students_at_school_while_infectious,
-            #'n_teacherstaff_at_school_while_infectious': self.n_teacherstaff_at_school_while_infectious,
         }
 
 
@@ -271,7 +337,6 @@ class School():
         self.uids_arriving_at_school = [u for u in self.uids if u not in self.uids_at_home.keys()]
 
         # Perform symptom screening
-        # TODO: screen_prob
         screen_pos_ids = self.screen()
 
         if len(screen_pos_ids) > 0:
@@ -287,6 +352,8 @@ class School():
         self.ct_mgr.remove_individuals(list(self.uids_at_home.keys()))
 
         self.stats.update()
+        if self.sim.t == self.sim.npts-1:
+            self.stats.finalize()
 
         # Return what is left of the layer
         return self.ct_mgr.get_layer()
