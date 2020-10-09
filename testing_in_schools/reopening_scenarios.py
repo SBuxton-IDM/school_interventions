@@ -6,7 +6,7 @@ from school_intervention import new_schools
 res = [0.9]
 incs = [20, 50, 110]
 n_seeds = 20
-pop_size = 2.25e5 # 2.25e4 2.25e5
+pop_size = 2.25e4 # 2.25e4 2.25e5
 
 def scenario(es, ms, hs):
     return {
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             print(proc, tot, len(sims))
             if len(sims) == step or proc == tot:
                 print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
-                msim = cv.MultiSim(sims)
+                msim = cv.MultiSim(sims) # run or do_run
                 msims.append(msim)
                 msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
                 sims = []

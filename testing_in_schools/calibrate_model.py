@@ -6,12 +6,12 @@ import create_sim as cs
 from school_intervention import new_schools
 
 pop_size = 2.25e5
-cases_to_fit = 110 #20, 50, 110
+cases_to_fit = 25 #20, 50, 110
 re_to_fit = 0.9
 
 name      = f'optimization_school_reopening_re_{re_to_fit}_cases_{cases_to_fit}_{int(pop_size)}'
 storage   = f'sqlite:///{name}.db'
-n_workers = 8
+n_workers = 16
 n_trials  = 20 # Each worker does n_trials
 save_json = True
 

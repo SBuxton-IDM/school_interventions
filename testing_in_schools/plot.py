@@ -10,7 +10,9 @@ msim = cv.MultiSim.load(f'msim_{int(pop_size)}.obj')
 #exit()
 
 results = []
+byschool = []
 for sim in msim.sims:
+
     first_school_day = sim.day('2020-09-01')
     last_school_day = sim.day('2020-12-01')
     rdf = pd.DataFrame(sim.results)
@@ -27,6 +29,10 @@ for sim in msim.sims:
     cases_mismatch = (cases_to_fit - ret['cases'])**2 / cases_to_fit**2
     ret['mismatch'] = re_mismatch + cases_mismatch
 
+    #if sim.label == 'all_remote' and sim.dynamic_par['inc'] == 110:
+    #    print(sim.label, sim.dynamic_par['inc'], ret['cases'], sim.dynamic_par['re'], ret['re'], ret['mismatch'])
+    #    sim.plot()
+
     attack_students = []
     attack_teachersstaff = []
 
@@ -35,6 +41,7 @@ for sim in msim.sims:
 
     n_schools = {'es':0, 'ms':0, 'hs':0}
     n_schools_with_inf_d1 = {'es':0, 'ms':0, 'hs':0}
+    inf_d1 = {'es':0, 'ms':0, 'hs':0} # TEMP
     for sid,stats in sim.school_stats.items():
         if stats['type'] not in ['es', 'ms', 'hs']:
             continue
@@ -53,6 +60,7 @@ for sim in msim.sims:
         n_schools[stats['type']] += 1
         if inf['students'][first_school_day] + inf['teachers'][first_school_day] + inf['staff'][first_school_day] > 0:
             n_schools_with_inf_d1[stats['type']] += 1
+            inf_d1[stats['type']] += inf['students'][first_school_day] + inf['teachers'][first_school_day] + inf['staff'][first_school_day]
 
 
         # Legacy:
@@ -64,19 +72,33 @@ for sim in msim.sims:
         'n_teacherstaff_at_school_while_infectious_first_day': self.n_teacherstaff_at_school_while_infectious_first_day,
         '''
 
+        groups = ['students', 'teachers', 'staff']
+        if sim.label == 'all_remote':
+            byschool.append({
+                'type': stats['type'],
+                'inc': sim.dynamic_par['inc'],
+                'size': sum([stats['num'][g] for g in groups]),
+                'd1 infectious': sum([stats['infectious'][g][first_school_day] for g in groups]),
+            })
+
     for stype in ['es', 'ms', 'hs']:
-        ret[f'{stype}_frac_d1'] = 100 * n_schools_with_inf_d1[stype] / n_schools[stype]
+        ret[f'{stype}_perc_d1'] = 100 * n_schools_with_inf_d1[stype] / n_schools[stype]
+        ret[f'{stype}_inf_d1'] = inf_d1[stype]
     ret['attack_students'] = np.mean(attack_students)
     ret['attack_teachersstaff'] = np.mean(attack_teachersstaff)
 
     ret['attack_students_legacy'] = np.mean(attack_students_legacy)
     ret['attack_teachersstaff_legacy'] = np.mean(attack_teachersstaff_legacy)
 
+
+    print('-'*80)
+    print(sim.label, sim.dynamic_par['inc'], ret['cases'], sim.dynamic_par['re'], ret['re'], ret['mismatch'])
+    print(n_schools_with_inf_d1, n_schools)
+    print(ret)
+
     results.append(ret)
 
 df = pd.DataFrame(results)
-print(df)
-print('-'*80)
 
 # Attack rate
 d = pd.melt(df, id_vars=['key', 'inc'], value_vars=['attack_students', 'attack_teachersstaff'], var_name='Group', value_name='Cum Inc (%)')
@@ -89,6 +111,24 @@ g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['attack_te
 g.map_dataframe( sns.barplot, x='key', y='Cum Inc (%)', hue='inc')
 plt.suptitle('Legacy')
 
+
+# Re
+fig = plt.figure(figsize=(16,10))
+sns.barplot(data=df, x='key', y='re', hue='inc')
+
+# Percent of schools with infections on day 1
+fig = plt.figure(figsize=(16,10))
+extract = df.groupby(['key', 'inc'])['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'].mean().loc['as_normal'].reset_index()
+melt = pd.melt(extract, id_vars=['inc'], value_vars=['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'], var_name='School Type', value_name='Schools with First-Day Infections')
+sns.barplot(data=melt, x='inc', y='Schools with First-Day Infections', hue='School Type')
+
+
+bs = pd.DataFrame(byschool)
+print(bs)
+fig = plt.figure(figsize=(16,10))
+g = sns.FacetGrid(data=bs, row='inc', height=4, aspect=3)
+g.map_dataframe( sns.scatterplot, x='size', y='d1 infectious', hue='type')
+plt.show()
 
 
 mu = df.groupby(['key', 'inc']).mean()

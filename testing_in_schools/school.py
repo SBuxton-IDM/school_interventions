@@ -190,6 +190,8 @@ class SchoolStats():
         staff_uids = [uid for uid in self.school.uids if ppl.staff_flag[uid]]
 
         for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
+            #if self.school.sim.t == self.school.sim.day(self.school.start_day):
+            #    print(self.school.sid, self.school.stype, group, self.school.sim.pars['pop_scale']*len(ids), sum(ppl.infectious[ids]) * rescale)
             self.infectious[group][t] = len(cvu.true(ppl.infectious[ids])) * rescale
             self.newly_exposed[group][t] = len(cvu.true(ppl.date_exposed[ids] == t-1)) * rescale
 
