@@ -38,15 +38,15 @@ def generate_scenarios():
         'screen_prob': 0,
         'test_prob': 0.0,
         'trace_prob': 0.0,
-        'ili_prob': 0.002, # Daily ili probability
-        'npi': 1
+        'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
+        'npi': 1 # No NPI
     }
     scns['as_normal'] = scenario(es=base, ms=base, hs=base)
 
     # Add screening and NPI
     screening = sc.dcp(base)
     screening['screen_prob'] = 0.9
-    screening['npi'] = 0.75
+    screening['npi'] = 0.75 # 25% reduction due to NPI
     scns['with_screening'] = scenario(es=screening, ms=screening, hs=screening)
     scns['ES_MS_inperson_HS_remote'] = scenario(es=screening, ms=screening, hs=remote)
     scns['ES_inperson_MS_HS_remote'] = scenario(es=screening, ms=remote, hs=remote)

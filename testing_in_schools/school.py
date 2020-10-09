@@ -21,7 +21,8 @@ class FullTimeContactManager():
         }
 
     def begin_day(self, date):
-        # Update group
+        ''' Called at the beginning of each day to configure the school layer '''
+
         dayname = sc.readdate(date).strftime('%A')
         group = self.schedule[dayname]
 
@@ -34,7 +35,7 @@ class FullTimeContactManager():
 
     def remove_individuals(self, uids):
         ''' Remove one or more individual from the contact network '''
-        #print(f'Removing {uids}')
+
         rows = np.concatenate((
             np.isin(self.layer['p1'], uids).nonzero()[0],
             np.isin(self.layer['p2'], uids).nonzero()[0]))
@@ -42,10 +43,13 @@ class FullTimeContactManager():
 
 
     def find_contacts(self, uids):
-        # Assumption: base_layer is close enough, not adjusting for absenteeism
+        ''' Finds contacts of individuals listed in uids, including those who are absent from school '''
+
         return self.base_layer.find_contacts(uids)
 
     def get_layer(self):
+        ''' Return the layer '''
+
         return self.layer
 
 
@@ -71,6 +75,7 @@ class HybridContactManager():
         }
 
     def split_layer(self):
+        ''' Split the layer into A- and B-sublayers '''
         students = [uid for uid in self.uids if self.sim.people.student_flag[uid]]
         self.staff = [uid for uid in self.uids if self.sim.people.staff_flag[uid]]
         self.teachers = [uid for uid in self.uids if self.sim.people.teacher_flag[uid]]
@@ -94,7 +99,7 @@ class HybridContactManager():
         return A_layer, B_layer
 
     def begin_day(self, date):
-        # Update group
+        ''' Called at the beginning of each day to configure the school layer '''
         dayname = sc.readdate(date).strftime('%A')
         group = self.schedule[dayname]
 
@@ -115,12 +120,19 @@ class HybridContactManager():
         pop = self.layer.pop_inds(rows)
 
     def find_contacts(self, uids):
+        ''' Finds contacts of individuals listed in uids, including those who are absent from school.
+            Look in A_base_layer as well as B_base_layer for uids and return contacts.
+            Join together contacts of A-students in A-layer with B-students in B-layer
+        '''
+
         contacts = np.concatenate((
             self.A_base_layer.find_contacts(uids),
             self.B_base_layer.find_contacts(uids) ))
         return contacts
 
     def get_layer(self):
+        ''' Return the layer '''
+
         return self.layer
 
 
@@ -173,14 +185,9 @@ class SchoolStats():
         self.cum_unique_students_at_school_while_infectious = -1
         self.cum_unique_teacherstaff_at_school_while_infectious = -1
 
-        # screened
-        # tested
-        # traced
-        # diagnosed
-        # at school
-
-
     def update(self):
+        ''' Called on each day to update school statistics '''
+
         t = self.school.sim.t
         ppl = self.school.sim.people
         rescale = self.school.sim.rescale_vec[t]
@@ -196,7 +203,7 @@ class SchoolStats():
             self.newly_exposed[group][t] = len(cvu.true(ppl.date_exposed[ids] == t-1)) * rescale
 
 
-        # From previous work:
+        # Tracing statistics to compare against previous work:
         if len(self.school.uids_arriving_at_school) > 0:
             school_infectious = cvu.itrue(ppl.infectious[np.array(self.school.uids_arriving_at_school)], np.array(self.school.uids_arriving_at_school))
         else:
@@ -221,6 +228,7 @@ class SchoolStats():
 
     def finalize(self):
         ''' Called once on the final time step '''
+
         t = self.school.sim.t
         rescale = self.school.sim.rescale_vec[t]
         for group in ['students', 'teachers', 'staff']:
@@ -228,6 +236,8 @@ class SchoolStats():
             #self.num_cases[group] = rescale * len(list(dict.fromkeys(self.num_cases[group]))) # Not scaled correctly!
 
     def get(self):
+        ''' Called once on the final time step to return a dictionary that will be preserved in sim.school_info by school id. '''
+
         return {
             'num': self.num,
             'infectious': self.infectious,
@@ -243,6 +253,7 @@ class SchoolStats():
 
 
 class School():
+''' Represent a single school '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
                 start_day, screen_prob, test_prob, trace_prob, is_hybrid, npi, ili_prob, verbose=False, **kwargs):
@@ -273,7 +284,7 @@ class School():
             self.ct_mgr = FullTimeContactManager(layer)
 
     def screen(self):
-        ''' Screen those at school '''
+        ''' Screen those individuals who are arriving at school '''
 
         # Inclusion criteria: diagnosed or symptomatic but not recovered and not dead
         inds_to_screen = cvu.binomial_filter(self.screen_prob, np.array(self.uids_arriving_at_school))
@@ -364,4 +375,6 @@ class School():
         return self.ct_mgr.get_layer()
 
     def get_stats(self):
+        ''' Return a dictionary of statistics '''
+
         return self.stats.get()

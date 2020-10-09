@@ -6,12 +6,13 @@ import seaborn as sns
 
 pop_size = 2.25e5 # 2.25e4 2.25e5
 msim = cv.MultiSim.load(f'msim_{int(pop_size)}.obj')
-#print(len(msim.sims))
-#exit()
 
 results = []
 byschool = []
+rs_fig, rs_ax = plt.subplots(figsize=(16,10))
 for sim in msim.sims:
+
+    rs_ax.plot(sim.results['date'], sim.rescale_vec)
 
     first_school_day = sim.day('2020-09-01')
     last_school_day = sim.day('2020-12-01')

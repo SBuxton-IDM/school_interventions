@@ -79,5 +79,6 @@ class new_schools(Intervention):
         for school in self.schools:
             layer = school.update()
             sim.people.contacts[school.sid] = layer
+            # Only needed on final time step:
             sim.school_stats[school.sid].update( school.get_stats() )
 
