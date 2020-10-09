@@ -156,13 +156,16 @@ class SchoolStats():
         }
 
         # To reproduce results from previous work:
-        self.num_cases = {
-            'students': [],
-            'teachers': [],
-            'staff':    [],
+        #self.num_cases = {
+        #    'students': [],
+        #    'teachers': [],
+        #    'staff':    [],
+        #}
+        self.at_school_while_infectious = {
+            'students': set(),
+            'teachers': set(),
+            'staff': set(),
         }
-        self.students_at_school_while_infectious = set()
-        self.teacherstaff_at_school_while_infectious = set()
 
         self.n_students_at_school_while_infectious_first_day = -1
         self.n_teacherstaff_at_school_while_infectious_first_day = -1
@@ -197,30 +200,30 @@ class SchoolStats():
         else:
             school_infectious = []
 
-        for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
-            self.num_cases[group] += [uid for uid in school_infectious if uid in ids]
+        #for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
+        #    self.num_cases[group] += [uid for uid in school_infectious if uid in ids]
 
-        stu_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.student_flag[uid]]
-        students_at_school_while_infectious_today = cvu.itrue(ppl.infectious[stu_at_sch_uids], np.array(stu_at_sch_uids))
-        self.students_at_school_while_infectious |= set(students_at_school_while_infectious_today)
+        students_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.student_flag[uid]]
+        teachers_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.teacher_flag[uid]]
+        staffs_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.staff_flag[uid]]
 
-        teacherstaff_at_sch_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.teacher_flag[uid] or ppl.staff_flag[uid]]
-        teacherstaff_at_school_while_infectious_today = cvu.itrue(ppl.infectious[teacherstaff_at_sch_uids], np.array(teacherstaff_at_sch_uids))
-        self.teacherstaff_at_school_while_infectious |= set(teacherstaff_at_school_while_infectious_today)
+        for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staffs_at_school_uids]):
+            at_school_while_infectious_today = cvu.itrue(ppl.infectious[ids], np.array(ids))
+            self.at_school_while_infectious[group] |= set(at_school_while_infectious_today)
 
         if self.school.sim.t == self.school.sim.day(self.school.start_day):
-            self.n_students_at_school_while_infectious_first_day = len(self.students_at_school_while_infectious)
-            self.n_teacherstaff_at_school_while_infectious_first_day = len(self.teacherstaff_at_school_while_infectious)
-        elif self.school.sim.t == self.school.sim.tvec[-1]:
-            self.cum_unique_students_at_school_while_infectious = len(self.students_at_school_while_infectious)
-            self.cum_unique_teacherstaff_at_school_while_infectious = len(self.teacherstaff_at_school_while_infectious)
+            self.n_students_at_school_while_infectious_first_day = rescale * len(self.at_school_while_infectious['students'])
+            self.n_teacherstaff_at_school_while_infectious_first_day = \
+                rescale * len(self.at_school_while_infectious['teachers']) + \
+                rescale *  len(self.at_school_while_infectious['staff'])
 
     def finalize(self):
         ''' Called once on the final time step '''
         t = self.school.sim.t
         rescale = self.school.sim.rescale_vec[t]
         for group in ['students', 'teachers', 'staff']:
-            self.num_cases[group] = rescale * len(list(dict.fromkeys(self.num_cases[group]))) # Not scaled correctly!
+            self.at_school_while_infectious[group] = rescale * len(self.at_school_while_infectious[group])
+            #self.num_cases[group] = rescale * len(list(dict.fromkeys(self.num_cases[group]))) # Not scaled correctly!
 
     def get(self):
         return {
@@ -229,7 +232,7 @@ class SchoolStats():
             'newly_exposed': self.newly_exposed,
 
             # From previous work:
-            'num_cases': self.num_cases,
+            'at_school_while_infectious': self.at_school_while_infectious,
             'n_students_at_school_while_infectious_first_day': self.n_students_at_school_while_infectious_first_day,
             'n_teacherstaff_at_school_while_infectious_first_day': self.n_teacherstaff_at_school_while_infectious_first_day,
             'cum_unique_students_at_school_while_infectious': self.cum_unique_students_at_school_while_infectious,

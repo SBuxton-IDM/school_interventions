@@ -5,8 +5,8 @@ from school_intervention import new_schools
 
 res = [0.9]
 incs = [20, 50, 110]
-n_seeds = 3
-pop_size = 2.25e4 # 2.25e5
+n_seeds = 20
+pop_size = 2.25e5 # 2.25e4 2.25e5
 
 def scenario(es, ms, hs):
     return {
@@ -36,8 +36,8 @@ def generate_scenarios():
         'start_day': '2020-09-01',
         'is_hybrid': False,
         'screen_prob': 0,
-        'test_prob': 0.5,
-        'trace_prob': 0.5,
+        'test_prob': 0.0,
+        'trace_prob': 0.0,
         'ili_prob': 0.002, # Daily ili probability
         'npi': 1
     }
@@ -89,10 +89,14 @@ if __name__ == '__main__':
     dynamic_pars = generate_pars(res, incs)
 
     # Temp - make experiment smaller for testing
-    scenarios = {s:v for s,v in scenarios.items() if s in ['as_normal', 'all_hybrid', 'all_remote']}
+    #scenarios = {s:v for s,v in scenarios.items() if s in ['as_normal', 'all_hybrid', 'all_remote']}
     #dynamic_pars = dynamic_pars[:2]
 
     sims = []
+    msims = []
+    tot = len(scenarios) * len(dynamic_pars)
+    proc = 0
+    step = 16
     for skey, scen in scenarios.items():
         for idx, dp in enumerate(dynamic_pars):
             sim = cs.create_sim(dp, pop_size=pop_size)
@@ -104,8 +108,16 @@ if __name__ == '__main__':
             ns = new_schools(scen) # Not sure if need new mem for each
             sim['interventions'] += [ns]
             sims.append(sim)
+            proc += 1
 
-    msim = cv.MultiSim(sims)
-    msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
+            print(proc, tot, len(sims))
+            if len(sims) == step or proc == tot:
+                print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
+                msim = cv.MultiSim(sims)
+                msims.append(msim)
+                msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
+                sims = []
 
-    cv.save('msim.obj', msim)
+    msim = cv.MultiSim.merge(msims)
+
+    cv.save(f'msim_{int(pop_size)}.obj', msim)

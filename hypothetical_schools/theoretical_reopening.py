@@ -134,7 +134,7 @@ def school_dict(msims, day_schools_reopen):
                     'num_students_screen_pos']
                 school_results[schools_reopening_scenarios[i]]['num_student_cases'] = sub_sim.school_info[
                     'num_student_cases']
-                school_results[schools_reopening_scenarios[i]]['num_students'] = sub_sim.school_info['num_students']
+                #school_results[schools_reopening_scenarios[i]]['num_students'] = sub_sim.school_info['num_students']
 
                 school_results[schools_reopening_scenarios[i]]['cum_infectious_staff'] = sum(
                     sub_sim.school_info['num_staff_infectious'])
