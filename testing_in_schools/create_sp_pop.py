@@ -80,7 +80,8 @@ def cache_populations(seed=0, popfile=None):
                    average_student_all_staff_ratio=average_student_all_staff_ratio,
                    average_additional_staff_degree=average_additional_staff_degree,
                    staff_age_min=staff_age_min,
-                   staff_age_max=staff_age_max
+                   staff_age_max=staff_age_max,
+                   layer_mapping={'LTCF':'l'},
                    )
     sc.toc(T)
 
