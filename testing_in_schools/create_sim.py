@@ -12,6 +12,7 @@ def define_pars(which='best', kind='default', ):
         pardata.update(dict(
             pop_infected = [250, 70, 700],
             clip_edges=[0.5, 0, 1],
+            change_beta=[0.5, 0, 1],
         ))
 
     output = {}

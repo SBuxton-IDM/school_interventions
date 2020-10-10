@@ -12,9 +12,9 @@ debug = False # Warning: this sets keep_people=True so limit to a few scenarios
 def scenario(es, ms, hs):
     return {
         'pk': None,
-        'es': es,
-        'ms': ms,
-        'hs': hs,
+        'es': sc.dcp(es),
+        'ms': sc.dcp(ms),
+        'hs': sc.dcp(hs),
         'uv': None,
     }
 
@@ -27,29 +27,25 @@ def generate_scenarios():
     base_beta_s = sim.pars['beta_layer']['s']
 
     # Testing interventions to add
-    PCR_1w_prior = {
+    PCR_1w_prior = [{
         'start_date': '2020-08-29',
         'repeat': None,
-        'school_types': ['es', 'ms'],
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 0.9,
-        'trace_prob': 0,
         'sensitivity': 1,
-        'specificity': 1,
-    }
+        #'specificity': 1,
+    }]
 
-    PCR_every_2w = {
+    PCR_every_2w = [{
         'start_date': '2020-09-01',
         'repeat': 14,
-        'school_types': ['es', 'ms'],
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 0.9,
-        'trace_prob': 0.8,
         'sensitivity': 1,
-        'specificity': 1,
-    }
+        #'specificity': 1,
+    }]
 
-    PCR_1w_prior_and_every_2w = [PCR_1w_prior, PCR_every_2w]
+    PCR_1w_prior_and_every_2w = PCR_1w_prior + PCR_every_2w
 
     scns = sc.odict()
 
@@ -71,7 +67,7 @@ def generate_scenarios():
         'test_prob': 0.5,
         'trace_prob': 0.5,
         'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
-        'beta_s': base_beta_s # No NPI
+        'beta_s': base_beta_s, # No NPI
         'testing': None,
     }
     scns['as_normal'] = scenario(es=normal, ms=normal, hs=normal)
@@ -80,14 +76,14 @@ def generate_scenarios():
     screening = sc.dcp(normal)
     screening['screen_prob'] = 0.9
     screening['beta_s'] = 0.75 * base_beta_s # 25% reduction due to NPI
+    screening['testing'] = PCR_1w_prior # Add testing
     scns['with_screening_1wprior'] = scenario(es=screening, ms=screening, hs=screening)
-    scns['with_screening_1wprior']['testing'] = PCR_1w_prior # Add testing
 
     # Add hybrid scheduling
     hybrid = sc.dcp(screening)
     hybrid['is_hybrid'] = True
+    hybrid['testing'] = PCR_1w_prior_and_every_2w # Add testing
     scns['all_hybrid_1wprior_every2w'] = scenario(es=hybrid, ms=hybrid, hs=hybrid)
-    scns['all_hybrid_1wprior_every2w']['testing'] = PCR_1w_prior_and_every_2w # Add testing
 
     # All remote
     scns['all_remote'] = scenario(es=remote, ms=remote, hs=remote)
@@ -110,7 +106,7 @@ if __name__ == '__main__':
     proc = 0
     step = 16
     for skey, scen in scenarios.items():
-        for rep in n_reps:
+        for rep in range(n_reps):
             par = sc.dcp(pars)
             par['rand_seed'] = rep
             sim = cs.create_sim(par, pop_size=pop_size)
@@ -132,7 +128,7 @@ if __name__ == '__main__':
                 sims = []
 
     msim = cv.MultiSim.merge(msims)
-    cv.save(os.path.jsoin('msims', f'msim_{int(pop_size)}.obj'), msim)
+    cv.save(os.path.join('msims', f'testing_{int(pop_size)}.msim'), msim)
 
     if debug:
         for sim in msim.sims:

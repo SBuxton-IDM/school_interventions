@@ -256,7 +256,7 @@ class School():
     ''' Represent a single school '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
-                start_day, screen_prob, test_prob, trace_prob, is_hybrid, beta_s, ili_prob, verbose=False, **kwargs):
+                start_day, screen_prob, test_prob, trace_prob, is_hybrid, beta_s, ili_prob, testing, verbose=False, **kwargs):
 
         self.sim = sim
         self.sid = school_id
@@ -270,11 +270,14 @@ class School():
         self.is_hybrid = is_hybrid
         self.beta_s = beta_s # Not currently used here, but rather in the school_intervention
         self.ili_prob = ili_prob
+        self.testing = [] if testing is None else testing
         self.verbose = verbose
 
         self.stats = SchoolStats(self)
 
         self.is_open = False # Schools start closed
+
+        self.init_testing() # Initialize testing
 
         self.uids_at_home = {} # Dict from uid to release date
 
@@ -282,6 +285,50 @@ class School():
             self.ct_mgr = HybridContactManager(sim, uids, layer)
         else:
             self.ct_mgr = FullTimeContactManager(layer)
+
+    def init_testing(self):
+        ''' Determine relevant testing interventions and test dates for this school. '''
+
+        for test in self.testing:
+            # Determine from test start_day and repeat which sim times to test on
+            start_t = self.sim.day(test['start_date'])
+            if test['repeat'] == None:
+                # Easy - one time test
+                test['t_vec'] = [start_t]
+            else:
+                test['t_vec'] = list(range(start_t, self.sim.pars['n_days'], test['repeat']))
+
+            # Determine uids to include
+            uids = []
+            if 'students' in test['groups']:
+                uids += [uid for uid in self.uids if self.sim.people.student_flag[uid]]
+            if 'staff' in test['groups']:
+                uids += [uid for uid in self.uids if self.sim.people.staff_flag[uid]]
+            if 'teachers' in test['groups']:
+                uids += [uid for uid in self.uids if self.sim.people.teacher_flag[uid]]
+            test['uids'] = uids
+
+        #print(f'School {self.sid} of type {self.stype} has testing: {self.testing}')
+
+    def check_testing(self):
+        ''' Check for testing today and conduct tests if needed.
+
+        Fields include:
+            * 'start_date': '2020-08-29',
+            * 'repeat': None,
+            * 'groups': ['students', 'teachers', 'staff'],
+            * 'coverage': 0.9,
+            * 'sensitivity': 1,
+            * TODO: 'specificity': 1,
+        '''
+        for test in self.testing:
+            if self.sim.t in test['t_vec']:
+                #print(test)
+                undiagnosed_uids = cvu.ifalsei(self.sim.people.diagnosed, np.array(test['uids']))
+                uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
+                self.sim.people.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=1) # one day test delay, TODO: Make a parameter!
+
+                # Handle false positives here?
 
     def screen(self):
         ''' Screen those individuals who are arriving at school '''
@@ -312,10 +359,22 @@ class School():
 
         return screen_pos_uids
 
+
     def update(self):
         ''' Process the day, return the school layer '''
 
-        # First check if school is open
+        # Even if a school is not yet open, consider testing in the population
+        self.check_testing()
+
+        # Look for newly diagnosed people
+        newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
+
+        # Isolate newly diagnosed individuals - could happen before school starts
+        if len(newly_dx_inds) > 0:
+            for uid in newly_dx_inds:
+                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
+
+        # Check if school is open
         if not self.is_open:
             if self.sim.t == self.sim.day(self.start_day):
                 if self.verbose: print(f'School {self.sid} is opening today')
@@ -326,14 +385,8 @@ class School():
         date = self.sim.date(self.sim.t)
         self.ct_mgr.begin_day(date) # Do this at the beginning of the update
 
-        # Look for newly diagnosed people
-        newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
-
-        # Isolate the positives
+        # Quarantine contacts of newly diagnosed individuals - # TODO: Schedule in a delay
         if len(newly_dx_inds) > 0:
-            for uid in newly_dx_inds:
-                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
-
             # Identify school contacts to quarantine
             uids_to_trace = cvu.binomial_filter(self.trace_prob, newly_dx_inds)
             uids_to_quar = self.ct_mgr.find_contacts(uids_to_trace)
@@ -349,7 +402,7 @@ class School():
             # No school today, nothing more to do - return an empty layer
             return cvb.Layer()
 
-        # Determine who will arrive at school
+        # Determine who will arrive at school (used in screen() and stats.update())
         self.uids_arriving_at_school = [u for u in self.uids if u not in self.uids_at_home.keys()]
 
         # Perform symptom screening

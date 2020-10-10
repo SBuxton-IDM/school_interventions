@@ -19,21 +19,12 @@ def scenario(es, ms, hs):
 
 if __name__ == '__main__':
     params = {
-        'rand_seed': 469,
-        'pop_infected': 100, #70.03126597682495,
-        'clip_edges': 0.5 #0.04683512823044871
+        'rand_seed': 0,
+        'pop_infected': 160,
+        'clip_edges': 0.65,
+        'change_beta': 0.525,
     }
     sim = cs.create_sim(params, pop_size=1e5) # 2.25e4
-
-    base = {
-        'start_day': '2020-09-01',
-        'is_hybrid': False,
-        'screen_prob': 0.9,
-        'test_prob': 0.5,
-        'trace_prob': 0.5,
-        'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
-        'beta_s': 0.75 * sim.pars['beta_layer']['s']
-    }
 
     remote = {
         'start_day': '2020-09-01',
@@ -44,6 +35,18 @@ if __name__ == '__main__':
         'ili_prob': 0,
         'beta_s': 0 # This turns off transmission in the School class
     }
+
+    PCR_every_2w = [{
+        'start_date': '2020-09-01',
+        'repeat': 14,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 0.9,
+        'sensitivity': 1,
+        #'specificity': 1,
+    }]
+
+    remote['testing'] = PCR_every_2w
+
 
     s = scenario(es=remote, ms=remote, hs=remote)
 
