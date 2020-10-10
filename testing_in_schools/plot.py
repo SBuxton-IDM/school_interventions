@@ -30,9 +30,9 @@ for sim in msim.sims:
     cases_mismatch = (cases_to_fit - ret['cases'])**2 / cases_to_fit**2
     ret['mismatch'] = re_mismatch + cases_mismatch
 
-    #if sim.label == 'all_remote' and sim.dynamic_par['inc'] == 110:
-    #    print(sim.label, sim.dynamic_par['inc'], ret['cases'], sim.dynamic_par['re'], ret['re'], ret['mismatch'])
-    #    sim.plot()
+    if sim.label == 'all_remote' and sim.dynamic_par['inc'] == 110:
+        print(sim.label, sim.dynamic_par['inc'], ret['cases'], sim.dynamic_par['re'], ret['re'], ret['mismatch'])
+        sim.plot()
 
     attack_students = []
     attack_teachersstaff = []

@@ -253,7 +253,7 @@ class SchoolStats():
 
 
 class School():
-''' Represent a single school '''
+    ''' Represent a single school '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
                 start_day, screen_prob, test_prob, trace_prob, is_hybrid, npi, ili_prob, verbose=False, **kwargs):

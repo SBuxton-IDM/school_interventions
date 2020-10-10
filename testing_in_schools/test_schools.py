@@ -17,7 +17,7 @@ if __name__ == '__main__':
     sim = cs.create_sim(params, pop_size=2.25e4)
 
     base = {
-        'start_day': '2020-09-01',
+        'start_day': '2020-09-01', # Schools are closed until this day
         'is_hybrid': False,
         'screen_prob': 0,
         'test_prob': 0.5,
@@ -28,7 +28,8 @@ if __name__ == '__main__':
     s = scenario(es=base, ms=base, hs=base)
 
     ns = new_schools(s)
-    sim['interventions'] += [ns]
+    #bc = cv.change_beta(days='2020-09-01', changes=1, layers='s', label='close_school')
+    sim['interventions'] += [ns]#, bc]
 
     sim.run()
     sim.plot()

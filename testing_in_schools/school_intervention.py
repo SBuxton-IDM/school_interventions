@@ -66,6 +66,7 @@ class new_schools(Intervention):
                     self.schools.append(sch)
 
                     # Configure the new layer
+                    print(sim['beta_layer']['s'])
                     sim['beta_layer'][sch.sid] = self.scenario[school_type]['npi'] * sim['beta_layer']['s']
                     sim['iso_factor'][sch.sid] = sim['iso_factor']['s']
                     sim['quar_factor'][sch.sid] = sim['quar_factor']['s']

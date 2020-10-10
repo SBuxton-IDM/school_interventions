@@ -4,7 +4,7 @@ import sciris as sc
 from school_intervention import new_schools
 
 res = [0.9]
-incs = [20, 50, 110]
+incs = [21, 111] #[20, 50, 110]
 n_seeds = 20
 pop_size = 2.25e4 # 2.25e4 2.25e5
 
@@ -89,14 +89,14 @@ if __name__ == '__main__':
     dynamic_pars = generate_pars(res, incs)
 
     # Temp - make experiment smaller for testing
-    #scenarios = {s:v for s,v in scenarios.items() if s in ['as_normal', 'all_hybrid', 'all_remote']}
+    scenarios = {s:v for s,v in scenarios.items() if s in ['as_normal', 'all_hybrid', 'all_remote']}
     #dynamic_pars = dynamic_pars[:2]
 
     sims = []
     msims = []
     tot = len(scenarios) * len(dynamic_pars)
     proc = 0
-    step = 16
+    step = 32
     for skey, scen in scenarios.items():
         for idx, dp in enumerate(dynamic_pars):
             sim = cs.create_sim(dp, pop_size=pop_size)
@@ -110,7 +110,6 @@ if __name__ == '__main__':
             sims.append(sim)
             proc += 1
 
-            print(proc, tot, len(sims))
             if len(sims) == step or proc == tot:
                 print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
                 msim = cv.MultiSim(sims) # run or do_run

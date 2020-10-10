@@ -25,7 +25,7 @@ def define_pars(which='best', kind='default', ):
 
 def create_sim(params, pop_size=2.25e5):
 
-    pop_scale = 2.25e6 / pop_size
+    pop_scale = 1# 2.25e6 / pop_size
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
     if 'rand_seed' not in p:
@@ -68,7 +68,10 @@ def create_sim(params, pop_size=2.25e5):
         cv.clip_edges(days='2020-08-01', changes=p.clip_edges, layers='c', label='close_community'),
         cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
         cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
-        cv.close_schools(day_schools_closed='2020-07-01', start_day=None, label='close_schools')
+
+        #cv.close_schools(day_schools_closed='2020-07-01', start_day=None, label='close_schools'),
+        #cv.clip_edges(days=['2020-07-01', '2020-09-01'], changes=[0,1], layers='s', label='close_school'),
+        cv.change_beta(days='2020-07-01', changes=0, layers='s', label='close_school'),
     ]
     sim['interventions'] = interventions
     for interv in sim['interventions']:
