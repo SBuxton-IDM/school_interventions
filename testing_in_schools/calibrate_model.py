@@ -54,12 +54,22 @@ def objective(trial, kind='default'):
     last = sim.day('2020-12-01')
 
     results = pd.DataFrame(sim.results)
+    '''
     re = results['r_eff'].iloc[first:last, ].mean(axis=0)
-    #cases = results['new_diagnoses'].iloc[(first-14):first, ].sum(axis=0) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
     cases = results['new_diagnoses'].iloc[first:last, ].sum(axis=0) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
     re_mismatch = (re_to_fit - re)**2 / re_to_fit**2
     cases_mismatch = (cases_to_fit - cases)**2 / cases_to_fit**2
     mismatch = re_mismatch + cases_mismatch
+    '''
+
+    re = results['r_eff'].iloc[first:last, ].mean(axis=0)
+    cases_past14 = results['new_diagnoses'].iloc[(first-14):first, ].sum(axis=0) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
+    cases_during = results['new_diagnoses'].iloc[first:last, ].mean(axis=0) * 14 * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
+    re_mismatch = (re_to_fit - re)**2 / re_to_fit**2
+    cases_past14_mismatch = (cases_to_fit - cases_past14)**2 / cases_to_fit**2
+    cases_during_mismatch = (cases_to_fit - cases_during)**2 / cases_to_fit**2
+    mismatch = re_mismatch + cases_past14_mismatch + cases_during_mismatch
+
     return mismatch
 
 
