@@ -1,3 +1,4 @@
+import os
 import covasim as cv
 import numpy as np
 import pandas as pd
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 pop_size = 1e5 # 2.25e4 2.25e5
-msim = cv.MultiSim.load(f'msim_{int(pop_size)}.obj')
+msim = cv.MultiSim.load(os.path.join('msims', f'msim_{int(pop_size)}.obj'))
 
 results = []
 byschool = []

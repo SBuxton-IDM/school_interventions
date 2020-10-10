@@ -16,9 +16,9 @@ def scenario(es, ms, hs):
 
 if __name__ == '__main__':
     params = {
-        'rand_seed': 339,
-        'pop_infected': 80.52972748642603,
-        'clip_edges': 0.20508402063180592
+        'rand_seed': 99,
+        'pop_infected': 259.6044361233582,
+        'clip_edges': 0.12707079671380783
     }
     sim = cs.create_sim(params, pop_size=1e5) # 2.25e4
 
@@ -54,9 +54,10 @@ if __name__ == '__main__':
     import pandas as pd
     rdf = pd.DataFrame(sim.results)
     re = rdf['r_eff'].iloc[first_school_day:last_school_day, ].mean(axis=0)
-    cases = rdf['new_diagnoses'].iloc[(first_school_day-14):first_school_day, ].sum(axis=0) * 100e3 / 100e3
-    re_to_fit = 0.9
-    cases_to_fit = 110
+    #cases = rdf['new_diagnoses'].iloc[(first_school_day-14):first_school_day, ].sum(axis=0) * 100e3 / 100e3
+    cases = rdf['new_diagnoses'].iloc[first:last, ].sum(axis=0) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
+    re_to_fit = 1.0
+    cases_to_fit = 100
     re_mismatch = (re_to_fit - re)**2 / re_to_fit**2
     cases_mismatch = (cases_to_fit - cases)**2 / cases_to_fit**2
     mismatch = re_mismatch + cases_mismatch

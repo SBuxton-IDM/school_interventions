@@ -1,11 +1,12 @@
+import os
 import covasim as cv
 import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-res = [0.9]
-incs = [20, 110] #[20, 50, 110]
-n_seeds = 2
+res = [1.0]
+incs = [20, 100, 150] #[20, 50, 110]
+n_seeds = 5
 pop_size = 1e5 # 2.25e4 2.25e5
 
 debug = False # Warning: this sets keep_people=True so limit to a few scenarios
@@ -126,7 +127,7 @@ if __name__ == '__main__':
 
     msim = cv.MultiSim.merge(msims)
 
-    cv.save(f'msim_{int(pop_size)}.obj', msim)
+    cv.save(os.path.jsoin('msims', f'msim_{int(pop_size)}.obj'), msim)
 
     if debug:
         for sim in msim.sims:
