@@ -14,7 +14,7 @@ def scenario(es, ms, hs):
 
 if __name__ == '__main__':
     params = { 'rand_seed':0 }
-    sim = cs.create_sim(params, pop_size=2.25e4)
+    sim = cs.create_sim(params, pop_size=2.25e5)
 
     base = {
         'start_day': '2020-09-01', # Schools are closed until this day

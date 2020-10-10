@@ -53,7 +53,7 @@ def create_sim(params, pop_size=2.25e5):
             'pop_infected': p.pop_infected,
             'rescale': True,
             'rescale_factor': 1.1,
-            'verbose': 0,
+            'verbose': 0.1,
             'start_day': '2020-07-01',
             'end_day': '2020-12-01',
             'rand_seed': p.rand_seed,
