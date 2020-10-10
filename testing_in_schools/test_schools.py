@@ -16,10 +16,9 @@ def scenario(es, ms, hs):
 
 if __name__ == '__main__':
     params = {
-        # inc 20, re 0.9 (approx)
-        'rand_seed': 204,
-        'pop_infected': 70.71031736962432,
-        'clip_edges': 0.01888076670133819
+        'rand_seed': 339,
+        'pop_infected': 80.52972748642603,
+        'clip_edges': 0.20508402063180592
     }
     sim = cs.create_sim(params, pop_size=1e5) # 2.25e4
 
@@ -57,7 +56,7 @@ if __name__ == '__main__':
     re = rdf['r_eff'].iloc[first_school_day:last_school_day, ].mean(axis=0)
     cases = rdf['new_diagnoses'].iloc[(first_school_day-14):first_school_day, ].sum(axis=0) * 100e3 / 100e3
     re_to_fit = 0.9
-    cases_to_fit = 20
+    cases_to_fit = 110
     re_mismatch = (re_to_fit - re)**2 / re_to_fit**2
     cases_mismatch = (cases_to_fit - cases)**2 / cases_to_fit**2
     mismatch = re_mismatch + cases_mismatch
