@@ -13,7 +13,7 @@ def cache_populations(seed=0, popfile=None):
 
     pars = sc.objdict(
         # pop_size = 2.25e6,
-        pop_size = 2.25e5,
+        pop_size = 1e5, #2.25e5,
         pop_type = 'synthpops',
         rand_seed = seed,
     )

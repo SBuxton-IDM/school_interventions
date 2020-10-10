@@ -256,7 +256,7 @@ class School():
     ''' Represent a single school '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
-                start_day, screen_prob, test_prob, trace_prob, is_hybrid, npi, ili_prob, verbose=False, **kwargs):
+                start_day, screen_prob, test_prob, trace_prob, is_hybrid, beta_s, ili_prob, verbose=False, **kwargs):
 
         self.sim = sim
         self.sid = school_id
@@ -268,7 +268,7 @@ class School():
         self.test_prob = test_prob
         self.trace_prob = trace_prob
         self.is_hybrid = is_hybrid
-        self.npi = npi
+        self.beta_s = beta_s # Not currently used here, but rather in the school_intervention
         self.ili_prob = ili_prob
         self.verbose = verbose
 

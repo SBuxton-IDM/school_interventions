@@ -5,13 +5,14 @@ import numpy as np
 import create_sim as cs
 from school_intervention import new_schools
 
-pop_size = 2.25e4
-cases_to_fit = 111 #20, 50, 110
+pop_size = 1e5 #2.25e4
+tot_pop = 1e5 # 2.25e6
+cases_to_fit = 20 #20, 50, 110
 re_to_fit = 0.9
 
 name      = f'optimization_school_reopening_re_{re_to_fit}_cases_{cases_to_fit}_{int(pop_size)}'
 storage   = f'sqlite:///{name}.db'
-n_workers = 8
+n_workers = 40
 n_trials  = 20 # Each worker does n_trials
 save_json = True
 
@@ -42,7 +43,7 @@ def objective(trial, kind='default'):
         'test_prob': 0,
         'trace_prob': 0,
         'ili_prob': 0,
-        'npi': 0 # This turns off transmission in this layer
+        'beta_s': 0 # This turns off transmission in the School class
     }
     scen = scenario(es=remote, ms=remote, hs=remote)
     ns = new_schools(scen)
@@ -54,7 +55,7 @@ def objective(trial, kind='default'):
 
     results = pd.DataFrame(sim.results)
     re = results['r_eff'].iloc[first:last, ].mean(axis=0)
-    cases = results['new_diagnoses'].iloc[(first-14):first, ].sum(axis=0) * 100e3 / 2.25e6
+    cases = results['new_diagnoses'].iloc[(first-14):first, ].sum(axis=0) * 100e3 / tot_pop
     re_mismatch = (re_to_fit - re)**2 / re_to_fit**2
     cases_mismatch = (cases_to_fit - cases)**2 / cases_to_fit**2
     mismatch = re_mismatch + cases_mismatch

@@ -47,20 +47,23 @@ def create_sim(params, pop_size=2.25e5):
         trace_time=5.0,
     )
 
-    pars = {'pop_size': pop_size,
-            'pop_scale': pop_scale,
-            'pop_type': 'synthpops',
-            'pop_infected': p.pop_infected,
-            'rescale': True,
-            'rescale_factor': 1.1,
-            'verbose': 0.1,
-            'start_day': '2020-07-01',
-            'end_day': '2020-12-01',
-            'rand_seed': p.rand_seed,
-            }
+    pars = {
+        'pop_size': pop_size,
+        'pop_scale': pop_scale,
+        'pop_type': 'synthpops',
+        'pop_infected': p.pop_infected,
+        'rescale': True,
+        'rescale_factor': 1.1,
+        'verbose': 0, #0.1,
+        'start_day': '2020-07-01',
+        'end_day': '2020-12-01',
+        'rand_seed': p.rand_seed,
+    }
+
     n_popfiles = 5
     popfile = popfile_stem + str(params['rand_seed'] % n_popfiles) + '.ppl'
     sim = cv.Sim(pars, popfile=popfile, load_pop=True)
+
     interventions = [
         cv.test_prob(start_day='2020-07-01', **tp),
         cv.contact_tracing(start_day='2020-07-01', **ct),
@@ -69,9 +72,7 @@ def create_sim(params, pop_size=2.25e5):
         cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
         cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
 
-        #cv.close_schools(day_schools_closed='2020-07-01', start_day=None, label='close_schools'),
-        #cv.clip_edges(days=['2020-07-01', '2020-09-01'], changes=[0,1], layers='s', label='close_school'),
-        cv.change_beta(days='2020-07-01', changes=0, layers='s', label='close_school'),
+        # N.B. Schools are not closed in create_sim, must be handled outside this function
     ]
     sim['interventions'] = interventions
     for interv in sim['interventions']:

@@ -36,12 +36,14 @@ class new_schools(Intervention):
         self.schools = []
 
     def initialize(self, sim):
-        # Create schools
+        # Create schools, stealing 's' edges into the School class instances upon *initialize*
         self.school_types = sim.people.school_types # Dict with keys of school types (e.g. 'es') and values of list of school ids (e.g. [1,5])
 
         sdf = sim.people.contacts['s'].to_df()
         sim.school_stats = {}
 
+        if sim['beta_layer']['s'] == 0:
+            print('Warning: new_schools intervention is being configured with school beta_layer set to zero, no transmission will occur.')
         for school_type, scids in self.school_types.items():
             for school_id in scids:
                 uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
@@ -66,8 +68,7 @@ class new_schools(Intervention):
                     self.schools.append(sch)
 
                     # Configure the new layer
-                    print(sim['beta_layer']['s'])
-                    sim['beta_layer'][sch.sid] = self.scenario[school_type]['npi'] * sim['beta_layer']['s']
+                    sim['beta_layer'][sch.sid] = self.scenario[school_type]['beta_s']
                     sim['iso_factor'][sch.sid] = sim['iso_factor']['s']
                     sim['quar_factor'][sch.sid] = sim['quar_factor']['s']
 
