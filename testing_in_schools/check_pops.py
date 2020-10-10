@@ -8,6 +8,7 @@ for fn in files:
     print(f'Working on {fn}...')
     pops.append(sc.loadobj(fn))
 
+#%%
 school_ids = []
 school_ids_type = []
 for p,pop in enumerate(pops):
@@ -27,4 +28,5 @@ for p,pop in enumerate(pops):
         school_ids_type[-1][k] = len(school_ids_type[-1][k])
     print(f'School {files[p]} has {len(ids)} unique schools')
     print(school_ids_type[-1])
+    print(school_ids_type[-1]['es'] + school_ids_type[-1]['ms'] + school_ids_type[-1]['hs'])
     school_ids.append(ids)
