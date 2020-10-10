@@ -25,7 +25,7 @@ def define_pars(which='best', kind='default', ):
 
 def create_sim(params, pop_size=2.25e5):
 
-    pop_scale = 2.25e6 / pop_size
+    pop_scale = 1# 2.25e6 / pop_size
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
     if 'rand_seed' not in p:
@@ -53,7 +53,7 @@ def create_sim(params, pop_size=2.25e5):
             'pop_infected': p.pop_infected,
             'rescale': True,
             'rescale_factor': 1.1,
-            'verbose': 0,
+            'verbose': 0.1,
             'start_day': '2020-07-01',
             'end_day': '2020-12-01',
             'rand_seed': p.rand_seed,
