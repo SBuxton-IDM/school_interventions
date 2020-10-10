@@ -37,11 +37,12 @@ def create_sim(params, pop_size=2.25e5):
 
     tp = sc.objdict(
         symp_prob=0.03,
-        asymp_prob=0.001,
+        asymp_prob=0.0022,
         symp_quar_prob=0.01,
         asymp_quar_prob=0.001,
         test_delay=5.0,
     )
+
     ct = sc.objdict(
         trace_probs={'w': 0.1, 'c': 0, 'h': 0.8, 's': 0.8},
         trace_time=5.0,
@@ -67,10 +68,9 @@ def create_sim(params, pop_size=2.25e5):
     interventions = [
         cv.test_prob(start_day='2020-07-01', **tp),
         cv.contact_tracing(start_day='2020-07-01', **ct),
-        cv.clip_edges(days='2020-08-01', changes=p.clip_edges, layers='w', label='close_work'),
-        cv.clip_edges(days='2020-08-01', changes=p.clip_edges, layers='c', label='close_community'),
-        cv.change_beta(days='2020-08-01', changes=0.75, layers='c', label='NPI_community'),
-        cv.change_beta(days='2020-08-01', changes=0.75, layers='w', label='NPI_work'),
+        #cv.change_beta(days='2020-08-01', changes=0.75, layers=['w', 'c'], label='NPI_work_community'),
+        cv.change_beta(days='2020-07-01', changes=p.change_beta, layers=['w', 'c'], label='NPI_work_community'),
+        cv.clip_edges(days='2020-07-01', changes=p.clip_edges, layers=['w', 'c'], label='close_work_community'),
 
         # N.B. Schools are not closed in create_sim, must be handled outside this function
     ]

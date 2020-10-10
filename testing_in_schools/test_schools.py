@@ -1,7 +1,10 @@
 import covasim as cv
+import numpy as np
 import create_sim as cs
 from school_intervention import new_schools
 
+re_to_fit = 1.0
+cases_to_fit = 75
 debug = True
 
 def scenario(es, ms, hs):
@@ -16,9 +19,9 @@ def scenario(es, ms, hs):
 
 if __name__ == '__main__':
     params = {
-        'rand_seed': 99,
-        'pop_infected': 259.6044361233582,
-        'clip_edges': 0.12707079671380783
+        'rand_seed': 469,
+        'pop_infected': 100, #70.03126597682495,
+        'clip_edges': 0.5 #0.04683512823044871
     }
     sim = cs.create_sim(params, pop_size=1e5) # 2.25e4
 
@@ -51,19 +54,17 @@ if __name__ == '__main__':
 
     first_school_day = sim.day('2020-09-01')
     last_school_day = sim.day('2020-12-01')
-    import pandas as pd
-    rdf = pd.DataFrame(sim.results)
-    re = rdf['r_eff'].iloc[first_school_day:last_school_day, ].mean(axis=0)
-    cases_past14 = rdf['new_diagnoses'].iloc[(first_school_day-14):first_school_day, ].sum(axis=0) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
-    cases_during = rdf['new_diagnoses'].iloc[first_school_day:last_school_day, ].mean(axis=0) * 14 * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
-    re_to_fit = 1.0
-    cases_to_fit = 100
+
+    re = np.mean(sim.results['r_eff'][first_school_day:last_school_day])
+    cases_past14 = np.sum(sim.results['new_diagnoses'][(first_school_day-14):first_school_day]) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
+    cases_during = np.mean(sim.results['new_diagnoses'][first_school_day:last_school_day]) * 14 * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
+
     re_mismatch = (re_to_fit - re)**2 / re_to_fit**2
     cases_past14_mismatch = (cases_to_fit - cases_past14)**2 / cases_to_fit**2
     cases_during_mismatch = (cases_to_fit - cases_during)**2 / cases_to_fit**2
     mismatch = re_mismatch + cases_past14_mismatch + cases_during_mismatch
 
-    print(re, cases_past14_mismatch, cases_during_mismatch, mismatch, (sim.pars['pop_size'] * sim.pars['pop_scale']))
+    print(re, cases_past14, cases_during, mismatch)
 
 
     if debug:
