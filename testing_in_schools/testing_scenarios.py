@@ -4,9 +4,9 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-n_reps = 5
+n_reps = 3
 pop_size = 1e5 # 2.25e4 2.25e5
-batch_size = 16
+batch_size = 24
 
 def scenario(es, ms, hs):
     return {
@@ -16,7 +16,6 @@ def scenario(es, ms, hs):
         'hs': sc.dcp(hs),
         'uv': None,
     }
-
 
 def generate_scenarios():
     ''' Generate scenarios (dictionaries of parameters) for the school intervention '''
@@ -78,8 +77,8 @@ def generate_testing():
         #'specificity': 1,
     }]
 
-    PCR_every_2w = [{
-        'start_date': '2020-09-01',
+    PCR_every_2w_starting_1wprior = [{
+        'start_date': '2020-08-29',
         'repeat': 14,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
@@ -88,33 +87,52 @@ def generate_testing():
         #'specificity': 1,
     }]
 
-    PCR_daily_starting_1wprior = [{
+    PCR_every_1w_starting_1wprior = [{
+        'start_date': '2020-08-29',
+        'repeat': 7,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 1,
+        'sensitivity': 1,
+        'delay': 1
+        #'specificity': 1,
+    }]
+
+    Antigen_every_1w_starting_1wprior_staff = [{
+        'start_date': '2020-08-29',
+        'repeat': 7,
+        'groups': ['teachers', 'staff'], # No students
+        'coverage': 1,
+        'sensitivity': 0.6, # Low sensitiviy
+        'delay': 0          # No delay
+        #'specificity': 1,
+    }]
+
+    PCR_every_1d_starting_1wprior = [{
         'start_date': '2020-08-29',
         'repeat': 1,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 0
+        'delay': 0 # NOTE: no delay!
         #'specificity': 1,
     }]
 
-    PCR_1w_prior_and_every_2w = PCR_1w_prior + PCR_every_2w
-
     return {
         'None': None,
-        'PCR 1w prior': PCR_1w_prior,
-        'PCR every 2w': PCR_every_2w,
-        'PCR 1w prior and every 2w': PCR_1w_prior_and_every_2w,
-        'PCR daily starting 1w prior': PCR_daily_starting_1wprior
+        #'PCR 1w prior': PCR_1w_prior,
+        #'PCR every 2w': PCR_every_2w_starting_1wprior,
+        'PCR every 1w': PCR_every_1w_starting_1wprior,
+        #'PCR every 1d': PCR_every_1d_starting_1wprior,
+        'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_staff,
     }
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    #scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal']}
+    scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal', 'all_hybrid']}
 
     testing = generate_testing()
 
-    # Hand tuned and replicates instead of optuna pars
+    # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
     pars = {
         'pop_infected': 160,
         'clip_edges': 0.65,

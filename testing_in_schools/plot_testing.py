@@ -16,7 +16,7 @@ mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
 pop_size = 1e5 # 2.25e4 2.25e5
-msim = cv.MultiSim.load(os.path.join('msims', f'testing_1d_{int(pop_size)}.msim'))
+msim = cv.MultiSim.load(os.path.join('msims', f'testing_{int(pop_size)}.msim'))
 
 re_to_fit = 1.0
 cases_to_fit = 75
@@ -49,7 +49,6 @@ for sim in msim.sims:
     cases_mismatch = (cases_to_fit - ret['cases'])**2 / cases_to_fit**2
     ret['mismatch'] = re_mismatch + cases_mismatch
 
-    n_school_days = cv.daydiff(first_school_day, last_school_day)
 
     #if sim.label == 'all_remote': # and sim.dynamic_par['inc'] == 110:
     #    print(sim.label, sim.dynamic_par['inc'], ret['cases'], sim.dynamic_par['re'], ret['re'], ret['mismatch'])
@@ -74,13 +73,14 @@ for sim in msim.sims:
         inf_at_sch = stats['infectious_at_school']
         in_person = stats['in_person']
         exp = stats['newly_exposed']
+        num_school_days = stats['num_school_days']
         n_exp = {}
         for grp in groups:
             n_exp[grp] = np.sum(exp[grp])
             in_person_days = np.sum(in_person[grp])
-            person_days_possible = n_school_days*stats['num'][grp]
+            scheduled_person_days = num_school_days * stats['num'][grp]
             perc_inperson_days_lost[grp].append(
-                100*(person_days_possible - in_person_days)/person_days_possible
+                100*(scheduled_person_days - in_person_days)/scheduled_person_days if scheduled_person_days > 0 else 100
             )
 
         attackrate_students.append( 100 * n_exp['students'] / stats['num']['students'] )
@@ -123,8 +123,8 @@ for sim in msim.sims:
         ret[f'{stype}_perc_d1'] = 100 * n_schools_with_inf_d1[stype] / n_schools[stype]
         ret[f'{stype}_inf_d1'] = inf_d1[stype]
 
-    ret['Students'] = np.mean(attackrate_students)
-    ret['Teachers & Staff'] = np.mean(attackrate_teachersstaff)
+    ret['attackrate_students'] = np.mean(attackrate_students)
+    ret['attackrate_teachersstaff'] = np.mean(attackrate_teachersstaff)
 
     ret['attackrate_students_legacy'] = np.mean(attackrate_students_legacy)
     ret['attackrate_teachersstaff_legacy'] = np.mean(attackrate_teachersstaff_legacy)
@@ -137,7 +137,8 @@ for sim in msim.sims:
 df = pd.DataFrame(results)
 
 # Attack rate
-d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=['Students', 'Teachers & Staff'], var_name='Group', value_name='Cum Inc (%)')
+d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=['attackrate_students', 'attackrate_teachersstaff'], var_name='Group', value_name='Cum Inc (%)')
+d.replace( {'Group': {'attackrate_students': 'Students', 'attackrate_teachersstaff': 'Teachers & Staff'}}, inplace=True)
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
 g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2')
 g.add_legend()
@@ -157,15 +158,16 @@ g.add_legend()
 
 
 # Frac days in-person
-d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{g}' for g in groups], var_name='Group', value_name='Days in-person (%)')
-g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Days in-person (%)', hue='key2')
+d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{g}' for g in groups], var_name='Group', value_name='Days lost (%)')
+d.replace( {'Group': {f'perc_inperson_days_lost_{g}':g.capitalize() for g in groups}}, inplace=True)
+g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers', 'Staff', 'Students'], legend_out=False)
+g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2')
 g.add_legend()
 g.set_titles(row_template="{row_name}")
-xtl = g.axes[1,0].get_xticklabels()
+xtl = g.axes[2,0].get_xticklabels()
 xtl = [l.get_text() for l in xtl]
-g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
-g.set_axis_labels(y_var="Days in-person (%)")
+#g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
+g.set_axis_labels(y_var="Days lost (%)")
 plt.tight_layout()
 
 
@@ -182,11 +184,12 @@ melt = pd.melt(extract, id_vars=['key2'], value_vars=['es_perc_d1', 'ms_perc_d1'
 sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2')
 plt.legend()
 
+'''
 bs = pd.DataFrame(byschool)
-#fig = plt.figure(figsize=(16,10))
 g = sns.FacetGrid(data=bs, row='key2', height=4, aspect=3)
 g.map_dataframe( sns.scatterplot, x='size', y='d1 infectious', hue='type')
 g.add_legend()
+'''
 
 mu = df.groupby(['key1', 'key2']).mean()
 print(mu)
