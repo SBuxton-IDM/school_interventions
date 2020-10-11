@@ -6,6 +6,7 @@ from school_intervention import new_schools
 
 n_reps = 5
 pop_size = 1e5 # 2.25e4 2.25e5
+batch_size = 16
 
 def scenario(es, ms, hs):
     return {
@@ -124,7 +125,6 @@ if __name__ == '__main__':
     msims = []
     tot = len(scenarios) * len(testing) * n_reps
     proc = 0
-    step = 16
     for skey, scen in scenarios.items():
         for tkey, test in testing.items():
             for rep in range(n_reps):
@@ -143,14 +143,14 @@ if __name__ == '__main__':
                 this_scen = sc.dcp(scen)
                 for stype, spec in this_scen.items():
                     if spec is not None:
-                        spec['testing'] = sc.dcp(test)
+                        spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
 
                 ns = new_schools(this_scen)
                 sim['interventions'] += [ns]
                 sims.append(sim)
                 proc += 1
 
-                if len(sims) == step or proc == tot:
+                if len(sims) == batch_size or proc == tot:
                     print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
                     msim = cv.MultiSim(sims)
                     msims.append(msim)
