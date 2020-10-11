@@ -4,8 +4,9 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-n_reps = 20
+n_reps = 1
 pop_size = 1e5 # 2.25e4 2.25e5
+batch_size = 32
 
 def scenario(es, ms, hs):
     return {
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     msims = []
     tot = len(scenarios) * len(testing) * n_reps
     proc = 0
-    step = 16
+    batch_size = 16
     for skey, scen in scenarios.items():
         for tkey, test in testing.items():
             for rep in range(n_reps):
@@ -150,7 +151,7 @@ if __name__ == '__main__':
                 sims.append(sim)
                 proc += 1
 
-                if len(sims) == step or proc == tot:
+                if len(sims) == batch_size or proc == tot:
                     print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
                     msim = cv.MultiSim(sims)
                     msims.append(msim)
