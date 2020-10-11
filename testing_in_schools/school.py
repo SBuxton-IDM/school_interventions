@@ -173,12 +173,13 @@ class SchoolStats():
             'staff':    sc.dcp(zero_vec),
         }
 
+        self.at_home = {
+            'students': sc.dcp(zero_vec),
+            'teachers': sc.dcp(zero_vec),
+            'staff':    sc.dcp(zero_vec),
+        }
+
         # To reproduce results from previous work:
-        #self.num_cases = {
-        #    'students': [],
-        #    'teachers': [],
-        #    'staff':    [],
-        #}
         self.at_school_while_infectious = {
             'students': set(),
             'teachers': set(),
@@ -203,10 +204,9 @@ class SchoolStats():
         staff_uids = [uid for uid in self.school.uids if ppl.staff_flag[uid]]
 
         for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
-            #if self.school.sim.t == self.school.sim.day(self.school.start_day):
-            #    print(self.school.sid, self.school.stype, group, self.school.sim.pars['pop_scale']*len(ids), sum(ppl.infectious[ids]) * rescale)
             self.infectious[group][t] = len(cvu.true(ppl.infectious[ids])) * rescale
             self.newly_exposed[group][t] = len(cvu.true(ppl.date_exposed[ids] == t-1)) * rescale
+            self.at_home[group][t] = len([u for u in ids if u in self.school.uids_at_home]) * rescale
 
 
         # Tracing statistics to compare against previous work:
@@ -214,9 +214,6 @@ class SchoolStats():
             school_infectious = cvu.itrue(ppl.infectious[np.array(self.school.uids_arriving_at_school)], np.array(self.school.uids_arriving_at_school))
         else:
             school_infectious = []
-
-        #for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
-        #    self.num_cases[group] += [uid for uid in school_infectious if uid in ids]
 
         students_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.student_flag[uid]]
         teachers_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.teacher_flag[uid]]
@@ -241,7 +238,6 @@ class SchoolStats():
         rescale = self.school.sim.rescale_vec[t]
         for group in ['students', 'teachers', 'staff']:
             self.at_school_while_infectious[group] = rescale * len(self.at_school_while_infectious[group])
-            #self.num_cases[group] = rescale * len(list(dict.fromkeys(self.num_cases[group]))) # Not scaled correctly!
 
     def get(self):
         ''' Called once on the final time step to return a dictionary that will be preserved in sim.school_info by school id. '''
@@ -250,6 +246,7 @@ class SchoolStats():
             'num': self.num,
             'infectious': self.infectious,
             'newly_exposed': self.newly_exposed,
+            'at_home': self.at_home,
 
             'infectious_at_school': self.infectious_at_school,
 
@@ -280,7 +277,7 @@ class School():
         self.is_hybrid = is_hybrid
         self.beta_s = beta_s # Not currently used here, but rather in the school_intervention
         self.ili_prob = ili_prob
-        self.testing = [] if testing is None else testing
+        self.testing = [] if testing is None else sc.dcp(testing)
         self.verbose = verbose
 
         self.stats = SchoolStats(self)
@@ -318,8 +315,6 @@ class School():
                 uids += [uid for uid in self.uids if self.sim.people.teacher_flag[uid]]
             test['uids'] = uids
 
-        #print(f'School {self.sid} of type {self.stype} has testing: {self.testing}')
-
     def check_testing(self):
         ''' Check for testing today and conduct tests if needed.
 
@@ -333,11 +328,10 @@ class School():
         '''
         for test in self.testing:
             if self.sim.t in test['t_vec']:
-                #print(test)
                 undiagnosed_uids = cvu.ifalsei(self.sim.people.diagnosed, np.array(test['uids']))
                 uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
-                self.sim.people.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=1) # one day test delay, TODO: Make a parameter!
-                print(self.sim.t, f'School {self.sid} of type {self.stype} is testing {len(uids_to_test)} today')
+                self.sim.people.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
+                if self.verbose: print(self.sim.t, f'School {self.sid} of type {self.stype} is testing {len(uids_to_test)} today')
 
                 # Handle false positives here?
 

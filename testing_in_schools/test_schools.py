@@ -1,6 +1,7 @@
 import covasim as cv
 import numpy as np
 import create_sim as cs
+import sciris as sc
 from school_intervention import new_schools
 
 re_to_fit = 1.0
@@ -10,9 +11,9 @@ debug = True
 def scenario(es, ms, hs):
     return {
         'pk': None,
-        'es': es,
-        'ms': ms,
-        'hs': hs,
+        'es': sc.dcp(es),
+        'ms': sc.dcp(ms),
+        'hs': sc.dcp(hs),
         'uv': None,
     }
 
@@ -42,11 +43,30 @@ if __name__ == '__main__':
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 0.9,
         'sensitivity': 1,
+        'delay': 1
         #'specificity': 1,
     }]
 
-    remote['testing'] = PCR_every_2w
+    PCR_1w_prior = [{
+        'start_date': '2020-08-29',
+        'repeat': None,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 1,
+        'sensitivity': 1,
+        'delay': 1
+        #'specificity': 1,
+    }]
 
+    PCR_daily = [{
+        'start_date': '2020-08-29',
+        'repeat': 1,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 1,
+        'sensitivity': 1,
+        'delay': 1
+        #'specificity': 1,
+    }]
+    remote['testing'] = PCR_daily
 
     s = scenario(es=remote, ms=remote, hs=remote)
 

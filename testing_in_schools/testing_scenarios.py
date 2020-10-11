@@ -4,7 +4,7 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-n_reps = 10
+n_reps = 20
 pop_size = 1e5 # 2.25e4 2.25e5
 
 def scenario(es, ms, hs):
@@ -73,6 +73,7 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
+        'delay': 1
         #'specificity': 1,
     }]
 
@@ -82,6 +83,17 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
+        'delay': 1
+        #'specificity': 1,
+    }]
+
+    PCR_daily_starting_1wprior = [{
+        'start_date': '2020-08-29',
+        'repeat': 1,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 1,
+        'sensitivity': 1,
+        'delay': 1
         #'specificity': 1,
     }]
 
@@ -91,12 +103,13 @@ def generate_testing():
         'None': None,
         'PCR 1w prior': PCR_1w_prior,
         'PCR every 2w': PCR_every_2w,
-        'PCR 1w prior and every 2w': PCR_1w_prior_and_every_2w
+        'PCR 1w prior and every 2w': PCR_1w_prior_and_every_2w,
+        'PCR daily starting 1w prior': PCR_daily_starting_1wprior
     }
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal']}
+    #scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal']}
 
     testing = generate_testing()
 
@@ -145,4 +158,4 @@ if __name__ == '__main__':
                     sims = []
 
     msim = cv.MultiSim.merge(msims)
-    cv.save(os.path.join('msims', f'testing2_{int(pop_size)}.msim'), msim)
+    cv.save(os.path.join('msims', f'testing_{int(pop_size)}.msim'), msim)
