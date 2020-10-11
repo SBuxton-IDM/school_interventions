@@ -6,7 +6,8 @@ import sciris as sc
 class FullTimeContactManager():
     ''' Contact manager for regular 5-day-per-week school '''
 
-    def __init__(self, layer):
+    def __init__(self, sim, uids, layer):
+        self.uids = uids
         self.base_layer = layer
         self.group = 'closed'
 
@@ -32,6 +33,8 @@ class FullTimeContactManager():
             self.layer = sc.dcp(self.base_layer) # needed?
         else:
             self.layer = cvb.Layer() # Empty
+
+        return self.uids # Everyone is scheduled for school today
 
     def remove_individuals(self, uids):
         ''' Remove one or more individual from the contact network '''
@@ -106,10 +109,14 @@ class HybridContactManager():
         # Could modify layer based on group
         if group == 'A':
             self.layer = sc.dcp(self.A_base_layer) # needed?
+            uids = self.A_group
         elif group == 'B':
             self.layer = sc.dcp(self.B_base_layer) # needed?
+            uids = self.B_group
         else:
+            uids = []
             self.layer = cvb.Layer() # Empty
+        return uids # Hybrid scheduling
 
     def remove_individuals(self, uids):
         ''' Remove one or more individual from the contact network '''
@@ -173,7 +180,7 @@ class SchoolStats():
             'staff':    sc.dcp(zero_vec),
         }
 
-        self.at_home = {
+        self.in_person = {
             'students': sc.dcp(zero_vec),
             'teachers': sc.dcp(zero_vec),
             'staff':    sc.dcp(zero_vec),
@@ -185,12 +192,6 @@ class SchoolStats():
             'teachers': set(),
             'staff': set(),
         }
-
-        self.n_students_at_school_while_infectious_first_day = -1
-        self.n_teacherstaff_at_school_while_infectious_first_day = -1
-
-        self.cum_unique_students_at_school_while_infectious = -1
-        self.cum_unique_teacherstaff_at_school_while_infectious = -1
 
     def update(self):
         ''' Called on each day to update school statistics '''
@@ -206,8 +207,7 @@ class SchoolStats():
         for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
             self.infectious[group][t] = len(cvu.true(ppl.infectious[ids])) * rescale
             self.newly_exposed[group][t] = len(cvu.true(ppl.date_exposed[ids] == t-1)) * rescale
-            self.at_home[group][t] = len([u for u in ids if u in self.school.uids_at_home]) * rescale
-
+            self.in_person[group][t] = len([u for u in self.school.uids_passed_screening if u in ids]) * rescale # Post-screening
 
         # Tracing statistics to compare against previous work:
         if len(self.school.uids_arriving_at_school) > 0:
@@ -215,21 +215,18 @@ class SchoolStats():
         else:
             school_infectious = []
 
+        # Options here:
+        # 1. Use ids of students who arrived as school (pre-screening): self.school.uids_arriving_at_school (pre-screening)
+        # 2. Use ids of students who passed screening: self.school.uids_passed_screening
+        # Assumption - there is a transmission risk even pre-screening (e.g. bus), so using option 1 for now
         students_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.student_flag[uid]]
         teachers_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.teacher_flag[uid]]
-        staffs_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.staff_flag[uid]]
-
-        for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staffs_at_school_uids]):
+        staff_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.staff_flag[uid]]
+        for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
             self.infectious_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
 
             at_school_while_infectious_today = cvu.itrue(ppl.infectious[ids], np.array(ids))
             self.at_school_while_infectious[group] |= set(at_school_while_infectious_today)
-
-        if self.school.sim.t == self.school.sim.day(self.school.start_day):
-            self.n_students_at_school_while_infectious_first_day = rescale * len(self.at_school_while_infectious['students'])
-            self.n_teacherstaff_at_school_while_infectious_first_day = \
-                rescale * len(self.at_school_while_infectious['teachers']) + \
-                rescale *  len(self.at_school_while_infectious['staff'])
 
     def finalize(self):
         ''' Called once on the final time step '''
@@ -245,18 +242,72 @@ class SchoolStats():
         return {
             'num': self.num,
             'infectious': self.infectious,
-            'newly_exposed': self.newly_exposed,
-            'at_home': self.at_home,
-
             'infectious_at_school': self.infectious_at_school,
+            'newly_exposed': self.newly_exposed,
+            'in_person': self.in_person,
 
             # From previous work:
             'at_school_while_infectious': self.at_school_while_infectious,
-            'n_students_at_school_while_infectious_first_day': self.n_students_at_school_while_infectious_first_day,
-            'n_teacherstaff_at_school_while_infectious_first_day': self.n_teacherstaff_at_school_while_infectious_first_day,
-            'cum_unique_students_at_school_while_infectious': self.cum_unique_students_at_school_while_infectious,
-            'cum_unique_teacherstaff_at_school_while_infectious': self.cum_unique_teacherstaff_at_school_while_infectious,
         }
+
+
+class SchoolTesting():
+    '''
+    Conduct testing in school students and staff.
+
+    N.B. screening with follow-up testing is handled in the School class.
+    '''
+
+    def __init__(self, school, testing):
+        ''' Initialize testing. '''
+
+        self.school = school
+        self.testing = [] if testing is None else sc.dcp(testing)
+
+        for test in self.testing:
+            # Determine from test start_day and repeat which sim times to test on
+            start_t = self.school.sim.day(test['start_date'])
+            if test['repeat'] == None:
+                # Easy - one time test
+                test['t_vec'] = [start_t]
+            else:
+                test['t_vec'] = list(range(start_t, self.school.sim.pars['n_days'], test['repeat']))
+
+            # Determine uids to include
+            uids = []
+            ppl = self.school.sim.people
+            if 'students' in test['groups']:
+                uids += [uid for uid in self.school.uids if ppl.student_flag[uid]]
+            if 'staff' in test['groups']:
+                uids += [uid for uid in self.school.uids if ppl.staff_flag[uid]]
+            if 'teachers' in test['groups']:
+                uids += [uid for uid in self.school.uids if ppl.teacher_flag[uid]]
+            test['uids'] = uids
+
+    def update(self):
+        '''
+        Check for testing today and conduct tests if needed.
+
+        Fields include:
+            * 'start_date': '2020-08-29',
+            * 'repeat': None,
+            * 'groups': ['students', 'teachers', 'staff'],
+            * 'coverage': 0.9,
+            * 'sensitivity': 1,
+            * 'delay': 1,
+            * TODO: 'specificity': 1,
+        '''
+
+        ppl = self.school.sim.people
+        for test in self.testing:
+            if self.school.sim.t in test['t_vec']:
+                undiagnosed_uids = cvu.ifalsei(ppl.diagnosed, np.array(test['uids']))
+                uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
+                ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
+                if self.school.verbose: print(self.school.sim.t, f'School {self.school.sid} of type {self.school.stype} is testing {len(uids_to_test)} today')
+
+                # Handle false positives here?
+
 
 
 class School():
@@ -277,63 +328,22 @@ class School():
         self.is_hybrid = is_hybrid
         self.beta_s = beta_s # Not currently used here, but rather in the school_intervention
         self.ili_prob = ili_prob
-        self.testing = [] if testing is None else sc.dcp(testing)
+        #self.testing = [] if testing is None else sc.dcp(testing)
         self.verbose = verbose
-
-        self.stats = SchoolStats(self)
 
         self.is_open = False # Schools start closed
 
-        self.init_testing() # Initialize testing
+        #self.init_testing() # Initialize testing
 
         self.uids_at_home = {} # Dict from uid to release date
 
         if self.is_hybrid:
             self.ct_mgr = HybridContactManager(sim, uids, layer)
         else:
-            self.ct_mgr = FullTimeContactManager(layer)
+            self.ct_mgr = FullTimeContactManager(sim, uids, layer)
 
-    def init_testing(self):
-        ''' Determine relevant testing interventions and test dates for this school. '''
-
-        for test in self.testing:
-            # Determine from test start_day and repeat which sim times to test on
-            start_t = self.sim.day(test['start_date'])
-            if test['repeat'] == None:
-                # Easy - one time test
-                test['t_vec'] = [start_t]
-            else:
-                test['t_vec'] = list(range(start_t, self.sim.pars['n_days'], test['repeat']))
-
-            # Determine uids to include
-            uids = []
-            if 'students' in test['groups']:
-                uids += [uid for uid in self.uids if self.sim.people.student_flag[uid]]
-            if 'staff' in test['groups']:
-                uids += [uid for uid in self.uids if self.sim.people.staff_flag[uid]]
-            if 'teachers' in test['groups']:
-                uids += [uid for uid in self.uids if self.sim.people.teacher_flag[uid]]
-            test['uids'] = uids
-
-    def check_testing(self):
-        ''' Check for testing today and conduct tests if needed.
-
-        Fields include:
-            * 'start_date': '2020-08-29',
-            * 'repeat': None,
-            * 'groups': ['students', 'teachers', 'staff'],
-            * 'coverage': 0.9,
-            * 'sensitivity': 1,
-            * TODO: 'specificity': 1,
-        '''
-        for test in self.testing:
-            if self.sim.t in test['t_vec']:
-                undiagnosed_uids = cvu.ifalsei(self.sim.people.diagnosed, np.array(test['uids']))
-                uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
-                self.sim.people.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
-                if self.verbose: print(self.sim.t, f'School {self.sid} of type {self.stype} is testing {len(uids_to_test)} today')
-
-                # Handle false positives here?
+        self.stats = SchoolStats(self)
+        self.testing = SchoolTesting(self, testing)
 
     def screen(self):
         ''' Screen those individuals who are arriving at school '''
@@ -369,7 +379,8 @@ class School():
         ''' Process the day, return the school layer '''
 
         # Even if a school is not yet open, consider testing in the population
-        self.check_testing()
+        #self.check_testing()
+        self.testing.update()
 
         # Look for newly diagnosed people
         newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
@@ -387,7 +398,7 @@ class School():
                 return cvb.Layer() # Might be faster to cache
 
         date = self.sim.date(self.sim.t)
-        self.ct_mgr.begin_day(date) # Do this at the beginning of the update
+        self.scheduled_uids = self.ct_mgr.begin_day(date) # Do this at the beginning of the update
 
         # Quarantine contacts of newly diagnosed individuals - # TODO: Schedule in a delay
         if len(newly_dx_inds) > 0:
@@ -407,7 +418,7 @@ class School():
             return cvb.Layer()
 
         # Determine who will arrive at school (used in screen() and stats.update())
-        self.uids_arriving_at_school = [u for u in self.uids if u not in self.uids_at_home.keys()]
+        self.uids_arriving_at_school = [u for u in self.scheduled_uids if u not in self.uids_at_home.keys()]
 
         # Perform symptom screening
         screen_pos_ids = self.screen()
@@ -420,6 +431,9 @@ class School():
             # Perform follow-up testing on some
             uids_to_test = cvu.binomial_filter(self.test_prob, screen_pos_ids)
             self.sim.people.test(uids_to_test, test_delay=1) # one day test delay, TODO: Make a parameter!
+
+        # Determine (for tracking, mostly) who has arrived at school and passed symptom screening
+        self.uids_passed_screening = [u for u in self.scheduled_uids if u not in self.uids_at_home.keys()]
 
         # Remove individuals at home from the network
         self.ct_mgr.remove_individuals(list(self.uids_at_home.keys()))

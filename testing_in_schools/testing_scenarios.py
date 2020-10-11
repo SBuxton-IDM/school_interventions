@@ -4,7 +4,7 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-n_reps = 20
+n_reps = 5
 pop_size = 1e5 # 2.25e4 2.25e5
 
 def scenario(es, ms, hs):
@@ -93,7 +93,7 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 1
+        'delay': 0
         #'specificity': 1,
     }]
 

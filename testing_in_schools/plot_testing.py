@@ -1,12 +1,22 @@
 import os
 import covasim as cv
+import covasim.misc as cvm
 import numpy as np
 import pandas as pd
+import matplotlib as mplt
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Global plotting styles
+font_size = 16
+font_style = 'Roboto Condensed'
+# font_style = 'Barlow Condensed'
+# font_style = 'Source Sans Pro'
+mplt.rcParams['font.size'] = font_size
+mplt.rcParams['font.family'] = font_style
+
 pop_size = 1e5 # 2.25e4 2.25e5
-msim = cv.MultiSim.load(os.path.join('msims', f'testing_{int(pop_size)}.msim'))
+msim = cv.MultiSim.load(os.path.join('msims', f'testing_1d_{int(pop_size)}.msim'))
 
 re_to_fit = 1.0
 cases_to_fit = 75
@@ -19,6 +29,8 @@ groups = ['students', 'teachers', 'staff']
 scen_names = {
     'as_normal': 'As Normal',
     'all_remote': 'All Remote',
+    'with_screening': 'Normal\nwith Screening',
+    'all_hybrid': 'All Hybrid',
 }
 
 for sim in msim.sims:
@@ -27,7 +39,7 @@ for sim in msim.sims:
     rdf = pd.DataFrame(sim.results)
     ret = {
         'key1': sim.key1,
-        'label1': scen_names[sim.key1] if sim.key1 in scen_names else sim.key1,
+        #'label1': scen_names[sim.key1] if sim.key1 in scen_names else sim.key1,
         'key2': sim.key2,
         're': rdf['r_eff'].iloc[first_school_day:last_school_day, ].mean(axis=0),
         'cases': rdf['new_diagnoses'].iloc[(first_school_day-14):first_school_day, ].sum(axis=0) * 100e3 / (pop_size * sim.pars['pop_scale']) #2.25e6,
@@ -36,6 +48,8 @@ for sim in msim.sims:
     re_mismatch = (re_to_fit - ret['re'])**2 / re_to_fit**2
     cases_mismatch = (cases_to_fit - ret['cases'])**2 / cases_to_fit**2
     ret['mismatch'] = re_mismatch + cases_mismatch
+
+    n_school_days = cv.daydiff(first_school_day, last_school_day)
 
     #if sim.label == 'all_remote': # and sim.dynamic_par['inc'] == 110:
     #    print(sim.label, sim.dynamic_par['inc'], ret['cases'], sim.dynamic_par['re'], ret['re'], ret['mismatch'])
@@ -50,19 +64,24 @@ for sim in msim.sims:
     n_schools = {'es':0, 'ms':0, 'hs':0}
     n_schools_with_inf_d1 = {'es':0, 'ms':0, 'hs':0}
     inf_d1 = {'es':0, 'ms':0, 'hs':0} # TEMP
+
+    perc_inperson_days_lost = {g:[] for g in groups}
     for sid,stats in sim.school_stats.items():
         if stats['type'] not in ['es', 'ms', 'hs']:
             continue
 
         inf = stats['infectious']
         inf_at_sch = stats['infectious_at_school']
-        at_home = stats['at_home']
+        in_person = stats['in_person']
         exp = stats['newly_exposed']
         n_exp = {}
-        num = 0
         for grp in groups:
             n_exp[grp] = np.sum(exp[grp])
-            num += stats['num'][grp]
+            in_person_days = np.sum(in_person[grp])
+            person_days_possible = n_school_days*stats['num'][grp]
+            perc_inperson_days_lost[grp].append(
+                100*(person_days_possible - in_person_days)/person_days_possible
+            )
 
         attackrate_students.append( 100 * n_exp['students'] / stats['num']['students'] )
         attackrate_teachersstaff.append( 100 * (n_exp['teachers'] + n_exp['staff']) / (stats['num']['teachers'] + stats['num']['staff']) )
@@ -98,6 +117,8 @@ for sim in msim.sims:
                 'd1 infectious': sum([inf_at_sch[g][first_school_day] for g in groups]),
             })
 
+    #ret['Days at Home'] = sum(
+
     for stype in ['es', 'ms', 'hs']:
         ret[f'{stype}_perc_d1'] = 100 * n_schools_with_inf_d1[stype] / n_schools[stype]
         ret[f'{stype}_inf_d1'] = inf_d1[stype]
@@ -108,13 +129,8 @@ for sim in msim.sims:
     ret['attackrate_students_legacy'] = np.mean(attackrate_students_legacy)
     ret['attackrate_teachersstaff_legacy'] = np.mean(attackrate_teachersstaff_legacy)
 
-
-    '''
-    print('-'*80)
-    print(sim.key1, sim.key2, (cases_to_fit, ret['cases']), (re_to_fit, ret['re']), ret['mismatch'])
-    print(n_schools_with_inf_d1, n_schools)
-    print(ret)
-    '''
+    for g in groups:
+        ret[f'perc_inperson_days_lost_{g}'] = np.mean(perc_inperson_days_lost[g])
 
     results.append(ret)
 
@@ -126,6 +142,11 @@ g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers 
 g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2')
 g.add_legend()
 g.set_titles(row_template="{row_name}")
+xtl = g.axes[1,0].get_xticklabels()
+xtl = [l.get_text() for l in xtl]
+g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
+g.set_axis_labels(y_var="Attack Rate")
+plt.tight_layout()
 
 # Attack rate (legacy)
 d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=['attackrate_students_legacy', 'attackrate_teachersstaff_legacy'], var_name='Group', value_name='Cum Inc (%)')
@@ -135,9 +156,24 @@ plt.suptitle('Legacy')
 g.add_legend()
 
 
+# Frac days in-person
+d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{g}' for g in groups], var_name='Group', value_name='Days in-person (%)')
+g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, legend_out=False)
+g.map_dataframe( sns.barplot, x='key1', y='Days in-person (%)', hue='key2')
+g.add_legend()
+g.set_titles(row_template="{row_name}")
+xtl = g.axes[1,0].get_xticklabels()
+xtl = [l.get_text() for l in xtl]
+g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
+g.set_axis_labels(y_var="Days in-person (%)")
+plt.tight_layout()
+
+
 # Re
-fig = plt.figure(figsize=(16,10))
+fig, ax = plt.subplots(figsize=(16,10))
 sns.barplot(data=df, x='key1', y='re', hue='key2')
+ax.set_ylim([0.9, 1.2])
+ax.set_ylabel(r'$R_e$')
 
 # Percent of schools with infections on day 1
 fig = plt.figure(figsize=(16,10))
