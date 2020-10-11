@@ -4,10 +4,8 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-n_reps = 2
+n_reps = 10
 pop_size = 1e5 # 2.25e4 2.25e5
-
-debug = False # Warning: this sets keep_people=True so limit to a few scenarios
 
 def scenario(es, ms, hs):
     return {
@@ -25,27 +23,6 @@ def generate_scenarios():
     # Create a single sim to get parameters (make_pars is close, but not quite)
     sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size)
     base_beta_s = sim.pars['beta_layer']['s']
-
-    # Testing interventions to add
-    PCR_1w_prior = [{
-        'start_date': '2020-08-29',
-        'repeat': None,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 0.9,
-        'sensitivity': 1,
-        #'specificity': 1,
-    }]
-
-    PCR_every_2w = [{
-        'start_date': '2020-09-01',
-        'repeat': 14,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 0.9,
-        'sensitivity': 1,
-        #'specificity': 1,
-    }]
-
-    PCR_1w_prior_and_every_2w = PCR_1w_prior + PCR_every_2w
 
     scns = sc.odict()
 
@@ -76,22 +53,52 @@ def generate_scenarios():
     screening = sc.dcp(normal)
     screening['screen_prob'] = 0.9
     screening['beta_s'] = 0.75 * base_beta_s # 25% reduction due to NPI
-    screening['testing'] = PCR_1w_prior # Add testing
-    scns['with_screening_1wprior'] = scenario(es=screening, ms=screening, hs=screening)
+    scns['with_screening'] = scenario(es=screening, ms=screening, hs=screening)
 
     # Add hybrid scheduling
     hybrid = sc.dcp(screening)
     hybrid['is_hybrid'] = True
-    hybrid['testing'] = PCR_1w_prior_and_every_2w # Add testing
-    scns['all_hybrid_1wprior_every2w'] = scenario(es=hybrid, ms=hybrid, hs=hybrid)
+    scns['all_hybrid'] = scenario(es=hybrid, ms=hybrid, hs=hybrid)
 
     # All remote
     scns['all_remote'] = scenario(es=remote, ms=remote, hs=remote)
 
     return scns
 
+def generate_testing():
+    # Testing interventions to add
+    PCR_1w_prior = [{
+        'start_date': '2020-08-29',
+        'repeat': None,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 1,
+        'sensitivity': 1,
+        #'specificity': 1,
+    }]
+
+    PCR_every_2w = [{
+        'start_date': '2020-09-01',
+        'repeat': 14,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 1,
+        'sensitivity': 1,
+        #'specificity': 1,
+    }]
+
+    PCR_1w_prior_and_every_2w = PCR_1w_prior + PCR_every_2w
+
+    return {
+        'None': None,
+        'PCR 1w prior': PCR_1w_prior,
+        'PCR every 2w': PCR_every_2w,
+        'PCR 1w prior and every 2w': PCR_1w_prior_and_every_2w
+    }
+
 if __name__ == '__main__':
     scenarios = generate_scenarios()
+    scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal']}
+
+    testing = generate_testing()
 
     # Hand tuned and replicates instead of optuna pars
     pars = {
@@ -102,35 +109,40 @@ if __name__ == '__main__':
 
     sims = []
     msims = []
-    tot = len(scenarios) * n_reps
+    tot = len(scenarios) * len(testing) * n_reps
     proc = 0
     step = 16
     for skey, scen in scenarios.items():
-        for rep in range(n_reps):
-            par = sc.dcp(pars)
-            par['rand_seed'] = rep
-            sim = cs.create_sim(par, pop_size=pop_size)
+        for tkey, test in testing.items():
+            for rep in range(n_reps):
+                par = sc.dcp(pars)
+                par['rand_seed'] = rep
+                sim = cs.create_sim(par, pop_size=pop_size)
 
-            sim.label = skey
-            sim.scen = scen
-            sim.dynamic_par = par
+                sim.label = f'{skey} + {tkey}'
+                sim.key1 = skey
+                sim.key2 = tkey
+                sim.scen = scen
+                sim.tscen = test
+                sim.dynamic_par = par
 
-            ns = new_schools(scen) # Not sure if need new mem for each
-            sim['interventions'] += [ns]
-            sims.append(sim)
-            proc += 1
+                # Modify scen with test
+                this_scen = sc.dcp(scen)
+                for stype, spec in this_scen.items():
+                    if spec is not None:
+                        spec['testing'] = sc.dcp(test)
 
-            if len(sims) == step or proc == tot:
-                print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
-                msim = cv.MultiSim(sims)
-                msims.append(msim)
-                msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=debug)
-                sims = []
+                ns = new_schools(this_scen)
+                sim['interventions'] += [ns]
+                sims.append(sim)
+                proc += 1
+
+                if len(sims) == step or proc == tot:
+                    print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
+                    msim = cv.MultiSim(sims)
+                    msims.append(msim)
+                    msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
+                    sims = []
 
     msim = cv.MultiSim.merge(msims)
-    cv.save(os.path.join('msims', f'testing_{int(pop_size)}.msim'), msim)
-
-    if debug:
-        for sim in msim.sims:
-            sim.plot(to_plot='overview')
-            t = sim.make_transtree()
+    cv.save(os.path.join('msims', f'testing2_{int(pop_size)}.msim'), msim)

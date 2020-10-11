@@ -161,6 +161,12 @@ class SchoolStats():
             'staff':    sc.dcp(zero_vec),
         }
 
+        self.infectious_at_school = {
+            'students': sc.dcp(zero_vec),
+            'teachers': sc.dcp(zero_vec),
+            'staff':    sc.dcp(zero_vec),
+        }
+
         self.newly_exposed = {
             'students': sc.dcp(zero_vec),
             'teachers': sc.dcp(zero_vec),
@@ -217,6 +223,8 @@ class SchoolStats():
         staffs_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.staff_flag[uid]]
 
         for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staffs_at_school_uids]):
+            self.infectious_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
+
             at_school_while_infectious_today = cvu.itrue(ppl.infectious[ids], np.array(ids))
             self.at_school_while_infectious[group] |= set(at_school_while_infectious_today)
 
@@ -242,6 +250,8 @@ class SchoolStats():
             'num': self.num,
             'infectious': self.infectious,
             'newly_exposed': self.newly_exposed,
+
+            'infectious_at_school': self.infectious_at_school,
 
             # From previous work:
             'at_school_while_infectious': self.at_school_while_infectious,
@@ -327,6 +337,7 @@ class School():
                 undiagnosed_uids = cvu.ifalsei(self.sim.people.diagnosed, np.array(test['uids']))
                 uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
                 self.sim.people.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=1) # one day test delay, TODO: Make a parameter!
+                print(self.sim.t, f'School {self.sid} of type {self.stype} is testing {len(uids_to_test)} today')
 
                 # Handle false positives here?
 
@@ -370,9 +381,8 @@ class School():
         newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
 
         # Isolate newly diagnosed individuals - could happen before school starts
-        if len(newly_dx_inds) > 0:
-            for uid in newly_dx_inds:
-                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
+        for uid in newly_dx_inds:
+            self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
         # Check if school is open
         if not self.is_open:
@@ -396,7 +406,7 @@ class School():
                 self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
         # If any individuals are done with quarantine, return them to school
-        self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date > self.sim.t}
+        self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date >= self.sim.t} # >= or =?
 
         if self.ct_mgr.group in ['weekend', 'distance']:
             # No school today, nothing more to do - return an empty layer
