@@ -37,8 +37,8 @@ def objective(trial, kind='default'):
     sim = cs.create_sim(pars, pop_size=pop_size)
 
     remote = {
-        'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'start_day': '2020-11-01',
+        'schedule': 'remote',
         'screen_prob': 0,
         'test_prob': 0,
         'trace_prob': 0,
@@ -50,8 +50,8 @@ def objective(trial, kind='default'):
     sim['interventions'] += [ns]
     sim.run()
 
-    first = sim.day('2020-09-01')
-    last = sim.day('2020-12-01')
+    first = sim.day('2020-11-01')
+    last = sim.day('2021-02-01')
 
     re = np.mean(sim.results['r_eff'][first:last])
     cases_past14 = np.sum(sim.results['new_diagnoses'][(first-14):first]) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])

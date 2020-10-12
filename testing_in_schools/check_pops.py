@@ -12,6 +12,26 @@ for fn in files:
 school_ids = []
 school_ids_type = []
 for p,pop in enumerate(pops):
+
+    print(f'Pop {p} has {sum(pop.student_flag)} students, {sum(pop.teacher_flag)} teachers, and {sum(pop.staff_flag)} staff')
+
+    students = {}
+    teachers = {}
+    staff = {}
+    for st, sids in pop.school_types.items():
+        students[st] = 0
+        teachers[st] = 0
+        staff[st] = 0
+        for sid in sids:
+            uids = pop.schools[sid]
+            students[st] += len([u for u in uids if pop.student_flag[u]])
+            teachers[st] += len([u for u in uids if pop.teacher_flag[u]])
+            staff[st] += len([u for u in uids if pop.staff_flag[u]])
+
+    print(f'Students: {students}')
+    print(f'Teachers: {teachers}')
+    print(f'Staff: {staff}')
+
     school_ids_type.append(sc.objdict())
     inds = [i for i,val in enumerate(pop.school_id) if val is not None]
     ids = set(pop.school_id[inds])

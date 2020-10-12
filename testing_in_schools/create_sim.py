@@ -57,8 +57,8 @@ def create_sim(params, pop_size=2.25e5):
         'rescale': True,
         'rescale_factor': 1.1,
         'verbose': 0, #0.1,
-        'start_day': '2020-07-01',
-        'end_day': '2020-12-01',
+        'start_day': '2020-09-01',
+        'end_day': '2021-02-01',
         'rand_seed': p.rand_seed,
     }
 
@@ -67,11 +67,11 @@ def create_sim(params, pop_size=2.25e5):
     sim = cv.Sim(pars, popfile=popfile, load_pop=True)
 
     interventions = [
-        cv.test_prob(start_day='2020-07-01', **tp),
-        cv.contact_tracing(start_day='2020-07-01', **ct),
+        cv.test_prob(start_day='2020-09-01', **tp),
+        cv.contact_tracing(start_day='2020-09-01', **ct),
         #cv.change_beta(days='2020-08-01', changes=0.75, layers=['w', 'c'], label='NPI_work_community'),
-        cv.change_beta(days='2020-07-01', changes=p.change_beta, layers=['w', 'c'], label='NPI_work_community'),
-        cv.clip_edges(days='2020-07-01', changes=p.clip_edges, layers=['w', 'c'], label='close_work_community'),
+        cv.change_beta(days='2020-09-01', changes=p.change_beta, layers=['w', 'c'], label='NPI_work_community'),
+        cv.clip_edges(days='2020-09-01', changes=p.clip_edges, layers=['w', 'c'], label='close_work_community'),
 
         # N.B. Schools are not closed in create_sim, must be handled outside this function
     ]

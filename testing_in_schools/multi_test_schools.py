@@ -1,20 +1,26 @@
 import covasim as cv
+import sciris as sc
+import matplotlib.pyplot as plt
+import os
 import numpy as np
 import create_sim as cs
 from school_intervention import new_schools
 
-do_run = True
-n_runs = 8
+do_run = False
+msim_fn = os.path.join('msims', 'remote_reps.msim')
+msim_nopeople_fn = os.path.join('msims', 'remote_no_people_reps.msim')
+n_runs = 25
 re_to_fit = 1.0
-cases_to_fit = 75 #75
+cases_to_fit = 75
 pop_size = 1e5
+
 
 def scenario(es, ms, hs):
     return {
         'pk': None,
-        'es': es,
-        'ms': ms,
-        'hs': hs,
+        'es': sc.dcp(es),
+        'ms': sc.dcp(ms),
+        'hs': sc.dcp(hs),
         'uv': None,
     }
 
@@ -39,23 +45,25 @@ if __name__ == '__main__':
     beta_s = 0.6 #sim.pars['beta_layer']['s']
 
     base = {
-        'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'start_day': '2020-11-01',
+        'schedule': 'Full',
         'screen_prob': 0.9,
         'test_prob': 0.5,
         'trace_prob': 0.5,
         'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
-        'beta_s': 0.75 * beta_s
+        'beta_s': 0.75 * beta_s,
+        'testing': None,
     }
 
     remote = {
-        'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'start_day': '2020-11-01',
+        'schedule': 'Remote',
         'screen_prob': 0,
         'test_prob': 0,
         'trace_prob': 0,
         'ili_prob': 0,
-        'beta_s': 0 # This turns off transmission in the School class
+        'beta_s': 0, # This turns off transmission in the School class
+        'testing': None,
     }
 
     if do_run:
@@ -72,16 +80,19 @@ if __name__ == '__main__':
 
             sims.append(sim)
 
-        ms = cv.MultiSim(sims, noise=0, keep_people=False)
+        ms = cv.MultiSim(sims, noise=0, keep_people=True)
         ms.run()
-        ms.save('multi.obj')
+        ms.save(msim_fn, keep_people=True)
+        ms.save(msim_nopeople_fn, keep_people=False)
     else:
-        ms = cv.MultiSim.load('multi.obj')
+        print('1')
+        ms = cv.MultiSim.load(msim_nopeople_fn)
+        print('2')
 
+    '''
     for s in ms.sims:
-        first_school_day = s.day('2020-09-01')
-        last_school_day = s.day('2020-12-01')
-
+        first_school_day = s.day('2020-11-01')
+        last_school_day = s.day('2021-02-01')
         re = np.mean(s.results['r_eff'][first_school_day:last_school_day])
         cases_past14 = np.sum(s.results['new_diagnoses'][(first_school_day-14):first_school_day]) * 100e3 / (s.pars['pop_size'] * s.pars['pop_scale'])
         cases_during = np.mean(s.results['new_diagnoses'][first_school_day:last_school_day]) * 14 * 100e3 / (s.pars['pop_size'] * s.pars['pop_scale'])
@@ -92,8 +103,24 @@ if __name__ == '__main__':
         mismatch = re_mismatch + cases_past14_mismatch + cases_during_mismatch
 
         print(re, cases_past14, cases_during, mismatch)
+    '''
+    print('Reduce')
 
     ms.reduce()
-    ms.plot(to_plot='overview')
+    ms.save(msim_nopeople_fn, keep_people=False)
+    #ms.plot(to_plot='overview')
+    #plt.savefig('sim.png')
 
-    cv.savefig('sim.png')
+    #plt.figure()
+    to_plot = sc.odict({
+            'New Diagnoses per 100k': [
+                'new_diagnoses',
+            ],
+            'Test Yield': [
+                'test_yield',
+            ],
+            'Effective Reproduction Number': [
+                'r_eff',
+            ],
+        })
+    ms.plot(to_plot=to_plot, n_cols=1)

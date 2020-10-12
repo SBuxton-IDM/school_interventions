@@ -146,6 +146,34 @@ class HybridContactManager():
 
         return self.layer
 
+class RemoteContactManager():
+    ''' Contact manager for remote school '''
+
+    def __init__(self, sim, uids, layer):
+        self.uids = uids
+        self.base_layer = cvb.Layer() # Empty base layer (ignore the passed-in layer)
+        self.school_day = False
+
+    def begin_day(self, date):
+        ''' Called at the beginning of each day to configure the school layer '''
+
+        self.layer = cvb.Layer() # Empty
+        uids = []
+
+        return uids
+
+    def remove_individuals(self, uids):
+        ''' No individuals to remove, so just return '''
+        return
+
+    def find_contacts(self, uids):
+        ''' No contacts because remote, return empty list '''
+        return []
+
+    def get_layer(self):
+        ''' Return the (empty) layer '''
+        return self.layer
+
 
 class SchoolStats():
     ''' Reporter for tracking statistics associated with a school '''
@@ -174,7 +202,13 @@ class SchoolStats():
             'staff':    sc.dcp(zero_vec),
         }
 
-        self.infectious_at_school = {
+        self.infectious_arrive_at_school = {
+            'students': sc.dcp(zero_vec),
+            'teachers': sc.dcp(zero_vec),
+            'staff':    sc.dcp(zero_vec),
+        }
+
+        self.infectious_stay_at_school = {
             'students': sc.dcp(zero_vec),
             'teachers': sc.dcp(zero_vec),
             'staff':    sc.dcp(zero_vec),
@@ -196,13 +230,6 @@ class SchoolStats():
             'students': sc.dcp(zero_vec),
             'teachers': sc.dcp(zero_vec),
             'staff':    sc.dcp(zero_vec),
-        }
-
-        # To reproduce results from previous work:
-        self.at_school_while_infectious = {
-            'students': set(),
-            'teachers': set(),
-            'staff': set(),
         }
 
     def update(self):
@@ -231,26 +258,27 @@ class SchoolStats():
         else:
             school_infectious = []
 
-        # Options here:
+        # Options here: (TODO - avoid code replication)
         # 1. Use ids of students who arrived as school (pre-screening): self.school.uids_arriving_at_school (pre-screening)
         # 2. Use ids of students who passed screening: self.school.uids_passed_screening
-        # Assumption - there is a transmission risk even pre-screening (e.g. bus), so using option 1 for now
+        # First "infectious_arrive_at_school" assumes there is a transmission risk even pre-screening (e.g. bus)
         students_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.student_flag[uid]]
         teachers_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.teacher_flag[uid]]
         staff_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.staff_flag[uid]]
         for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
-            self.infectious_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
+            self.infectious_arrive_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
 
-            at_school_while_infectious_today = cvu.itrue(ppl.infectious[ids], np.array(ids))
-            self.at_school_while_infectious[group] |= set(at_school_while_infectious_today)
+        # Second "infectious_stay_at_school" effectively assumes "screen-positive" kids would be kept home from school in the first place
+        students_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.student_flag[uid]]
+        teachers_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.teacher_flag[uid]]
+        staff_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.staff_flag[uid]]
+        for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
+            self.infectious_stay_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
 
     def finalize(self):
         ''' Called once on the final time step '''
+        return
 
-        t = self.school.sim.t
-        rescale = self.school.sim.rescale_vec[t]
-        for group in ['students', 'teachers', 'staff']:
-            self.at_school_while_infectious[group] = rescale * len(self.at_school_while_infectious[group])
 
     def get(self):
         ''' Called once on the final time step to return a dictionary that will be preserved in sim.school_info by school id. '''
@@ -258,14 +286,12 @@ class SchoolStats():
         return {
             'num': self.num,
             'infectious': self.infectious,
-            'infectious_at_school': self.infectious_at_school,
+            'infectious_arrive_at_school': self.infectious_arrive_at_school,
+            'infectious_stay_at_school': self.infectious_stay_at_school,
             'newly_exposed': self.newly_exposed,
             'scheduled': self.scheduled,
             'in_person': self.in_person,
             'num_school_days': self.num_school_days,
-
-            # From previous work:
-            'at_school_while_infectious': self.at_school_while_infectious,
         }
 
 
@@ -335,18 +361,27 @@ class School():
     ''' Represent a single school '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
-                start_day, screen_prob, test_prob, trace_prob, is_hybrid, beta_s, ili_prob, testing, verbose=False, **kwargs):
+                start_day, screen_prob, test_prob, trace_prob, schedule, beta_s, ili_prob, testing, verbose=False, **kwargs):
+        '''
+        Initialize the School
+
+        ili_prev    (float or dict)     : Prevalence of influenza-like-illness symptoms in the population
+        num_pos     (int)               : number of covid positive cases per school that triggers school closure
+        trace       (float)             : probability of tracing contacts of diagnosed covid+
+        test        (float)             : probability of testing screen positive
+        test_freq   (int)               : frequency of testing teachers (1 = daily, 2 = every other day, ...)
+        schedule    (str)               : school schedule: full, hybrid, or remote
+        '''
 
         self.sim = sim
         self.sid = school_id
         self.stype = school_type
         self.uids = uids
-        self.is_hybrid = is_hybrid
         self.start_day = start_day
         self.screen_prob = screen_prob
         self.test_prob = test_prob
         self.trace_prob = trace_prob
-        self.is_hybrid = is_hybrid
+        self.schedule = schedule
         self.beta_s = beta_s # Not currently used here, but rather in the school_intervention
         self.ili_prob = ili_prob
         #self.testing = [] if testing is None else sc.dcp(testing)
@@ -358,10 +393,14 @@ class School():
 
         self.uids_at_home = {} # Dict from uid to release date
 
-        if self.is_hybrid:
+        if self.schedule.lower() == 'hybrid':
             self.ct_mgr = HybridContactManager(sim, uids, layer)
-        else:
+        elif self.schedule.lower() == 'full':
             self.ct_mgr = FullTimeContactManager(sim, uids, layer)
+        elif self.schedule.lower() == 'remote':
+            self.ct_mgr = RemoteContactManager(sim, uids, layer)
+        else:
+            print(f'Warning: Unrecognized schedule ({self.schedule}) passed to School class.')
 
         self.stats = SchoolStats(self)
         self.testing = SchoolTesting(self, testing)
@@ -434,9 +473,11 @@ class School():
         # If any individuals are done with quarantine, return them to school
         self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date >= self.sim.t} # >= or =?
 
+        '''
         if not self.ct_mgr.school_day:
             # No school today, nothing more to do - return an empty layer
             return cvb.Layer()
+        '''
 
         # Determine who will arrive at school (used in screen() and stats.update())
         self.uids_arriving_at_school = [u for u in self.scheduled_uids if u not in self.uids_at_home.keys()]

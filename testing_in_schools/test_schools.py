@@ -28,8 +28,8 @@ if __name__ == '__main__':
     sim = cs.create_sim(params, pop_size=1e5) # 2.25e4
 
     remote = {
-        'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'start_day': '2020-11-01',
+        'schedule': 'Remote',
         'screen_prob': 0,
         'test_prob': 0,
         'trace_prob': 0,
@@ -37,36 +37,16 @@ if __name__ == '__main__':
         'beta_s': 0 # This turns off transmission in the School class
     }
 
-    PCR_every_2w = [{
-        'start_date': '2020-09-01',
-        'repeat': 14,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 0.9,
-        'sensitivity': 1,
-        'delay': 1
-        #'specificity': 1,
-    }]
-
-    PCR_1w_prior = [{
-        'start_date': '2020-08-29',
-        'repeat': None,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 1,
-        'sensitivity': 1,
-        'delay': 1
-        #'specificity': 1,
-    }]
-
-    PCR_daily = [{
-        'start_date': '2020-08-29',
+    PCR_every_1d_starting_1wprior = [{
+        'start_date': '2020-10-25',
         'repeat': 1,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 1
+        'delay': 0 # NOTE: no delay!
         #'specificity': 1,
     }]
-    remote['testing'] = PCR_daily
+    remote['testing'] = None # PCR_every_1d_starting_1wprior
 
     s = scenario(es=remote, ms=remote, hs=remote)
 
@@ -75,8 +55,8 @@ if __name__ == '__main__':
 
     sim.run(keep_people=debug)
 
-    first_school_day = sim.day('2020-09-01')
-    last_school_day = sim.day('2020-12-01')
+    first_school_day = sim.day('2020-11-01')
+    last_school_day = sim.day('2021-02-01')
 
     re = np.mean(sim.results['r_eff'][first_school_day:last_school_day])
     cases_past14 = np.sum(sim.results['new_diagnoses'][(first_school_day-14):first_school_day]) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])

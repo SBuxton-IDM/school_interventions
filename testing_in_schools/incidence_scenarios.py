@@ -32,7 +32,7 @@ def generate_scenarios():
 
     remote = {
         'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'schedule': 'remote',
         'screen_prob': 0,
         'test_prob': 0,
         'trace_prob': 0,
@@ -42,7 +42,7 @@ def generate_scenarios():
 
     base = {
         'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'schedule': 'full',
         'screen_prob': 0,
         'test_prob': 0.5,
         'trace_prob': 0.5,
@@ -61,7 +61,7 @@ def generate_scenarios():
 
     # Add hybrid scheduling
     hybrid = sc.dcp(screening)
-    hybrid['is_hybrid'] = True
+    hybrid['schedule'] = 'hybrid'
     scns['all_hybrid'] = scenario(es=hybrid, ms=hybrid, hs=hybrid)
     scns['ES_hybrid'] = scenario(es=hybrid, ms=remote, hs=remote)
 

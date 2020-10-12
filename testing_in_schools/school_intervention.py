@@ -3,35 +3,13 @@ import covasim.base as cvb
 from school import School
 
 class new_schools(Intervention):
-    '''
-    Specifies reopening strategy.
-
-    Args:
-        ili_prev    (float or dict)     : Prevalence of influenza-like-illness symptoms in the population
-        num_pos     (int)               : number of covid positive cases per school that triggers school closure
-        trace       (float)             : probability of tracing contacts of diagnosed covid+
-        test        (float)             : probability of testing screen positive
-        test_freq   (int)               : frequency of testing teachers (1 = daily, 2 = every other day, ...)
-        is_hybrid   (bool or dict)      : whether or not to schedule partially remote (if dict, by type, otherwise for all types)
-        kwargs      (dict)              : passed to Intervention
-
-    **Examples**
-        TODO
-    '''
+    ''' Specifies reopening strategy.  '''
 
     def __init__(self, scenario, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so that intervention can be recreated
 
         # Store arguments
-        '''
-        self.start_day  = start_day
-        self.ili_prev   = ili_prev
-        self.test_freq  = test_freq # int of frequency of diagnostic testing
-        self.trace_prob = trace_prob # whether or not you trace contacts of all diagnosed patients
-        self.test_prob  = test_prob # probability that anyone who screens positive is tested
-        self.is_hybrid   = is_hybrid # dictionary
-        '''
         self.scenario = scenario
         self.schools = []
 

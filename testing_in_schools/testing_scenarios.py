@@ -4,7 +4,7 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-n_reps = 3
+n_reps = 25
 pop_size = 1e5 # 2.25e4 2.25e5
 batch_size = 24
 
@@ -27,19 +27,19 @@ def generate_scenarios():
     scns = sc.odict()
 
     remote = {
-        'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'start_day': '2020-11-01',
+        'schedule': 'Remote',
         'screen_prob': 0,
         'test_prob': 0,
         'trace_prob': 0,
         'ili_prob': 0,
-        'beta_s': 0,
+        'beta_s': 0, # NOTE: No transmission in school layers
         'testing': None,
     }
 
     normal = {
-        'start_day': '2020-09-01',
-        'is_hybrid': False,
+        'start_day': '2020-11-01',
+        'schedule': 'Full',
         'screen_prob': 0,
         'test_prob': 0.5,
         'trace_prob': 0.5,
@@ -57,7 +57,7 @@ def generate_scenarios():
 
     # Add hybrid scheduling
     hybrid = sc.dcp(screening)
-    hybrid['is_hybrid'] = True
+    hybrid['schedule'] = 'Hybrid'
     scns['all_hybrid'] = scenario(es=hybrid, ms=hybrid, hs=hybrid)
 
     # All remote
@@ -68,7 +68,7 @@ def generate_scenarios():
 def generate_testing():
     # Testing interventions to add
     PCR_1w_prior = [{
-        'start_date': '2020-08-29',
+        'start_date': '2020-10-25',
         'repeat': None,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
@@ -78,7 +78,7 @@ def generate_testing():
     }]
 
     PCR_every_2w_starting_1wprior = [{
-        'start_date': '2020-08-29',
+        'start_date': '2020-10-25',
         'repeat': 14,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
@@ -88,7 +88,7 @@ def generate_testing():
     }]
 
     PCR_every_1w_starting_1wprior = [{
-        'start_date': '2020-08-29',
+        'start_date': '2020-10-25',
         'repeat': 7,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
@@ -97,18 +97,38 @@ def generate_testing():
         #'specificity': 1,
     }]
 
+    PCR_every_1m_15cov = [{
+        'start_date': '2020-11-01',
+        'repeat': 30,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 0.15,
+        'sensitivity': 1,
+        'delay': 1
+        #'specificity': 1,
+    }]
+
+    PCR_every_2w_50cov = [{
+        'start_date': '2020-11-01',
+        'repeat': 14,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 0.50,
+        'sensitivity': 1,
+        'delay': 1
+        #'specificity': 1,
+    }]
+
     Antigen_every_1w_starting_1wprior_staff = [{
-        'start_date': '2020-08-29',
+        'start_date': '2020-10-25',
         'repeat': 7,
         'groups': ['teachers', 'staff'], # No students
         'coverage': 1,
-        'sensitivity': 0.6, # Low sensitiviy
+        'sensitivity': 0.8, # Lower sensitiviy, 0.8 is a modeling assumption as the true sensitivity is unknown at this time  - TODO: Propoer antigen testing in covasim
         'delay': 0          # No delay
         #'specificity': 1,
     }]
 
     PCR_every_1d_starting_1wprior = [{
-        'start_date': '2020-08-29',
+        'start_date': '2020-10-25',
         'repeat': 1,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
@@ -119,16 +139,17 @@ def generate_testing():
 
     return {
         'None': None,
-        #'PCR 1w prior': PCR_1w_prior,
-        #'PCR every 2w': PCR_every_2w_starting_1wprior,
+        'PCR 1w prior': PCR_1w_prior,
+        'PCR every 2w': PCR_every_2w_starting_1wprior,
         'PCR every 1w': PCR_every_1w_starting_1wprior,
-        #'PCR every 1d': PCR_every_1d_starting_1wprior,
+        'PCR every 1m 15%': PCR_every_1m_15cov,
+        'PCR every 1d': PCR_every_1d_starting_1wprior,
         'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_staff,
     }
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal', 'all_hybrid']}
+    #scenarios = {k:v for k,v in scenarios.items() if k not in ['all_remote']}
 
     testing = generate_testing()
 
@@ -176,4 +197,4 @@ if __name__ == '__main__':
                     sims = []
 
     msim = cv.MultiSim.merge(msims)
-    cv.save(os.path.join('msims', f'testing_{int(pop_size)}.msim'), msim)
+    cv.save(os.path.join('msims', f'testing_v20201012_v2_{int(pop_size)}.msim'), msim)
