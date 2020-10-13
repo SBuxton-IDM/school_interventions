@@ -28,15 +28,16 @@ if __name__ == '__main__':
     sim = cs.create_sim(params, pop_size=1e5) # 2.25e4
     base_beta_s = sim.pars['beta_layer']['s']
 
-    PCR_every_1d_starting_1wprior = [{
+    PCR_every_1w_starting_1wprior = [{
         'start_date': '2020-10-26',
-        'repeat': 1,
+        'repeat': 7,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 0 # NOTE: no delay!
-        #'specificity': 1,
+        'specificity': 1,
+        'delay': 1,
     }]
+
 
     Antigen_every_1w_starting_1wprior_staff = [{
         'start_date': '2020-10-26',
@@ -60,6 +61,19 @@ if __name__ == '__main__':
         'testing': None,
     }
 
+    full_with_countermeasures = {
+        'start_day': '2020-11-02',
+        'schedule': 'Full',
+        'screen_prob': 0.9,
+        'test_prob': 0.5, # Amongst those who screen positive
+        'trace_prob': 0.75, # Fraction of newly diagnosed index cases who are traced
+        'quar_prob': 0.75, # Of those reached by contact tracing, this fraction will quarantine
+        'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
+        'beta_s': 0.75 * base_beta_s, # 25% reduction due to NPI
+        'testing': None,
+    }
+    full_with_countermeasures['testing'] = PCR_every_1w_starting_1wprior
+
     base = {
         'start_day': '2020-11-02',
         'schedule': 'Full',
@@ -73,8 +87,9 @@ if __name__ == '__main__':
     }
 
 
-    s = scenario(es=base, ms=base, hs=base)
+    s = scenario(es=full_with_countermeasures, ms=full_with_countermeasures, hs=full_with_countermeasures)
 
+    s['es']['verbose'] = s['ms']['verbose'] = s['hs']['verbose'] = True
     ns = new_schools(s)
     sim['interventions'] += [ns]
 

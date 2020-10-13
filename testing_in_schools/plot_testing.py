@@ -19,16 +19,18 @@ pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201013_225k_v2'
 imgdir = os.path.join(folder, 'img')
-#msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'pars_0-5.msim'))
+msim = cv.MultiSim.load(os.path.join(folder, 'msims', 'combined.msim'))
 #msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))
 
+'''
 msim = cv.MultiSim.merge([
     cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_0-5.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_5-10.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_10-15.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_15-25.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_5-13.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_13-20.msim')),
+    #cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_15-25.msim')),
 ])
 msim.save(os.path.join(folder, 'msims', 'combined.msim'))
+'''
 
 '''
 msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_not_remote_{int(pop_size)}.msim'))
@@ -49,14 +51,26 @@ debug_plot = False
 results = []
 byschool = []
 groups = ['students', 'teachers', 'staff']
-hue_order = ['None', 'PCR 1w prior', 'Antigen every 1w teach&staff', 'PCR every 2w', 'PCR every 1w', 'PCR every 1d'] # , 'PCR every 1m 15%'
 
 scen_names = {
     'as_normal': 'As Normal',
+    'with_screening': 'Normal with\nCountermeasures',
+    'all_hybrid': 'Hybrid with\nCountermeasures',
     'all_remote': 'All Remote',
-    'with_screening': 'Normal with\nNPI & Screening',
-    'all_hybrid': 'All Hybrid',
 }
+
+test_names = {
+    'None': 'None',
+    'PCR 1w prior': 'PCR one week prior, 1d delay',
+    'Antigen every 1w teach&staff': 'Weekly antigen for teachers & staff, no delay',
+    'PCR every 2w': 'Fortnightly PCR, 1d delay',
+    'PCR every 1w': 'Weekly PCR, 1d delay',
+    'PCR every 1d': 'Daily PCR, no delay'
+}
+
+for sim in msim.sims:
+    sim.key2 = test_names[sim.key2]
+hue_order = [test_names[x] for x in ['None', 'PCR 1w prior', 'Antigen every 1w teach&staff', 'PCR every 2w', 'PCR every 1w', 'PCR every 1d']] # , 'PCR every 1m 15%'
 
 for sim in msim.sims:
     # Note: The objective function has recently changed, so mismatch will not match!
@@ -190,7 +204,7 @@ cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'))
 # Re
 fig, ax = plt.subplots(figsize=(16,10))
 sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=hue_order)
-ax.set_ylim([0.8, 1.2])
+ax.set_ylim([0.8, 1.3])
 ax.set_ylabel(r'Average $R_e$')
 ax.set_xlabel('')
 xtl = ax.get_xticklabels()
@@ -216,8 +230,8 @@ print(d)
 
 
 d.replace( {'type': {'es':'Elementary', 'ms':'Middle', 'hs':'High'}}, inplace=True)
-d.replace( {'key2': {'PCR every 1w':'PCR one week prior', 'PCR every 1d':'PCR one day prior'}}, inplace=True)
-g = sns.FacetGrid(data=d, row='key2', height=3, aspect=3.5, margin_titles=False, row_order=['None', 'PCR one week prior', 'PCR one day prior']) # row='type'
+#d.replace( {'key2': {'PCR every 1w':'PCR one week prior', 'PCR every 1d':'PCR one day prior'}}, inplace=True)
+g = sns.FacetGrid(data=d, row='key2', height=3, aspect=3.5, margin_titles=False, row_order=[test_names[x] for x in ['None', 'PCR one week prior', 'PCR one day prior']]) # row='type'
 g.map_dataframe( sns.regplot, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'color':'black', 's':5})
 g.set_titles(col_template="{col_name}", row_template="{row_name}")
 g.set_axis_labels(x_var='School size (students)', y_var='Infection on First Day (%)')

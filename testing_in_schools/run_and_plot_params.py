@@ -49,6 +49,7 @@ if __name__ == '__main__':
                     for stype, spec in this_scen.items():
                         if spec is not None:
                             spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
+                            spec['beta_s'] = 1.0 # Shouldn't matter considering schools are closed in the 'all_remote' scenario
 
                     ns = new_schools(this_scen)
                     sim['interventions'] += [ns]
@@ -81,10 +82,10 @@ if __name__ == '__main__':
 
     #plt.figure()
     to_plot = sc.odict({
-            'New Infections': [
+            'New Infections per 225k': [
                 'new_infections',
             ],
-            'New Diagnoses per 100k': [
+            'New Diagnoses per 225k': [
                 'new_diagnoses',
             ],
             'Test Yield': [
@@ -93,7 +94,7 @@ if __name__ == '__main__':
             'Effective Reproduction Number': [
                 'r_eff',
             ],
-            'New Tests': [
+            'New Tests per 225k': [
                 'new_tests',
             ],
             'Prevalence': [
@@ -104,10 +105,27 @@ if __name__ == '__main__':
     ms.plot(to_plot=to_plot, n_cols=2, interval=30, legend_args={'show_legend':False}, do_show=False, fig=fig) # , dateformat='%B'
 
     s0 = ms.sims[0]
-    for i, ax in enumerate(fig.axes):
-        if i < len(fig.axes)-2:
+    for axi, ax in enumerate(fig.axes):
+        if axi < len(fig.axes)-2:
             ax.xaxis.set_visible(False)
         ax.axvline(x=s0.day('2020-11-01'), color='c', ls='--')
+
+
+    ''' WIP
+    scale = 1e5 / s0.pars['pop_size'] * s0.pars['pop_scale']
+    scale_ax = [0,1,4]
+    for axi, ax in enumerate(fig.axes):
+        #if axi not in scale_ax: # Surely a better way to do this!
+        #    continue
+        ytl = list(ax.get_yticklabels()) #[yt for yt in ax.get_yticklabels()]
+        if axi==0:
+            ax.set_yticklabels(['1', '2', '3'])
+
+        if axi==2:
+            ax.set_yticklabels(['4', '5', '6'])
+        print(ytl)
+    '''
+
 
     # Agh, x-axis is not a datetime!
     #import matplotlib.dates as mdates
