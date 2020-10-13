@@ -355,9 +355,10 @@ class SchoolTesting():
                 if self.school.verbose: print(self.school.sim.t, f'School {self.school.sid} of type {self.school.stype} is testing {len(uids_to_test)} today')
 
                 # Handle false positives here?
-                non_infectious_uids = cvu.ifalse(self.school.sim.people.infectious[uids_to_test], np.array(uids_to_test))
-                false_positive_uids = cvu.binomial_filter(1-test['specificity'], non_infectious_uids)
-                #self.n_tested += len(uids_to_test) # Count the follow-up PCR test, will be negative
+                if test['specificity'] < 1 :
+                    non_infectious_uids = cvu.ifalse(ppl.infectious[uids_to_test], np.array(uids_to_test))
+                    false_positive_uids = cvu.binomial_filter(1-test['specificity'], non_infectious_uids)
+                    #self.n_tested += len(uids_to_test) # Count the follow-up PCR test, will be negative
 
         return false_positive_uids
 

@@ -4,11 +4,13 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-seeds = range(25,40) # range(6,25)
+par_inds = (0,5)
 pop_size = 1e5 # 2.25e4 2.25e5
-batch_size = 50
+batch_size = 16
 
-stem = f'testing_v20201013_v1e_{int(pop_size)}'
+folder = 'v20201013_225k'
+stem = f'pars_{par_inds[0]}-{par_inds[1]}'
+calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 def scenario(es, ms, hs):
     return {
@@ -156,8 +158,9 @@ def generate_testing():
         'PCR 1w prior': PCR_1w_prior,
         'PCR every 2w': PCR_every_2w_starting_1wprior,
         'PCR every 1w': PCR_every_1w_starting_1wprior,
-        'PCR every 1m 15%': PCR_every_1m_15cov,
         'PCR every 1d': PCR_every_1d_starting_1wprior,
+        #'PCR every 1m 15%': PCR_every_1m_15cov,
+        #'PCR every 2w 50%': PCR_every_2w_50cov,
         'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_staff,
     }
 
@@ -169,27 +172,29 @@ if __name__ == '__main__':
     #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'PCR every 1d']}
 
     # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
-    pars_v1 = {
+    pars_v1 = { # 100k pop
         'pop_infected': 160,
         'clip_edges': 0.65,
         'change_beta': 0.525,
     }
 
-    pars = { # Updated v2 pars achieve lower prevalence (0.2% as opposed to closer to 0.5% with v1)
+    pars_v2 = { # Updated v2 pars achieve lower prevalence (0.2% as opposed to closer to 0.5% with v1) (100kpop)
         'pop_infected': 90,
         'clip_edges': 0.65,
         'change_beta': 0.62,
     }
 
+    par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
+
     sims = []
     msims = []
-    tot = len(scenarios) * len(testing) * len(seeds)
+    tot = len(scenarios) * len(testing) * len(par_list)
     proc = 0
     for skey, scen in scenarios.items():
         for tidx, (tkey, test) in enumerate(testing.items()):
-            for seed in seeds:
-                par = sc.dcp(pars)
-                par['rand_seed'] = seed
+            for eidx, entry in enumerate(par_list):
+                par = sc.dcp(entry['pars'])
+                par['rand_seed'] = int(entry['index'])
                 sim = cs.create_sim(par, pop_size=pop_size)
 
                 sim.label = f'{skey} + {tkey}'
@@ -210,7 +215,7 @@ if __name__ == '__main__':
                 sims.append(sim)
                 proc += 1
 
-                if len(sims) == batch_size or proc == tot or (tidx == len(testing)-1 and seed == seeds[-1]):
+                if len(sims) == batch_size or proc == tot or (tidx == len(testing)-1 and eidx == len(par_list)-1):
                     print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
                     msim = cv.MultiSim(sims)
                     msims.append(msim)
@@ -220,7 +225,7 @@ if __name__ == '__main__':
         print(f'*** Saving after completing {skey}')
         sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == skey]
         msim = cv.MultiSim(sims_this_scenario)
-        cv.save(os.path.join('msims', f'{stem}_{skey}.msim'), msim)
+        cv.save(os.path.join(folder, 'msims', f'{stem}_{skey}.msim'), msim)
 
     msim = cv.MultiSim.merge(msims)
-    cv.save(os.path.join('msims', f'{stem}.msim'), msim)
+    cv.save(os.path.join(folder, 'msims', f'{stem}.msim'), msim)

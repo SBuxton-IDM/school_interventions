@@ -15,32 +15,33 @@ font_style = 'Roboto Condensed'
 mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
-pop_size = 1e5 # 2.25e4 2.25e5
+pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
-imgdir = 'img_v20201013_v1_filterseeds'
-#msim = cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1_{int(pop_size)}.msim'))
-msim = cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))
+folder = 'v20201013_225k'
+imgdir = os.path.join(folder, 'img')
+msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'pars_0-3.msim'))
+#msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))
 
 '''
 msim = cv.MultiSim.merge([
-    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1a_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1b_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1c_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1d_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1e_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1a_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1b_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1c_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1d_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1e_{int(pop_size)}.msim')),
 ])
-msim.save(os.path.join('msims', f'testing_v20201013_v1_{int(pop_size)}.msim'))
+msim.save(os.path.join(folder, 'msims', f'testing_v20201013_v1_{int(pop_size)}.msim'))
 '''
 
 '''
-msim = cv.MultiSim.load(os.path.join('msims', f'testing_not_remote_{int(pop_size)}.msim'))
+msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_not_remote_{int(pop_size)}.msim'))
 print(len(msim.sims))
 # Replace "all_remote" sims with update
-remote = cv.MultiSim.load(os.path.join('msims', f'testing_remote_{int(pop_size)}.msim'))
+remote = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_remote_{int(pop_size)}.msim'))
 sims = [s for s in msim.sims if s.key1 != 'all_remote'] + remote.sims
 msim = cv.MultiSim(sims)
 print(len(msim.sims))
-msim.save(os.path.join('msims', f'testing_v20201012_{int(pop_size)}.msim'))
+msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 '''
 
 
@@ -60,6 +61,7 @@ scen_names = {
 }
 
 for sim in msim.sims:
+    # Note: The objective function has recently changed, so mismatch will not match!
     first_school_day = sim.day('2020-11-02')
     last_school_day = sim.day('2021-01-31')
     rdf = pd.DataFrame(sim.results)
@@ -119,19 +121,20 @@ for sim in msim.sims:
             n_schools_with_inf_d1[stats['type']] += 1
             inf_d1[stats['type']] += inf_at_sch['students'][first_school_day] + inf_at_sch['teachers'][first_school_day] + inf_at_sch['staff'][first_school_day]
 
-        if debug_plot and sim.key2 != 'None' and sum([inf_at_sch[g][first_school_day] for g in groups]) > 0:
+        if debug_plot and sim.key1=='as_normal' and sim.key2 == 'None':# and sum([inf_at_sch[g][first_school_day] for g in groups]) > 0:
             f = plt.figure(figsize=(16,10))
             import datetime as dt
             for grp in ['students', 'teachers', 'staff']:
                 #plt.plot(sim.results['date'], inf[grp], label=grp)
-                plt.plot(sim.results['date'], inf_at_sch[grp], ls='-', label=f'{grp} at sch')
-                plt.plot(sim.results['date'], at_home[grp], ls=':', label=f'{grp} at home')
+                plt.plot(sim.results['date'], stats['infectious_arrive_at_school'][grp], ls='-', label=f'{grp} arrived')
+                plt.plot(sim.results['date'], stats['infectious_stay_at_school'][grp], ls=':', label=f'{grp} stayed')
+                #plt.plot(sim.results['date'], at_home[grp], ls=':', label=f'{grp} at home')
                 plt.axvline(x=dt.datetime(2020, 11, 2), color = 'r')
             plt.title(sim.label)
             plt.legend()
             plt.show()
 
-        d1scenario = 'all_remote'
+        d1scenario = 'as_normal'
         if sim.key1 == d1scenario:
             byschool.append({
                 'type': stats['type'],
@@ -211,6 +214,9 @@ cv.savefig(os.path.join(imgdir, 'SchoolsWithFirstDayInfections.png'))
 
 # Infections on first day as function on school type and testing - regression
 d = pd.DataFrame(byschool)
+print(d)
+
+
 d.replace( {'type': {'es':'Elementary', 'ms':'Middle', 'hs':'High'}}, inplace=True)
 d.replace( {'key2': {'PCR every 1w':'PCR one week prior', 'PCR every 1d':'PCR one day prior'}}, inplace=True)
 g = sns.FacetGrid(data=d, row='key2', height=3, aspect=3.5, margin_titles=False, row_order=['None', 'PCR one week prior', 'PCR one day prior']) # row='type'
