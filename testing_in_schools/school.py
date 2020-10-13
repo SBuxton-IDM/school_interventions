@@ -168,7 +168,7 @@ class RemoteContactManager():
 
     def find_contacts(self, uids):
         ''' No contacts because remote, return empty list '''
-        return []
+        return np.empty(0)
 
     def get_layer(self):
         ''' Return the (empty) layer '''
@@ -344,24 +344,29 @@ class SchoolTesting():
             * TODO: 'specificity': 1,
         '''
 
+        false_positive_uids = []
         ppl = self.school.sim.people
         for test in self.testing:
             if self.school.sim.t in test['t_vec']:
                 undiagnosed_uids = cvu.ifalsei(ppl.diagnosed, np.array(test['uids']))
                 uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
-                ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
                 self.n_tested += len(uids_to_test)
+                ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
                 if self.school.verbose: print(self.school.sim.t, f'School {self.school.sid} of type {self.school.stype} is testing {len(uids_to_test)} today')
 
                 # Handle false positives here?
+                non_infectious_uids = cvu.ifalse(self.school.sim.people.infectious[uids_to_test], np.array(uids_to_test))
+                false_positive_uids = cvu.binomial_filter(1-test['specificity'], non_infectious_uids)
+                #self.n_tested += len(uids_to_test) # Count the follow-up PCR test, will be negative
 
+        return false_positive_uids
 
 
 class School():
     ''' Represent a single school '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
-                start_day, screen_prob, test_prob, trace_prob, schedule, beta_s, ili_prob, testing, verbose=False, **kwargs):
+                start_day, screen_prob, test_prob, trace_prob, quar_prob, schedule, beta_s, ili_prob, testing, verbose=False, **kwargs):
         '''
         Initialize the School
 
@@ -381,15 +386,14 @@ class School():
         self.screen_prob = screen_prob
         self.test_prob = test_prob
         self.trace_prob = trace_prob
+        self.quar_prob = quar_prob
         self.schedule = schedule
         self.beta_s = beta_s # Not currently used here, but rather in the school_intervention
         self.ili_prob = ili_prob
-        #self.testing = [] if testing is None else sc.dcp(testing)
         self.verbose = verbose
 
         self.is_open = False # Schools start closed
 
-        #self.init_testing() # Initialize testing
 
         self.uids_at_home = {} # Dict from uid to release date
 
@@ -413,16 +417,17 @@ class School():
         if len(inds_to_screen) == 0:
             return []
 
-        dx_or_sx = np.logical_or(
-            self.sim.people.diagnosed[inds_to_screen],
-            self.sim.people.symptomatic[inds_to_screen])
+        symp = self.sim.people.symptomatic[inds_to_screen]
 
         rec_or_dead = np.logical_or(
             self.sim.people.recovered[inds_to_screen],
             self.sim.people.dead[inds_to_screen])
 
-        screen_pos = np.logical_and(dx_or_sx, ~rec_or_dead)
+        screen_pos = np.logical_and(symp, ~rec_or_dead)
         screen_pos_uids = cvu.itrue(screen_pos, np.array(inds_to_screen))
+
+        inf = [z for z in self.uids_arriving_at_school if self.sim.people.infectious[z]]
+        inf_post_screen = [z for z in inf if z not in screen_pos_uids]
 
         # Add in screen positives from ILI amongst those who were screened negative
         if self.ili_prob is not None and self.ili_prob > 0:
@@ -439,8 +444,11 @@ class School():
         ''' Process the day, return the school layer '''
 
         # Even if a school is not yet open, consider testing in the population
-        #self.check_testing()
-        self.testing.update()
+        false_positive_uids = self.testing.update()
+
+        for uid in false_positive_uids:
+            # Assume figure out it was a false positive using PCR within a few days:
+            self.uids_at_home[uid] = self.sim.t + 2 # Can come back in a few days, TODO: make a parameter
 
         # Look for newly diagnosed people
         newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
@@ -464,7 +472,8 @@ class School():
         if len(newly_dx_inds) > 0:
             # Identify school contacts to quarantine
             uids_to_trace = cvu.binomial_filter(self.trace_prob, newly_dx_inds)
-            uids_to_quar = self.ct_mgr.find_contacts(uids_to_trace)
+            uids_reached_by_tracing = self.ct_mgr.find_contacts(uids_to_trace) # Assume all contacts of traced individuals will quarantine
+            uids_to_quar = cvu.binomial_filter(self.quar_prob, uids_reached_by_tracing)
 
             # Quarantine school contacts
             for uid in uids_to_quar:

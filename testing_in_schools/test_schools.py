@@ -26,19 +26,10 @@ if __name__ == '__main__':
         'change_beta': 0.525,
     }
     sim = cs.create_sim(params, pop_size=1e5) # 2.25e4
-
-    remote = {
-        'start_day': '2020-11-01',
-        'schedule': 'Remote',
-        'screen_prob': 0,
-        'test_prob': 0,
-        'trace_prob': 0,
-        'ili_prob': 0,
-        'beta_s': 0 # This turns off transmission in the School class
-    }
+    base_beta_s = sim.pars['beta_layer']['s']
 
     PCR_every_1d_starting_1wprior = [{
-        'start_date': '2020-10-25',
+        'start_date': '2020-10-26',
         'repeat': 1,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
@@ -46,17 +37,51 @@ if __name__ == '__main__':
         'delay': 0 # NOTE: no delay!
         #'specificity': 1,
     }]
-    remote['testing'] = None # PCR_every_1d_starting_1wprior
 
-    s = scenario(es=remote, ms=remote, hs=remote)
+    Antigen_every_1w_starting_1wprior_staff = [{
+        'start_date': '2020-10-26',
+        'repeat': 7,
+        'groups': ['teachers', 'staff'], # No students
+        'coverage': 1,
+        'sensitivity': 0.8, # Lower sensitiviy, 0.8 is a modeling assumption as the true sensitivity is unknown at this time  - TODO: Propoer antigen testing in covasim
+        'specificity': 0.8,
+        'delay': 0,          # No delay
+    }]
+
+    remote = { # <-- used in calibration
+        'start_day': '2020-11-02',
+        'schedule': 'Remote',
+        'screen_prob': 0,
+        'test_prob': 0, # Amongst those screened positive
+        'trace_prob': 0, # Tracing prob from newly diagnosed index cases
+        'quar_prob': 0,
+        'ili_prob': 0,
+        'beta_s': 0, # This turns off transmission in the School class
+        'testing': None,
+    }
+
+    base = {
+        'start_day': '2020-11-02',
+        'schedule': 'Full',
+        'screen_prob': 0.9,
+        'test_prob': 0.5,
+        'trace_prob': 0.75,
+        'quar_prob': 0.75,
+        'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
+        'beta_s': 0.75 * base_beta_s,
+        'testing': Antigen_every_1w_starting_1wprior_staff,
+    }
+
+
+    s = scenario(es=base, ms=base, hs=base)
 
     ns = new_schools(s)
     sim['interventions'] += [ns]
 
     sim.run(keep_people=debug)
 
-    first_school_day = sim.day('2020-11-01')
-    last_school_day = sim.day('2021-02-01')
+    first_school_day = sim.day('2020-11-02')
+    last_school_day = sim.day('2021-01-31')
 
     re = np.mean(sim.results['r_eff'][first_school_day:last_school_day])
     cases_past14 = np.sum(sim.results['new_diagnoses'][(first_school_day-14):first_school_day]) * 100e3 / (sim.pars['pop_size'] * sim.pars['pop_scale'])

@@ -17,7 +17,7 @@ mplt.rcParams['font.family'] = font_style
 
 pop_size = 1e5 # 2.25e4 2.25e5
 
-msim = cv.MultiSim.load(os.path.join('msims', f'testing_v20201012_{int(pop_size)}.msim'))
+msim = cv.MultiSim.load(os.path.join('msims', f'testing_v20201012_v2_{int(pop_size)}.msim'))
 '''
 msim = cv.MultiSim.load(os.path.join('msims', f'testing_not_remote_{int(pop_size)}.msim'))
 print(len(msim.sims))
@@ -46,8 +46,8 @@ scen_names = {
 }
 
 for sim in msim.sims:
-    first_school_day = sim.day('2020-09-01')
-    last_school_day = sim.day('2020-12-01')
+    first_school_day = sim.day('2020-11-02')
+    last_school_day = sim.day('2021-01-31')
     rdf = pd.DataFrame(sim.results)
     ret = {
         'key1': sim.key1,
@@ -68,9 +68,6 @@ for sim in msim.sims:
     attackrate_students = []
     attackrate_teachersstaff = []
 
-    attackrate_students_legacy = []
-    attackrate_teachersstaff_legacy = []
-
     n_schools = {'es':0, 'ms':0, 'hs':0}
     n_schools_with_inf_d1 = {'es':0, 'ms':0, 'hs':0}
     inf_d1 = {'es':0, 'ms':0, 'hs':0} # TEMP
@@ -83,7 +80,7 @@ for sim in msim.sims:
             continue
 
         inf = stats['infectious']
-        inf_at_sch = stats['infectious_at_school']
+        inf_at_sch = stats['infectious_stay_at_school'] # stats['infectious_arrive_at_school']
         in_person = stats['in_person']
         exp = stats['newly_exposed']
         num_school_days = stats['num_school_days']
@@ -115,15 +112,10 @@ for sim in msim.sims:
                 #plt.plot(sim.results['date'], inf[grp], label=grp)
                 plt.plot(sim.results['date'], inf_at_sch[grp], ls='-', label=f'{grp} at sch')
                 plt.plot(sim.results['date'], at_home[grp], ls=':', label=f'{grp} at home')
-                plt.axvline(x=dt.datetime(2020, 9, 1), color = 'r')
+                plt.axvline(x=dt.datetime(2020, 11, 2), color = 'r')
             plt.title(sim.label)
             plt.legend()
             plt.show()
-
-        # Legacy:
-        aswi = stats['at_school_while_infectious']
-        attackrate_students_legacy.append( 100 * aswi['students'] / stats['num']['students'] )
-        attackrate_teachersstaff_legacy.append( 100 * (aswi['teachers']+aswi['staff']) / (stats['num']['teachers'] + stats['num']['staff']) )
 
         if sim.key1 == 'as_normal':
             byschool.append({
@@ -141,9 +133,6 @@ for sim in msim.sims:
 
     ret['attackrate_students'] = np.mean(attackrate_students)
     ret['attackrate_teachersstaff'] = np.mean(attackrate_teachersstaff)
-
-    ret['attackrate_students_legacy'] = np.mean(attackrate_students_legacy)
-    ret['attackrate_teachersstaff_legacy'] = np.mean(attackrate_teachersstaff_legacy)
 
     for gkey in grp_dict.keys():
         ret[f'perc_inperson_days_lost_{gkey}'] = np.mean(perc_inperson_days_lost[gkey])
@@ -165,18 +154,6 @@ g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
 g.set_axis_labels(y_var="3-Month Attack Rate (%)")
 plt.tight_layout()
 cv.savefig(os.path.join('img', '3mAttackRate.png'))
-
-# Attack rate (legacy)
-'''
-d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=['attackrate_students_legacy', 'attackrate_teachersstaff_legacy'], var_name='Group', value_name='Cum Inc (%)')
-g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['attackrate_teachersstaff_legacy', 'attackrate_students_legacy'])
-g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2')
-plt.suptitle('Legacy')
-g.add_legend()
-plt.tight_layout()
-cv.savefig(os.path.join('img', '3mFracInfectiousArrivingAtSchool.png'))
-'''
-
 
 # Frac in-person days lost
 d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
@@ -210,7 +187,7 @@ cv.savefig(os.path.join('img', '3mAverageRe.png'))
 
 # Percent of schools with infections on day 1
 fig = plt.figure(figsize=(16,10))
-extract = df.groupby(['key1', 'key2'])['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'].mean().loc['as_normal'].reset_index()
+extract = df.groupby(['key1', 'key2'])[['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1']].mean().loc['as_normal'].reset_index()
 melt = pd.melt(extract, id_vars=['key2'], value_vars=['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'], var_name='School Type', value_name='Schools with First-Day Infections')
 sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2')
 plt.legend()
@@ -220,7 +197,7 @@ cv.savefig(os.path.join('img', 'SchoolsWithFirstDayInfections.png'))
 # Infections on first day as function on school type and testing - regression
 d = pd.DataFrame(byschool)
 d.replace( {'type': {'es':'Elementary', 'ms':'Middle', 'hs':'High'}}, inplace=True)
-d.replace( {'key2': {'PCR 1w prior':'PCR one week prior', 'PCR every 1d':'PCR one day prior'}}, inplace=True)
+d.replace( {'key2': {'PCR every 1w':'PCR one week prior', 'PCR every 1d':'PCR one day prior'}}, inplace=True)
 g = sns.FacetGrid(data=d, row='key2', height=3, aspect=3.5, margin_titles=False, row_order=['None', 'PCR one week prior', 'PCR one day prior']) # row='type'
 g.map_dataframe( sns.regplot, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'color':'black', 's':5})
 g.set_titles(col_template="{col_name}", row_template="{row_name}")

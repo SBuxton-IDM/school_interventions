@@ -4,9 +4,11 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-n_reps = 25
+seeds = range(5) # range(6,25)
 pop_size = 1e5 # 2.25e4 2.25e5
-batch_size = 24
+batch_size = 25
+
+stem = f'testing_v20201012_v2_{int(pop_size)}'
 
 def scenario(es, ms, hs):
     return {
@@ -27,36 +29,47 @@ def generate_scenarios():
     scns = sc.odict()
 
     remote = {
-        'start_day': '2020-11-01',
+        'start_day': '2020-11-02',
         'schedule': 'Remote',
         'screen_prob': 0,
         'test_prob': 0,
         'trace_prob': 0,
+        'quar_prob': 0,
         'ili_prob': 0,
         'beta_s': 0, # NOTE: No transmission in school layers
         'testing': None,
     }
 
     normal = {
-        'start_day': '2020-11-01',
+        'start_day': '2020-11-02',
         'schedule': 'Full',
         'screen_prob': 0,
-        'test_prob': 0.5,
-        'trace_prob': 0.5,
+        'test_prob': 0, # Amongst those who screen positive
+        'trace_prob': 0, # Fraction of newly diagnosed index cases who are traced
+        'quar_prob': 0, # Of those reached by contact tracing, this fraction will quarantine
         'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
         'beta_s': base_beta_s, # No NPI
         'testing': None,
     }
     scns['as_normal'] = scenario(es=normal, ms=normal, hs=normal)
 
+    full_with_countermeasures = {
+        'start_day': '2020-11-02',
+        'schedule': 'Full',
+        'screen_prob': 0.9,
+        'test_prob': 0.5, # Amongst those who screen positive
+        'trace_prob': 0.75, # Fraction of newly diagnosed index cases who are traced
+        'quar_prob': 0.75, # Of those reached by contact tracing, this fraction will quarantine
+        'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
+        'beta_s': 0.75 * base_beta_s, # 25% reduction due to NPI
+        'testing': None,
+    }
+
     # Add screening and NPI
-    screening = sc.dcp(normal)
-    screening['screen_prob'] = 0.9
-    screening['beta_s'] = 0.75 * base_beta_s # 25% reduction due to NPI
-    scns['with_screening'] = scenario(es=screening, ms=screening, hs=screening)
+    scns['with_screening'] = scenario(es=full_with_countermeasures, ms=full_with_countermeasures, hs=full_with_countermeasures)
 
     # Add hybrid scheduling
-    hybrid = sc.dcp(screening)
+    hybrid = sc.dcp(full_with_countermeasures)
     hybrid['schedule'] = 'Hybrid'
     scns['all_hybrid'] = scenario(es=hybrid, ms=hybrid, hs=hybrid)
 
@@ -68,73 +81,74 @@ def generate_scenarios():
 def generate_testing():
     # Testing interventions to add
     PCR_1w_prior = [{
-        'start_date': '2020-10-25',
+        'start_date': '2020-10-26',
         'repeat': None,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 1
-        #'specificity': 1,
+        'specificity': 1,
+        'delay': 1,
     }]
 
     PCR_every_2w_starting_1wprior = [{
-        'start_date': '2020-10-25',
+        'start_date': '2020-10-26',
         'repeat': 14,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 1
-        #'specificity': 1,
+        'specificity': 1,
+        'delay': 1,
     }]
 
     PCR_every_1w_starting_1wprior = [{
-        'start_date': '2020-10-25',
+        'start_date': '2020-10-26',
         'repeat': 7,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 1
-        #'specificity': 1,
+        'specificity': 1,
+        'delay': 1,
     }]
 
     PCR_every_1m_15cov = [{
-        'start_date': '2020-11-01',
+        'start_date': '2020-11-02',
         'repeat': 30,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 0.15,
         'sensitivity': 1,
-        'delay': 1
-        #'specificity': 1,
+        'specificity': 1,
+        'delay': 1,
     }]
 
     PCR_every_2w_50cov = [{
-        'start_date': '2020-11-01',
+        'start_date': '2020-11-02',
         'repeat': 14,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 0.50,
         'sensitivity': 1,
-        'delay': 1
-        #'specificity': 1,
+        'specificity': 1,
+        'delay': 1,
     }]
 
+    # TODO: Propoer antigen testing in covasim
     Antigen_every_1w_starting_1wprior_staff = [{
-        'start_date': '2020-10-25',
+        'start_date': '2020-10-26',
         'repeat': 7,
         'groups': ['teachers', 'staff'], # No students
         'coverage': 1,
-        'sensitivity': 0.8, # Lower sensitiviy, 0.8 is a modeling assumption as the true sensitivity is unknown at this time  - TODO: Propoer antigen testing in covasim
-        'delay': 0          # No delay
-        #'specificity': 1,
+        'sensitivity': 0.8, # Lower sensitiviy, 80% is a modeling assumption as the true sensitivity is unknown at this time.  Should be high when viral load is high, but unsure how low at lower viral loads.
+        'specificity': 0.9, # 90% specificity is a modeling assumption
+        'delay': 0,          # No delay
     }]
 
     PCR_every_1d_starting_1wprior = [{
-        'start_date': '2020-10-25',
+        'start_date': '2020-10-26',
         'repeat': 1,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'delay': 0 # NOTE: no delay!
-        #'specificity': 1,
+        'specificity': 1,
+        'delay': 0, # NOTE: no delay!
     }]
 
     return {
@@ -149,9 +163,10 @@ def generate_testing():
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    #scenarios = {k:v for k,v in scenarios.items() if k not in ['all_remote']}
+    #scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
 
     testing = generate_testing()
+    #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'PCR every 1d']}
 
     # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
     pars = {
@@ -162,13 +177,13 @@ if __name__ == '__main__':
 
     sims = []
     msims = []
-    tot = len(scenarios) * len(testing) * n_reps
+    tot = len(scenarios) * len(testing) * len(seeds)
     proc = 0
     for skey, scen in scenarios.items():
-        for tkey, test in testing.items():
-            for rep in range(n_reps):
+        for tidx, (tkey, test) in enumerate(testing.items()):
+            for seed in seeds:
                 par = sc.dcp(pars)
-                par['rand_seed'] = rep
+                par['rand_seed'] = seed
                 sim = cs.create_sim(par, pop_size=pop_size)
 
                 sim.label = f'{skey} + {tkey}'
@@ -189,12 +204,17 @@ if __name__ == '__main__':
                 sims.append(sim)
                 proc += 1
 
-                if len(sims) == batch_size or proc == tot:
-                    print(f'Running sims {proc-len(sims)}:{proc} of {tot}')
+                if len(sims) == batch_size or proc == tot or tidx == len(testing)-1:
+                    print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
                     msim = cv.MultiSim(sims)
                     msims.append(msim)
                     msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
                     sims = []
 
+        print(f'Saving after completing {skey}')
+        sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == skey]
+        msim = cv.MultiSim(sims_this_scenario)
+        cv.save(os.path.join('msims', f'{stem}_{skey}.msim'), msim)
+
     msim = cv.MultiSim.merge(msims)
-    cv.save(os.path.join('msims', f'testing_v20201012_v2_{int(pop_size)}.msim'), msim)
+    cv.save(os.path.join('msims', f'{stem}.msim'), msim)

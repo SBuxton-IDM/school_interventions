@@ -58,7 +58,7 @@ def create_sim(params, pop_size=2.25e5):
         'rescale_factor': 1.1,
         'verbose': 0, #0.1,
         'start_day': '2020-09-01',
-        'end_day': '2021-02-01',
+        'end_day': '2021-01-31',
         'rand_seed': p.rand_seed,
     }
 
