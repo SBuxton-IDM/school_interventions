@@ -4,7 +4,7 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-par_inds = (5,10)
+par_inds = (0,5)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 

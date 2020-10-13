@@ -10,12 +10,12 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 do_run = True
 
-par_inds = (5,10) # First and last parameters to run
+par_inds = (0,20) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
 folder = 'v20201013_225k_v2'
-stem = f'transtree_{par_inds[0]}-{par_inds[1]}_betaS=1.2_hybrid2w'
+stem = f'transtree_{par_inds[0]}-{par_inds[1]}_betaS=1.5'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 scenarios = generate_scenarios()

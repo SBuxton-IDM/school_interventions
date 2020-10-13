@@ -19,17 +19,17 @@ pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201013_225k_v2'
 imgdir = os.path.join(folder, 'img')
-msim = cv.MultiSim.load(os.path.join(folder, 'msims', 'combined.msim'))
+msim = cv.MultiSim.load(os.path.join(folder, 'msims', 'combined2.msim'))
 #msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))
 
 '''
 msim = cv.MultiSim.merge([
-    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_0-5.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_5-13.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_13-20.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars2_0-5.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars2_5-13.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars2_13-20.msim')),
     #cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_15-25.msim')),
 ])
-msim.save(os.path.join(folder, 'msims', 'combined.msim'))
+msim.save(os.path.join(folder, 'msims', 'combined2.msim'))
 '''
 
 '''
@@ -204,7 +204,7 @@ cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'))
 # Re
 fig, ax = plt.subplots(figsize=(16,10))
 sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=hue_order)
-ax.set_ylim([0.8, 1.3])
+ax.set_ylim([0.8, 1.45])
 ax.set_ylabel(r'Average $R_e$')
 ax.set_xlabel('')
 xtl = ax.get_xticklabels()
@@ -230,8 +230,8 @@ print(d)
 
 
 d.replace( {'type': {'es':'Elementary', 'ms':'Middle', 'hs':'High'}}, inplace=True)
-#d.replace( {'key2': {'PCR every 1w':'PCR one week prior', 'PCR every 1d':'PCR one day prior'}}, inplace=True)
-g = sns.FacetGrid(data=d, row='key2', height=3, aspect=3.5, margin_titles=False, row_order=[test_names[x] for x in ['None', 'PCR one week prior', 'PCR one day prior']]) # row='type'
+d.replace( {'key2': {'PCR one week prior, 1d delay':'PCR one week prior', 'Daily PCR, no delay':'PCR one day prior'}}, inplace=True)
+g = sns.FacetGrid(data=d, row='key2', height=3, aspect=3.5, margin_titles=False, row_order=['None', 'PCR one week prior', 'PCR one day prior']) # row='type'
 g.map_dataframe( sns.regplot, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'color':'black', 's':5})
 g.set_titles(col_template="{col_name}", row_template="{row_name}")
 g.set_axis_labels(x_var='School size (students)', y_var='Infection on First Day (%)')
