@@ -26,10 +26,11 @@ weight = {
 }
 
 label     = '_'.join([f'{k}={v}' for k,v in to_fit.items()])
+label    += '_v2'
 name      = os.path.join('opt', f'pars_{label}_pop_size={int(pop_size)}')
 storage   = f'sqlite:///{name}.db'
 n_workers = 24
-n_trials  = 10 # Each worker does n_trials
+n_trials  = 5 # Each worker does n_trials
 save_json = True
 
 def scenario(es, ms, hs):
