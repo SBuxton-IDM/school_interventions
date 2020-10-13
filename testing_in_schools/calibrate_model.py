@@ -8,12 +8,21 @@ from school_intervention import new_schools
 
 pop_size = 2.25e5
 to_fit = {
-    'cases_begin': 75, # per 100k over 2-weeks
-    'cases_end': 75, # per 100k over 2-weeks
-    're': 1.0,
-    'prevalence': 0.002,
-    'yield': 0.024, # 2.4% positive
-    'tests': 225,   # per 100k (per day) - 225 is 5000 tests in 2.23M pop per day
+    'cases_begin':  75, # per 100k over 2-weeks
+    'cases_end':    75, # per 100k over 2-weeks
+    're':           1.0,
+    'prevalence':   0.002,
+    'yield':        0.024, # 2.4% positive
+    'tests':        225,   # per 100k (per day) - 225 is 5000 tests in 2.23M pop per day
+}
+
+weight = {
+    'cases_begin':  1, # per 100k over 2-weeks
+    'cases_end':    1, # per 100k over 2-weeks
+    're':           1,
+    'prevalence':   5,
+    'yield':        1, # 2.4% positive
+    'tests':        1,   # per 100k (per day) - 225 is 5000 tests in 2.23M pop per day
 }
 
 label     = '_'.join([f'{k}={v}' for k,v in to_fit.items()])
@@ -73,11 +82,13 @@ def objective(trial, kind='default'):
     #cases_during = np.mean(sim.results['new_diagnoses'][first:last]) * 14 * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
 
     mismatch = 0
+    wsum = 0
     for key,true in to_fit.items():
         realized = ret[key]
-        mismatch += np.abs(realized-true)/true
+        mismatch += weight[key] * np.abs(realized-true)/true
+        wsum += weight[key]
 
-    return mismatch / len(to_fit) # Mean absolute error (scaled to true value)
+    return mismatch / wsum # Weighted mean absolute error (scaled to true value)
 
 
 def worker():
