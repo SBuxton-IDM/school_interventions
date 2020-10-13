@@ -10,19 +10,19 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 do_run = True
 
-par_inds = (0,2) # First and last parameters to run
+par_inds = (5,10) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
-folder = 'v20201013_225k'
-stem = f'transtree_{par_inds[0]}-{par_inds[1]}_betaS=1.2'
+folder = 'v20201013_225k_v2'
+stem = f'transtree_{par_inds[0]}-{par_inds[1]}_betaS=1.2_hybrid2w'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 scenarios = generate_scenarios()
-scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal']}
+scenarios = {k:v for k,v in scenarios.items() if k in ['as_normal']} # as_normal, all_hybrid
 
 testing = generate_testing()
-testing = {k:v for k,v in testing.items() if k in ['None']}
+testing = {k:v for k,v in testing.items() if k in ['None']} # None, PCR every 2w
 
 par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
 
@@ -40,7 +40,7 @@ if do_run:
 
                 for st, cfg in scen.items():
                     if cfg is not None:
-                        cfg['beta_s'] = 1.2 # Increase beta (multiplier) in schools from default of 0.6
+                        cfg['beta_s'] = 1.5 # Increase beta (multiplier) in schools from default of 0.6
 
                 sim.label = f'{skey} + {tkey}'
                 sim.key1 = skey
