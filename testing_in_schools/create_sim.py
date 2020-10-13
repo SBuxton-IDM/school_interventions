@@ -10,9 +10,9 @@ def define_pars(which='best', kind='default', ):
     pardata = {}
     if kind in ['default', 'both']:
         pardata.update(dict(
-            pop_infected = [250, 70, 700],
-            clip_edges=[0.5, 0, 1],
-            change_beta=[0.5, 0, 1],
+            pop_infected = [200, 100, 300],
+            change_beta=[0.5, 0.35, 0.65],
+            symp_prob=[0.1, 0.05, 0.2],
         ))
 
     output = {}
@@ -30,7 +30,7 @@ def create_sim(params, pop_size=2.25e5):
 
     p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
     if 'rand_seed' not in p:
-        seed = 1
+        seed = 1 #np.random.randint(1e6)
         print(f'Note, could not find random seed in {params}! Setting to {seed}')
         p['rand_seed'] = seed  # Ensure this exists
 
@@ -48,11 +48,11 @@ def create_sim(params, pop_size=2.25e5):
 
     # V2
     tp = sc.objdict(
-        symp_prob=0.10,
-        asymp_prob=0.0022,
-        symp_quar_prob=0.10,
-        asymp_quar_prob=0.001,
-        test_delay=2.0,
+        symp_prob = p.symp_prob, # 0.10
+        asymp_prob = 0.0022,
+        symp_quar_prob = p.symp_prob, # 0.10
+        asymp_quar_prob = 0.001,
+        test_delay = 2.0,
     )
 
     ct = sc.objdict(
@@ -82,7 +82,7 @@ def create_sim(params, pop_size=2.25e5):
         cv.contact_tracing(start_day='2020-09-01', **ct),
         #cv.change_beta(days='2020-08-01', changes=0.75, layers=['w', 'c'], label='NPI_work_community'),
         cv.change_beta(days='2020-09-01', changes=p.change_beta, layers=['w', 'c'], label='NPI_work_community'),
-        cv.clip_edges(days='2020-09-01', changes=p.clip_edges, layers=['w', 'c'], label='close_work_community'),
+        cv.clip_edges(days='2020-09-01', changes=0.65, layers=['w', 'c'], label='close_work_community'),
 
         # N.B. Schools are not closed in create_sim, must be handled outside this function
     ]

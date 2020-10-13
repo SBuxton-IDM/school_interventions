@@ -13,7 +13,7 @@ def cache_populations(seed=0, popfile=None):
 
     pars = sc.objdict(
         # pop_size = 2.25e6,
-        pop_size = 1e5, #2.25e5,
+        pop_size = 2.25e5, #2.25e5,
         pop_type = 'synthpops',
         rand_seed = seed,
     )
@@ -92,8 +92,8 @@ def cache_populations(seed=0, popfile=None):
 if __name__ == '__main__':
 
     seeds = [0,1,2,3,4]
-    parallelize = True
-    # parallelize = False
+    #parallelize = True
+    parallelize = False
 
     if parallelize:
         ram = psutil.virtual_memory().available/1e9

@@ -7,12 +7,12 @@ import create_sim as cs
 from school_intervention import new_schools
 
 do_run = True
-msim_fn = os.path.join('msims', 'remote_reps.msim')
-msim_nopeople_fn = os.path.join('msims', 'remote_no_people_reps.msim')
-n_runs = 25
+msim_fn = os.path.join('msims', 'multitest.msim') # remote_reps
+msim_nopeople_fn = os.path.join('msims', 'multitest_nopeople.msim') # remote_no_people_reps
+n_runs = 16
 re_to_fit = 1.0
 cases_to_fit = 75
-pop_size = 1e5
+pop_size = 2.25e5 #1e5
 
 
 def scenario(es, ms, hs):
@@ -28,15 +28,23 @@ def scenario(es, ms, hs):
 if __name__ == '__main__':
 
     params_all = {}
+
     # 75
     params_all[75] = {
+        'change_beta': 0.5835480898452896,
+        'pop_infected': 216.5246337339597,
+        'symp_prob': 0.14187399483257482
+    }
+
+    # 75 - v2 (100k pop)
+    params_all['75_v2'] = {
         'pop_infected': 90,
         'clip_edges': 0.65,
         'change_beta': 0.62,
     }
 
-    # 75 - v1
-    params_all['75_good'] = {
+    # 75 - v1 (100k pop)
+    params_all['75_v1'] = {
         'pop_infected': 160,
         'clip_edges': 0.65,
         'change_beta': 0.525,
@@ -92,7 +100,7 @@ if __name__ == '__main__':
 
         ###### TEMP ms = cv.MultiSim(sims, noise=0, keep_people=True)
         ms = cv.MultiSim(sims, noise=0, keep_people=False)
-        ms.run()
+        ms.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
         ###### #ms.save(msim_fn, keep_people=True)
         ms.save(msim_nopeople_fn, keep_people=False)
     else:
@@ -120,11 +128,9 @@ if __name__ == '__main__':
     #ms.save(msim_nopeople_fn, keep_people=False)
     #ms.plot(to_plot='overview')
 
-    #plt.savefig('sim.png')
-
     #plt.figure()
     to_plot = sc.odict({
-            'New Infections per 100k': [
+            'New Infections': [
                 'new_infections',
             ],
             'New Diagnoses per 100k': [
@@ -136,11 +142,30 @@ if __name__ == '__main__':
             'Effective Reproduction Number': [
                 'r_eff',
             ],
-            'New Tests per 100k': [
+            'New Tests': [
                 'new_tests',
             ],
             'Prevalence': [
                 'prevalence',
             ],
         })
-    ms.plot(to_plot=to_plot, n_cols=2)
+    fig = plt.figure(figsize=(16,10))
+    ms.plot(to_plot=to_plot, n_cols=2, interval=30, legend_args={'show_legend':False}, do_show=False, fig=fig) # , dateformat='%B'
+
+    s0 = ms.sims[0]
+    for i, ax in enumerate(fig.axes):
+        if i < len(fig.axes)-2:
+            ax.xaxis.set_visible(False)
+        ax.axvline(x=s0.day('2020-11-01'), color='c', ls='--')
+
+    # Agh, x-axis is not a datetime!
+    #import matplotlib.dates as mdates
+    #months = mdates.MonthLocator(interval=1)  # every month
+    #fig.axes[-1].xaxis.set_major_locator(months)
+
+    #from matplotlib.dates import DateFormatter
+    #date_form = DateFormatter('%B')#"%m-%d")
+    #fig.axes[-1].xaxis.set_major_formatter(date_form)
+
+    fig.tight_layout()
+    cv.savefig(os.path.join('img', f'calibration_{int(pop_size)}.png'))

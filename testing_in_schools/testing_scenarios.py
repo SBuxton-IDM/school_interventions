@@ -4,11 +4,11 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-seeds = range(5) # range(6,25)
+seeds = range(25,40) # range(6,25)
 pop_size = 1e5 # 2.25e4 2.25e5
-batch_size = 25
+batch_size = 50
 
-stem = f'testing_v20201013_v1_{int(pop_size)}'
+stem = f'testing_v20201013_v1e_{int(pop_size)}'
 
 def scenario(es, ms, hs):
     return {
@@ -120,7 +120,7 @@ def generate_testing():
         'delay': 1,
     }]
 
-    PCR_every_2w_50cov = [{
+    PCR_every_2w_50cov = [{ # TODO
         'start_date': '2020-11-02',
         'repeat': 14,
         'groups': ['students', 'teachers', 'staff'],
@@ -210,14 +210,14 @@ if __name__ == '__main__':
                 sims.append(sim)
                 proc += 1
 
-                if len(sims) == batch_size or proc == tot or tidx == len(testing)-1:
+                if len(sims) == batch_size or proc == tot or (tidx == len(testing)-1 and seed == seeds[-1]):
                     print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
                     msim = cv.MultiSim(sims)
                     msims.append(msim)
                     msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
                     sims = []
 
-        print(f'Saving after completing {skey}')
+        print(f'*** Saving after completing {skey}')
         sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == skey]
         msim = cv.MultiSim(sims_this_scenario)
         cv.save(os.path.join('msims', f'{stem}_{skey}.msim'), msim)

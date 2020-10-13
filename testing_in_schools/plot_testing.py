@@ -17,7 +17,21 @@ mplt.rcParams['font.family'] = font_style
 
 pop_size = 1e5 # 2.25e4 2.25e5
 
-msim = cv.MultiSim.load(os.path.join('msims', f'testing_v20201012_v2_{int(pop_size)}.msim'))
+imgdir = 'img_v20201013_v1_filterseeds'
+#msim = cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1_{int(pop_size)}.msim'))
+msim = cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))
+
+'''
+msim = cv.MultiSim.merge([
+    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1a_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1b_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1c_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1d_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join('msims', f'testing_v20201013_v1e_{int(pop_size)}.msim')),
+])
+msim.save(os.path.join('msims', f'testing_v20201013_v1_{int(pop_size)}.msim'))
+'''
+
 '''
 msim = cv.MultiSim.load(os.path.join('msims', f'testing_not_remote_{int(pop_size)}.msim'))
 print(len(msim.sims))
@@ -80,7 +94,7 @@ for sim in msim.sims:
             continue
 
         inf = stats['infectious']
-        inf_at_sch = stats['infectious_stay_at_school'] # stats['infectious_arrive_at_school']
+        inf_at_sch = stats['infectious_stay_at_school'] # stats['infectious_arrive_at_school'] stats['infectious_stay_at_school']
         in_person = stats['in_person']
         exp = stats['newly_exposed']
         num_school_days = stats['num_school_days']
@@ -117,10 +131,11 @@ for sim in msim.sims:
             plt.legend()
             plt.show()
 
-        if sim.key1 == 'as_normal':
+        d1scenario = 'all_remote'
+        if sim.key1 == d1scenario:
             byschool.append({
                 'type': stats['type'],
-                'key1': sim.key1, # Filtered to 'as_normal'
+                'key1': sim.key1, # Filtered to just one scenario (key1)
                 'key2': sim.key2,
                 'n_students': stats['num']['students'], #sum([stats['num'][g] for g in groups]),
                 'd1 infectious': sum([inf_at_sch[g][first_school_day] for g in groups]),
@@ -153,7 +168,7 @@ xtl = [l.get_text() for l in xtl]
 g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
 g.set_axis_labels(y_var="3-Month Attack Rate (%)")
 plt.tight_layout()
-cv.savefig(os.path.join('img', '3mAttackRate.png'))
+cv.savefig(os.path.join(imgdir, '3mAttackRate.png'))
 
 # Frac in-person days lost
 d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
@@ -168,13 +183,13 @@ xtl = [l.get_text() for l in xtl]
 g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
 g.set_axis_labels(y_var="Days lost (%)")
 plt.tight_layout()
-cv.savefig(os.path.join('img', '3mInPersonDaysLost.png'))
+cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'))
 
 
 # Re
 fig, ax = plt.subplots(figsize=(16,10))
 sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=['None', 'PCR 1w prior', 'PCR every 1m 15%', 'Antigen every 1w teach&staff', 'PCR every 2w', 'PCR every 1w', 'PCR every 1d'])
-ax.set_ylim([0.9, 1.2])
+ax.set_ylim([0.8, 1.2])
 ax.set_ylabel(r'Average $R_e$')
 ax.set_xlabel('')
 xtl = ax.get_xticklabels()
@@ -183,16 +198,16 @@ ax.set_xticklabels([scen_names[k] if k in scen_names else k for k in xtl])
 ax.axhline(y=1, color='k', ls=':', lw=2)
 plt.legend().set_title('')
 plt.tight_layout()
-cv.savefig(os.path.join('img', '3mAverageRe.png'))
+cv.savefig(os.path.join(imgdir, '3mAverageRe.png'))
 
 # Percent of schools with infections on day 1
 fig = plt.figure(figsize=(16,10))
-extract = df.groupby(['key1', 'key2'])[['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1']].mean().loc['as_normal'].reset_index()
+extract = df.groupby(['key1', 'key2'])[['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1']].mean().loc[d1scenario].reset_index()
 melt = pd.melt(extract, id_vars=['key2'], value_vars=['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'], var_name='School Type', value_name='Schools with First-Day Infections')
 sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2')
 plt.legend()
 plt.tight_layout()
-cv.savefig(os.path.join('img', 'SchoolsWithFirstDayInfections.png'))
+cv.savefig(os.path.join(imgdir, 'SchoolsWithFirstDayInfections.png'))
 
 # Infections on first day as function on school type and testing - regression
 d = pd.DataFrame(byschool)
@@ -206,9 +221,10 @@ for ax in g.axes.flat:
     yt = [0.0, 0.25, 0.50, 0.75, 1.0]
     ax.set_yticks(yt)
     ax.set_yticklabels([int(100*t) for t in yt])
+    ax.grid(True)
 g.add_legend()
 plt.tight_layout()
-cv.savefig(os.path.join('img', 'FirstDayInfectionsReg.png'), dpi=300)
+cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg.png'), dpi=300)
 
 
 mu = df.groupby(['key1', 'key2']).mean()
