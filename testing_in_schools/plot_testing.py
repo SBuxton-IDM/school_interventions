@@ -19,7 +19,7 @@ pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201013_225k'
 imgdir = os.path.join(folder, 'img')
-msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'pars_0-3.msim'))
+msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'pars_0-5.msim'))
 #msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))
 
 '''
@@ -52,6 +52,7 @@ debug_plot = False
 results = []
 byschool = []
 groups = ['students', 'teachers', 'staff']
+hue_order = ['None', 'PCR 1w prior', 'Antigen every 1w teach&staff', 'PCR every 2w', 'PCR every 1w', 'PCR every 1d'] # , 'PCR every 1m 15%'
 
 scen_names = {
     'as_normal': 'As Normal',
@@ -163,7 +164,7 @@ df = pd.DataFrame(results)
 d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=['attackrate_students', 'attackrate_teachersstaff'], var_name='Group', value_name='Cum Inc (%)')
 d.replace( {'Group': {'attackrate_students': 'Students', 'attackrate_teachersstaff': 'Teachers & Staff'}}, inplace=True)
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=['None', 'PCR 1w prior', 'PCR every 1m 15%', 'Antigen every 1w teach&staff', 'PCR every 2w', 'PCR every 1w', 'PCR every 1d'])
+g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=hue_order)
 g.add_legend()
 g.set_titles(row_template="{row_name}")
 xtl = g.axes[1,0].get_xticklabels()
@@ -178,7 +179,7 @@ d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_
 print(d)
 d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=['None', 'PCR 1w prior', 'PCR every 1m 15%', 'Antigen every 1w teach&staff', 'PCR every 2w', 'PCR every 1w', 'PCR every 1d'], palette='Reds')
+g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=hue_order, palette='Reds')
 g.add_legend()
 g.set_titles(row_template="{row_name}", fontsize=24)
 xtl = g.axes[1,0].get_xticklabels()
@@ -191,7 +192,7 @@ cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'))
 
 # Re
 fig, ax = plt.subplots(figsize=(16,10))
-sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=['None', 'PCR 1w prior', 'PCR every 1m 15%', 'Antigen every 1w teach&staff', 'PCR every 2w', 'PCR every 1w', 'PCR every 1d'])
+sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=hue_order)
 ax.set_ylim([0.8, 1.2])
 ax.set_ylabel(r'Average $R_e$')
 ax.set_xlabel('')
