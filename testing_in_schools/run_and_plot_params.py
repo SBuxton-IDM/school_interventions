@@ -6,15 +6,15 @@ import matplotlib.pyplot as plt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 
-do_run = False
+do_run = True
 
-par_inds = (0,5) # First and last parameters to run
+par_inds = (0,25) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 16
+batch_size = 25
 
-folder = 'v20201013_225k'
+folder = 'v20201013_225k_v2'
 stem = f'calib_remote_notest_{par_inds[0]}-{par_inds[1]}'
-calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
+calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_v2_pop_size=225000.json')
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
@@ -67,7 +67,7 @@ if __name__ == '__main__':
             msim = cv.MultiSim(sims_this_scenario)
 
         msim = cv.MultiSim.merge(msims)
-        msim.save(os.path.join(folder, 'msims', f'{stem}.msim'), keep_people=kp)
+        msim.save(os.path.join(folder, 'msims', f'{stem}.msim'), keep_people=False)
     else:
         msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'{stem}.msim'))
 
