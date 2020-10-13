@@ -9,7 +9,7 @@ from school_intervention import new_schools
 do_run = True
 msim_fn = os.path.join('msims', 'remote_reps.msim')
 msim_nopeople_fn = os.path.join('msims', 'remote_no_people_reps.msim')
-n_runs = 16
+n_runs = 25
 re_to_fit = 1.0
 cases_to_fit = 75
 pop_size = 1e5
@@ -30,9 +30,9 @@ if __name__ == '__main__':
     params_all = {}
     # 75
     params_all[75] = {
-        'pop_infected': 100,
+        'pop_infected': 90,
         'clip_edges': 0.65,
-        'change_beta': 0.525,
+        'change_beta': 0.62,
     }
 
     # 75 - v1
@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
     ms.reduce()
     #ms.save(msim_nopeople_fn, keep_people=False)
-    ms.plot(to_plot='overview')
+    #ms.plot(to_plot='overview')
 
     #plt.savefig('sim.png')
 
@@ -136,8 +136,8 @@ if __name__ == '__main__':
             'Effective Reproduction Number': [
                 'r_eff',
             ],
-            'Infectious per 100k': [
-                'n_infectious',
+            'New Tests per 100k': [
+                'new_tests',
             ],
             'Prevalence': [
                 'prevalence',

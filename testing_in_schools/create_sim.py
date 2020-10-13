@@ -36,6 +36,7 @@ def create_sim(params, pop_size=2.25e5):
 
     popfile_stem = f'inputs/kc_synthpops_clustered_{int(pop_size)}_withstaff_seed'
 
+    ''' #V1:
     tp = sc.objdict(
         symp_prob=0.03,
         asymp_prob=0.0022,
@@ -43,10 +44,20 @@ def create_sim(params, pop_size=2.25e5):
         asymp_quar_prob=0.001,
         test_delay=5.0,
     )
+    '''
+
+    # V2
+    tp = sc.objdict(
+        symp_prob=0.10,
+        asymp_prob=0.0022,
+        symp_quar_prob=0.10,
+        asymp_quar_prob=0.001,
+        test_delay=2.0,
+    )
 
     ct = sc.objdict(
-        trace_probs={'w': 0.1, 'c': 0, 'h': 0.8, 's': 0.8},
-        trace_time=5.0,
+        trace_probs = {'w': 0.1, 'c': 0, 'h': 0.9, 's': 0.8}, # N.B. 's' will be ignored if using the Schools class
+        trace_time  = {'w': 2,   'c': 0, 'h': 1,   's': 2},
     )
 
     pars = {

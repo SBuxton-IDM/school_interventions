@@ -8,7 +8,7 @@ seeds = range(5) # range(6,25)
 pop_size = 1e5 # 2.25e4 2.25e5
 batch_size = 25
 
-stem = f'testing_v20201012_v2_{int(pop_size)}'
+stem = f'testing_v20201013_v1_{int(pop_size)}'
 
 def scenario(es, ms, hs):
     return {
@@ -169,10 +169,16 @@ if __name__ == '__main__':
     #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'PCR every 1d']}
 
     # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
-    pars = {
+    pars_v1 = {
         'pop_infected': 160,
         'clip_edges': 0.65,
         'change_beta': 0.525,
+    }
+
+    pars = { # Updated v2 pars achieve lower prevalence (0.2% as opposed to closer to 0.5% with v1)
+        'pop_infected': 90,
+        'clip_edges': 0.65,
+        'change_beta': 0.62,
     }
 
     sims = []
