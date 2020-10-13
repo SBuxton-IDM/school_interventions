@@ -3,6 +3,7 @@
 import covasim as cv
 import sciris as sc
 import pandas as pd
+import os
 
 def define_pars(which='best', kind='default', ):
     ''' Define the parameter best guesses and bounds '''
@@ -24,7 +25,7 @@ def define_pars(which='best', kind='default', ):
 
     return output
 
-def create_sim(params, pop_size=2.25e5):
+def create_sim(params, pop_size=2.25e5, folder=None):
 
     pop_scale = 1# 2.25e6 / pop_size
 
@@ -34,7 +35,9 @@ def create_sim(params, pop_size=2.25e5):
         print(f'Note, could not find random seed in {params}! Setting to {seed}')
         p['rand_seed'] = seed  # Ensure this exists
 
-    popfile_stem = f'inputs/kc_synthpops_clustered_{int(pop_size)}_withstaff_seed'
+    popfile_stem = os.path.join('inputs', f'kc_synthpops_clustered_{int(pop_size)}_withstaff_seed')
+    if folder is not None:
+        popfile_stem = os.path.join(folder, popfile_stem) # Prepend user folder
 
     ''' #V1:
     tp = sc.objdict(

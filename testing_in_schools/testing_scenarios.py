@@ -4,7 +4,7 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-par_inds = (0,5)
+par_inds = (0,10)
 pop_size = 1e5 # 2.25e4 2.25e5
 batch_size = 16
 
@@ -25,7 +25,7 @@ def generate_scenarios():
     ''' Generate scenarios (dictionaries of parameters) for the school intervention '''
 
     # Create a single sim to get parameters (make_pars is close, but not quite)
-    sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size)
+    sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size, folder=folder)
     base_beta_s = sim.pars['beta_layer']['s']
 
     scns = sc.odict()
@@ -195,7 +195,7 @@ if __name__ == '__main__':
             for eidx, entry in enumerate(par_list):
                 par = sc.dcp(entry['pars'])
                 par['rand_seed'] = int(entry['index'])
-                sim = cs.create_sim(par, pop_size=pop_size)
+                sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
 
                 sim.label = f'{skey} + {tkey}'
                 sim.key1 = skey
