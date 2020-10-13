@@ -19,8 +19,8 @@ to_fit = {
 label     = '_'.join([f'{k}={v}' for k,v in to_fit.items()])
 name      = os.path.join('opt', f'pars_{label}_pop_size={int(pop_size)}')
 storage   = f'sqlite:///{name}.db'
-n_workers = 4
-n_trials  = 5 # Each worker does n_trials
+n_workers = 24
+n_trials  = 10 # Each worker does n_trials
 save_json = True
 
 def scenario(es, ms, hs):
@@ -109,7 +109,7 @@ def make_study(restart=True):
 
 if __name__ == '__main__':
     t0 = sc.tic()
-    make_study()
+    make_study(restart=False)
     run_workers()
     study = op.load_study(storage=storage, study_name=name)
     best_pars = study.best_params
