@@ -395,7 +395,6 @@ class School():
 
         self.is_open = False # Schools start closed
 
-
         self.uids_at_home = {} # Dict from uid to release date
 
         if self.schedule.lower() == 'hybrid':
@@ -453,17 +452,29 @@ class School():
 
         # Look for newly diagnosed people
         newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
+        if self.verbose and len(newly_dx_inds)>0: print(self.sim.t, f'School {self.sid} has {len(newly_dx_inds)} newly diagnosed: {newly_dx_inds}', [self.sim.people.date_exposed[u] for u in newly_dx_inds], 'recovering', [self.sim.people.date_recovered[u] for u in newly_dx_inds])
 
         # Isolate newly diagnosed individuals - could happen before school starts
         for uid in newly_dx_inds:
             self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
+
+        # If any individuals are done with quarantine, return them to school
+        self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date >= self.sim.t} # >= or =?
+
         # Check if school is open
         if not self.is_open:
             if self.sim.t == self.sim.day(self.start_day):
-                if self.verbose: print(f'School {self.sid} is opening today')
+                if self.verbose:
+                    print(self.sim.t, self.sid, f'School {self.sid} is opening today with {len(self.uids_at_home)} at home: {self.uids_at_home}')
+
+                    infectious_uids = cvu.itrue(self.sim.people.infectious[self.uids], np.array(self.uids))
+                    print(self.sim.t, self.sid, 'Infectious:', len(cvu.true(self.sim.people.infectious[self.uids])) * self.sim.rescale_vec[self.sim.t], len(infectious_uids) )
+                    print(self.sim.t, self.sid, 'Iuids:', infectious_uids)
+                    print(self.sim.t, self.sid, 'Itime:', [self.sim.people.date_exposed[u] for u in infectious_uids])
                 self.is_open = True
             else:
+                # CLOSED SCHOOLS DO NOT PASS THIS POINT!
                 return cvb.Layer() # Might be faster to cache
 
         date = self.sim.date(self.sim.t)
@@ -479,9 +490,6 @@ class School():
             # Quarantine school contacts
             for uid in uids_to_quar:
                 self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
-
-        # If any individuals are done with quarantine, return them to school
-        self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date >= self.sim.t} # >= or =?
 
         '''
         if not self.ct_mgr.school_day:

@@ -8,13 +8,13 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 do_run = False
 
-par_inds = (0,5) # First and last parameters to run
+par_inds = (0,25) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
 folder = 'v20201013_225k_v2'
 stem = f'calib_remote_notest_{par_inds[0]}-{par_inds[1]}'
-calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
+calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_v2_pop_size=225000.json')
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
@@ -49,6 +49,7 @@ if __name__ == '__main__':
                     for stype, spec in this_scen.items():
                         if spec is not None:
                             spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
+                            spec['beta_s'] = 1.0 # Shouldn't matter considering schools are closed in the 'all_remote' scenario
 
                     ns = new_schools(this_scen)
                     sim['interventions'] += [ns]
@@ -81,10 +82,10 @@ if __name__ == '__main__':
 
     #plt.figure()
     to_plot = sc.odict({
-            'New Infections': [
+            'New Infections per 225k': [
                 'new_infections',
             ],
-            'New Diagnoses per 100k': [
+            'New Diagnoses per 225k': [
                 'new_diagnoses',
             ],
             'Test Yield': [
@@ -93,7 +94,7 @@ if __name__ == '__main__':
             'Effective Reproduction Number': [
                 'r_eff',
             ],
-            'New Tests': [
+            'New Tests per 225k': [
                 'new_tests',
             ],
             'Prevalence': [
@@ -104,10 +105,27 @@ if __name__ == '__main__':
     ms.plot(to_plot=to_plot, n_cols=2, interval=30, legend_args={'show_legend':False}, do_show=False, fig=fig) # , dateformat='%B'
 
     s0 = ms.sims[0]
-    for i, ax in enumerate(fig.axes):
-        if i < len(fig.axes)-2:
+    for axi, ax in enumerate(fig.axes):
+        if axi < len(fig.axes)-2:
             ax.xaxis.set_visible(False)
         ax.axvline(x=s0.day('2020-11-01'), color='c', ls='--')
+
+
+    ''' WIP
+    scale = 1e5 / s0.pars['pop_size'] * s0.pars['pop_scale']
+    scale_ax = [0,1,4]
+    for axi, ax in enumerate(fig.axes):
+        #if axi not in scale_ax: # Surely a better way to do this!
+        #    continue
+        ytl = list(ax.get_yticklabels()) #[yt for yt in ax.get_yticklabels()]
+        if axi==0:
+            ax.set_yticklabels(['1', '2', '3'])
+
+        if axi==2:
+            ax.set_yticklabels(['4', '5', '6'])
+        print(ytl)
+    '''
+
 
     # Agh, x-axis is not a datetime!
     #import matplotlib.dates as mdates
