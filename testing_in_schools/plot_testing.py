@@ -17,7 +17,7 @@ mplt.rcParams['font.family'] = font_style
 
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
-folder = 'v20201013_225k'
+folder = 'v20201013_225k_v2'
 imgdir = os.path.join(folder, 'img')
 #msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'pars_0-5.msim'))
 #msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))

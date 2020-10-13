@@ -8,9 +8,9 @@ par_inds = (0,5)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
-folder = 'v20201013_225k'
+folder = 'v20201013_225k_v2'
 stem = f'pars_{par_inds[0]}-{par_inds[1]}'
-calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
+calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_v2_pop_size=225000.json')
 
 def scenario(es, ms, hs):
     return {
@@ -195,6 +195,7 @@ if __name__ == '__main__':
             for eidx, entry in enumerate(par_list):
                 par = sc.dcp(entry['pars'])
                 par['rand_seed'] = int(entry['index'])
+
                 sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
 
                 sim.label = f'{skey} + {tkey}'
@@ -209,6 +210,7 @@ if __name__ == '__main__':
                 for stype, spec in this_scen.items():
                     if spec is not None:
                         spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
+                        spec['beta_s'] = 1.0 # Increase beta (multiplier) in schools from default of 0.6 to 1.0 (makes normal school R0>1, as to be expected based on global data (Israel), but with Hybrid + 2w PCR testing, R0>1, again as expected from global exemplars.
 
                 ns = new_schools(this_scen)
                 sim['interventions'] += [ns]
