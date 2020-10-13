@@ -26,6 +26,7 @@ msim = cv.MultiSim.merge([
     cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_0-5.msim')),
     cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_5-10.msim')),
     cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_10-15.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_15-25.msim')),
 ])
 msim.save(os.path.join(folder, 'msims', 'combined.msim'))
 

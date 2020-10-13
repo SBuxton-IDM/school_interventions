@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 
-do_run = False
+do_run = True
 
-par_inds = (1,2) # First and last parameters to run
+par_inds = (0,2) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
 folder = 'v20201013_225k'
-stem = f'transtree_{par_inds[0]}-{par_inds[1]}'
+stem = f'transtree_{par_inds[0]}-{par_inds[1]}_betaS=1.2'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 scenarios = generate_scenarios()
@@ -37,6 +37,10 @@ if do_run:
                 par = sc.dcp(entry['pars'])
                 par['rand_seed'] = int(entry['index'])
                 sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
+
+                for st, cfg in scen.items():
+                    if cfg is not None:
+                        cfg['beta_s'] = 1.2 # Increase beta (multiplier) in schools from default of 0.6
 
                 sim.label = f'{skey} + {tkey}'
                 sim.key1 = skey
@@ -71,50 +75,56 @@ if do_run:
 else:
     msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'{stem}.msim'))
 
-sim = msim.sims[0]
-tt = sim.results.transtree
 
-first = sim.day('2020-11-02')
-last = sim.day('2021-01-31')
+downstream_targets = {'es':0, 'ms':0, 'hs':0}
+infected_schools = {'es':0, 'ms':0, 'hs':0}
+for sim in msim.sims:
+    tt = sim.results.transtree
 
-print(tt)
-df = pd.DataFrame(tt.infection_log)
-print(dir(sim.people))
-pop = sim.people
-print(f'Pop has {sum(pop.student_flag)} students, {sum(pop.teacher_flag)} teachers, and {sum(pop.staff_flag)} staff')
+    first = sim.day('2020-11-02')
+    last = sim.day('2021-01-31')
 
-students = {}
-teachers = {}
-staff = {}
-for st, sids in pop.school_types.items():
-    if st in ['pk', 'uv']:
-        continue
-    students[st] = 0
-    teachers[st] = 0
-    staff[st] = 0
-    for sid in sids:
-        print(st, sid, '-'*80)
-        uids = pop.schools[sid]
-        # hs 54 [nan, nan, nan, nan, nan, nan, nan, 54.0, nan, 139.0, nan, nan, nan, nan, nan, 140.0, nan, nan, nan, 135.0, nan, nan, nan]
+    print(tt)
+    df = pd.DataFrame(tt.infection_log)
+    df['S.Student'] = [sim.people.student_flag[int(t)] if not np.isnan(t) else False for t in df['source']]
+    df['T.Student'] = [sim.people.student_flag[t] for t in df['target']]
+    print(dir(sim.people))
+    pop = sim.people
+    print(f'Pop has {sum(pop.student_flag)} students, {sum(pop.teacher_flag)} teachers, and {sum(pop.staff_flag)} staff')
 
-        #exp_date = [sim.people.date_exposed[u] for u in uids]
-        df_sch = df.loc[
-            (df['layer'].isin(['h', 's', 'w', 'c', sid])) & \
-            (df['target'].isin(uids)) & \
-            (df['date'] >= first)
-        ]
-        if df_sch.shape[0] > 0:
-            print(df_sch)
+    for st, sids in pop.school_types.items():
+        if st in ['pk', 'uv']:
+            continue
 
-            first_infected_in_sch = df_sch.iloc[0]['target']
-            targets = df_sch.loc[df_sch['source'] == first_infected_in_sch]
-            print(f'Individual {first_infected_in_sch} infected {len(targets)} others.')
-        else:
-            print(f'No individuals were infected after this school opened:', np.sum([sim.people.date_exposed[u] for u in uids if not sim.people.susceptible[u]]))
+        for sid in sids:
+            print(st, sid, '-'*80)
+            uids = pop.schools[sid]
+            # hs 54 [nan, nan, nan, nan, nan, nan, nan, 54.0, nan, 139.0, nan, nan, nan, nan, nan, 140.0, nan, nan, nan, 135.0, nan, nan, nan]
+
+            #exp_date = [sim.people.date_exposed[u] for u in uids]
+            df_sch = df.loc[
+                (df['layer'].isin(['h', 's', 'w', 'c', sid])) & \
+                (df['target'].isin(uids)) & \
+                (df['date'] >= first)
+            ]
+            if df_sch.shape[0] > 0:
+                print(df_sch)
+
+                first_infected_in_sch = df_sch.iloc[0]['target']
+                targets = df_sch.loc[df_sch['source'] == first_infected_in_sch]
+                print(f'Individual {first_infected_in_sch} infected {len(targets)} others.')
+                downstream_targets[st] += len(targets)
+                infected_schools[st] +=1
+            else:
+                print(f'No individuals were infected after this school opened:', np.sum([sim.people.date_exposed[u] for u in uids if not sim.people.susceptible[u]]))
 
 
-print(f'Students: {students}')
-print(f'Teachers: {teachers}')
-print(f'Staff: {staff}')
+print(f'{infected_schools} schools had at least one infected individual after opening.')
+dst = ifs = 0
+for st in ['es', 'ms', 'hs']:
+    print(f'R0 in {st} school: {downstream_targets[st]/infected_schools[st]}')
+    dst += downstream_targets[st]
+    ifs += infected_schools[st]
+print(f'R0 overall: {dst/ifs}')
 
-sim.results.transtree.plot()
+#sim.results.transtree.plot()
