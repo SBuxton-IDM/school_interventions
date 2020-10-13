@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 
-do_run = True
+do_run = False
 
-par_inds = (1,2) # First and last parameters to run
+par_inds = (0,5) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
 folder = 'v20201013_225k'
-stem = f'keeppeople_remote_notest_{par_inds[0]}-{par_inds[1]}'
+stem = f'calib_remote_notest_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 if __name__ == '__main__':
@@ -55,32 +55,28 @@ if __name__ == '__main__':
                     sims.append(sim)
                     proc += 1
 
-                    if len(sims) == batch_size or proc == tot or (tidx == len(testing)-1 and eidx == len(par_list)-1):
+                    if len(sims) == batch_size or proc == tot:# or (tidx == len(testing)-1 and eidx == len(par_list)-1):
                         print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
                         msim = cv.MultiSim(sims)
                         msims.append(msim)
-                        msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=True)
+                        msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
                         sims = []
 
             print(f'*** Saving after completing {skey}')
             sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == skey]
             msim = cv.MultiSim(sims_this_scenario)
 
-            for sim in msim.sims:
-                sim.make_transtree()
-
-            #cv.save(os.path.join(folder, 'msims', f'{stem}_{skey}.msim'), msim)
-            msim.save(os.path.join(folder, 'msims', f'{stem}_{skey}.msim'), keep_people=False)
-
         msim = cv.MultiSim.merge(msims)
-        #cv.save(os.path.join(folder, 'msims', f'{stem}.msim'), msim)
-        msim.save(os.path.join(folder, 'msims', f'{stem}.msim'), keep_people=True)
+        msim.save(os.path.join(folder, 'msims', f'{stem}.msim'), keep_people=kp)
     else:
         msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'{stem}.msim'))
 
-    # Plotting
-    msim.reduce()
-    #ms.save(msim_nopeople_fn, keep_people=False)
+    # Calib plotting
+
+    sims = [s for s in msim.sims if s.key1=='all_remote' and s.key2=='None']
+    ms = cv.MultiSim(sims)
+
+    ms.reduce()
     #ms.plot(to_plot='overview')
 
     #plt.figure()
@@ -105,9 +101,9 @@ if __name__ == '__main__':
             ],
         })
     fig = plt.figure(figsize=(16,10))
-    msim.plot(to_plot=to_plot, n_cols=2, interval=30, legend_args={'show_legend':False}, do_show=False, fig=fig) # , dateformat='%B'
+    ms.plot(to_plot=to_plot, n_cols=2, interval=30, legend_args={'show_legend':False}, do_show=False, fig=fig) # , dateformat='%B'
 
-    s0 = msim.sims[0]
+    s0 = ms.sims[0]
     for i, ax in enumerate(fig.axes):
         if i < len(fig.axes)-2:
             ax.xaxis.set_visible(False)

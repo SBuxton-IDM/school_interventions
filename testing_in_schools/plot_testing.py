@@ -19,19 +19,16 @@ pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201013_225k'
 imgdir = os.path.join(folder, 'img')
-msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'pars_0-5.msim'))
+#msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'pars_0-5.msim'))
 #msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1_filterseeds_{int(pop_size)}.msim'))
 
-'''
 msim = cv.MultiSim.merge([
-    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1a_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1b_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1c_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1d_{int(pop_size)}.msim')),
-    cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_v20201013_v1e_{int(pop_size)}.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_0-5.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_5-10.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_10-15.msim')),
+    cv.MultiSim.load(os.path.join(folder, 'msims', 'pars_15-25.msim')),
 ])
-msim.save(os.path.join(folder, 'msims', f'testing_v20201013_v1_{int(pop_size)}.msim'))
-'''
+msim.save(os.path.join(folder, 'msims', 'combined.msim'))
 
 '''
 msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_not_remote_{int(pop_size)}.msim'))
