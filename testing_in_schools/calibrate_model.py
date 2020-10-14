@@ -43,6 +43,32 @@ def scenario(es, ms, hs):
     }
 
 
+def evaluate_sim(sim):
+    first = sim.day('2020-11-02')
+    last = sim.day('2021-01-31')
+
+    ret = {
+        'cases_begin': np.sum(sim.results['new_diagnoses'][(first-14):first]) * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale']),
+        'cases_end': np.sum(sim.results['new_diagnoses'][(last-14):last]) * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale']),
+        're': np.mean(sim.results['r_eff'][first:last]),
+        'prevalence': np.mean(sim.results['prevalence'][first:last]),
+        'yield': np.mean(sim.results['test_yield'][first:last]),
+        'tests': np.mean(sim.results['new_tests'][first:last]) * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale']),
+    }
+    #cases_during = np.mean(sim.results['new_diagnoses'][first:last]) * 14 * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
+
+    mismatch = 0
+    wsum = 0
+    for key,true in to_fit.items():
+        realized = ret[key]
+        mismatch += weight[key] * np.abs(realized-true)/true
+        wsum += weight[key]
+
+    ret['mismatch'] = mismatch / wsum
+
+    return ret # Weighted mean absolute error (scaled to true value)
+
+
 def objective(trial, kind='default'):
     ''' Define the objective for Optuna '''
     pars = {}
@@ -69,27 +95,8 @@ def objective(trial, kind='default'):
     sim['interventions'] += [ns]
     sim.run()
 
-    first = sim.day('2020-11-02')
-    last = sim.day('2021-01-31')
-
-    ret = {
-        'cases_begin': np.sum(sim.results['new_diagnoses'][(first-14):first]) * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale']),
-        'cases_end': np.sum(sim.results['new_diagnoses'][(last-14):last]) * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale']),
-        're': np.mean(sim.results['r_eff'][first:last]),
-        'prevalence': np.mean(sim.results['prevalence'][first:last]),
-        'yield': np.mean(sim.results['test_yield'][first:last]),
-        'tests': np.mean(sim.results['new_tests'][first:last]) * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale']),
-    }
-    #cases_during = np.mean(sim.results['new_diagnoses'][first:last]) * 14 * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
-
-    mismatch = 0
-    wsum = 0
-    for key,true in to_fit.items():
-        realized = ret[key]
-        mismatch += weight[key] * np.abs(realized-true)/true
-        wsum += weight[key]
-
-    return mismatch / wsum # Weighted mean absolute error (scaled to true value)
+    mismatch = evaluate_sim(sim)['mismatch']
+    return mismatch
 
 
 def worker():
