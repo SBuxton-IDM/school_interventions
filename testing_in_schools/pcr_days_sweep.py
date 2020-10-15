@@ -19,7 +19,7 @@ do_run = False
 
 par_inds = (0,20) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 25
+batch_size = 24
 
 folder = 'v20201015_225k'
 imgdir = os.path.join(folder, 'img')

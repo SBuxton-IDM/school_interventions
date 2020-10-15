@@ -149,36 +149,36 @@ def generate_testing():
         'groups': ['teachers', 'staff'], # No students
         'coverage': 1,
         'is_antigen': True,
-        'symp7d_sensitivity': 0.95, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
         'other_sensitivity': 0.90, # Modeling assumption
-        'specificity': 0.979, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'specificity': 0.985, # https://www.fda.gov/media/141570/download
         'PCR_followup_perc': 1,
         'PCR_followup_delay': 3,
     }]
 
 
-    Antigen_every_1w_starting_1wprior_all_PCR_followup = [{
+    Antigen_every_2w_starting_1wprior_all_PCR_followup = [{
         'start_date': '2020-10-26',
-        'repeat': 7,
+        'repeat': 14,
         'groups': ['students', 'teachers', 'staff'], # No students
         'coverage': 1,
         'is_antigen': True,
-        'symp7d_sensitivity': 0.95, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
         'other_sensitivity': 0.90, # Modeling assumption
-        'specificity': 0.979, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'specificity': 0.985, # https://www.fda.gov/media/141570/download
         'PCR_followup_perc': 1,
         'PCR_followup_delay': 3,
     }]
 
-    Antigen_every_1w_starting_1wprior_all_no_followup = [{
+    Antigen_every_2w_starting_1wprior_all_no_followup = [{
         'start_date': '2020-10-26',
-        'repeat': 7,
+        'repeat': 14,
         'groups': ['students', 'teachers', 'staff'], # No students
         'coverage': 1,
         'is_antigen': True,
-        'symp7d_sensitivity': 0.95, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
         'other_sensitivity': 0.90, # Modeling assumption
-        'specificity': 0.979, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'specificity': 0.985, # https://www.fda.gov/media/141570/download
         'PCR_followup_perc': 0,
         'PCR_followup_delay': 0, # Does not matter with no PCR follow-up
     }]
@@ -193,16 +193,16 @@ def generate_testing():
         'PCR every 2w 50%': PCR_every_2w_50cov,
         #'PCR every 1m 15%': PCR_every_1m_15cov,
         'Antigen every 1w teach&staff, PCR f/u': Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup,
-        'Antigen every 1w, PCR f/u': Antigen_every_1w_starting_1wprior_all_PCR_followup,
-        'Antigen every 1w, no f/u': Antigen_every_1w_starting_1wprior_all_no_followup,
+        'Antigen every 2w, PCR f/u': Antigen_every_2w_starting_1wprior_all_PCR_followup,
+        'Antigen every 2w, no f/u': Antigen_every_2w_starting_1wprior_all_no_followup,
     }
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
+    #scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
 
     testing = generate_testing()
-    #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'PCR every 1d']}
+    testing = {k:v for k,v in testing.items() if 'Antigen' in k}
 
     # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
     pars_v1 = { # 100k pop
