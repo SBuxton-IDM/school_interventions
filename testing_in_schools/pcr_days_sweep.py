@@ -5,12 +5,19 @@ import covasim as cv
 import create_sim as cs
 import sciris as sc
 import matplotlib.pyplot as plt
+import matplotlib as mplt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 
+# Global plotting styles
+font_size = 16
+font_style = 'Roboto Condensed'
+mplt.rcParams['font.size'] = font_size
+mplt.rcParams['font.family'] = font_style
+
 do_run = False
 
-par_inds = (0,1) # First and last parameters to run
+par_inds = (0,20) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 25
 
@@ -26,9 +33,12 @@ if __name__ == '__main__':
     test = generate_testing()['PCR 1w prior']
 
     testing = {}
-    for start_date in ['2020-10-26', '2020-10-27', '2020-10-28', '2020-10-29', '2020-10-30', '2020-10-31', '2020-11-01', '2020-11-02']:
+    for start_date in ['None', '2020-10-26', '2020-10-27', '2020-10-28', '2020-10-29', '2020-10-30', '2020-10-31', '2020-11-01', '2020-11-02']:
         t = sc.dcp(test)
-        t[0]['start_date'] = start_date
+        if start_date == 'None':
+            t[0]['start_date'] = '2022-01-01' # Move into the deep future
+        else:
+            t[0]['start_date'] = start_date
 
         testing[start_date] = t
 
@@ -79,7 +89,18 @@ if __name__ == '__main__':
         msim = cv.MultiSim.merge(msims)
         msim.save(os.path.join(folder, 'msims', f'{stem}.msim'), keep_people=False)
     else:
+        '''
         msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'{stem}.msim'))
+        msim_None1 = cv.MultiSim.load(os.path.join(folder, 'msims', 'batch_0-15_with_countermeasures.msim'))
+        msim_None2 = cv.MultiSim.load(os.path.join(folder, 'msims', 'batch_15-30_with_countermeasures.msim'))
+        sims = msim.sims
+        sims += [s for s in msim_None1.sims if s.key2 == 'None']
+        sims += [s for s in msim_None2.sims if s.key2 == 'None']
+        msim = cv.MultiSim(sims)
+        print('saving')
+        msim.save('pcr.msim')
+        '''
+        msim = cv.MultiSim.load('pcr.msim')
 
     byschool = []
     groups = ['students', 'teachers', 'staff']
@@ -104,22 +125,34 @@ if __name__ == '__main__':
 
 
     d = pd.DataFrame(byschool)
-    #d.replace( {'type': {'es':'Elementary', 'ms':'Middle', 'hs':'High'}}, inplace=True)
-    #d.replace( {'key2': {'PCR one week prior, 1d delay':'PCR one week prior', 'Daily PCR, no delay':'PCR one day prior'}}, inplace=True)
-    ###g = sns.FacetGrid(data=d, row='key2', height=3, aspect=3.5, margin_titles=False)#, row_order=['None', 'PCR one week prior', 'PCR one day prior']) # row='type'
-    ###g.map_dataframe( sns.regplot, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'color':'black', 's':5}, ax=ax)
     fig, ax = plt.subplots(figsize=(12,8))
     for key, dat in d.groupby('key2'):
-        sns.regplot(data=dat, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'s':5}, label=key, ax=ax)
-    plt.legend()
-    #g.set_titles(col_template="{col_name}", row_template="{row_name}")
-    #g.set_axis_labels(x_var='School size (students)', y_var='Infection on First Day (%)')
-    #for ax in g.axes.flat:
-    #    yt = [0.0, 0.25, 0.50, 0.75, 1.0]
-    #    ax.set_yticks(yt)
-    #    ax.set_yticklabels([int(100*t) for t in yt])
-    #    ax.grid(True)
-    #g.add_legend(fontsize=14)
+        c = 'k' if key == 'None' else None
+        sns.regplot(data=dat, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'s':5}, label=key, ax=ax, ci=None, scatter=False, color=c)
+    ax.set_xlabel('School size (students)')
+    ax.set_ylabel('Infection on First Day (%)')
+    yt = [0.0, 0.25, 0.50, 0.75]
+    ax.set_yticks(yt)
+    ax.set_yticklabels([int(100*t) for t in yt])
+    ax.grid(True)
+
+    lmap = {
+        'None':'No PCR testing',
+        '2020-10-26': 'One week prior',
+        '2020-10-27': 'Six days prior',
+        '2020-10-28': 'Five days prior',
+        '2020-10-29': 'Four days prior',
+        '2020-10-30': 'Three days prior',
+        '2020-10-31': 'Two days prior',
+        '2020-11-01': 'One day prior',
+        '2020-11-02': 'On the first day of school'
+    }
+
+    handles, labels = ax.get_legend_handles_labels()
+    handles = [handles[-1]] + handles[:-1]
+    labels = [lmap[labels[-1]]] + [lmap[l] for l in labels[:-1]]
+
+    ax.legend(handles, labels)
     plt.tight_layout()
     cv.savefig(os.path.join(imgdir, 'PCR_Days_Sweep.png'), dpi=300)
 
