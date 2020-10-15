@@ -295,6 +295,8 @@ class SchoolStats():
         }
 
 
+
+
 class SchoolTesting():
     '''
     Conduct testing in school students and staff.
@@ -308,7 +310,12 @@ class SchoolTesting():
         self.school = school
         self.testing = [] if testing is None else sc.dcp(testing)
 
-        self.n_tested = 0
+        for test in self.testing:
+            if 'is_antigen' not in test:
+                test['is_antigen'] = False
+            test['type'] = 'Antigen' if test['is_antigen'] else 'PCR'
+
+        self.n_tested = { 'PCR': 0, 'Antigen': 0 }
 
         for test in self.testing:
             # Determine from test start_day and repeat which sim times to test on
@@ -330,9 +337,61 @@ class SchoolTesting():
                 uids += [uid for uid in self.school.uids if ppl.teacher_flag[uid]]
             test['uids'] = uids
 
+
+    def antigen_test(self, inds, sym7d_sens=1.0, other_sens=1.0, loss_prob=0.0, delay=0):
+        '''
+        Adapted from the test() method on sim.people to do antigen testing. Main change is that sensitivity is now broken into those symptomatic in the past week and others.
+
+        Args:
+            inds: indices of who to test
+            sym7d_sens (float): probability of a true positive in a recently symptomatic individual (7d)
+            other_sens (float): probability of a true positive in others
+            loss_prob (float): probability of loss to follow-up
+            delay (int): number of days before test results are ready
+
+
+        https://www.fda.gov/media/141570/download
+        Within 7-days of symptom onset:
+        * Positive Agreement:  34/35        97.1% (95% CI:  85.1% -99.9%)  (The one missed was Ct>33)
+        * Negative Agreement: 66/67         98.5% (95% CI:  92.0% -100%)
+
+        Symptom onset greater than seven days: Although  the  sample  size  was  relatively  small,  the  positive  agreement  in  this  cohort was 75% (9/12) and negative agreement was 92% (11/12).
+
+        https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        * Performance of 95.0% positive agreement (sensitivity) and 97.9% negative agreement (specificity) in subjects within seven days post symptom onset.
+        * Overall performance of 93.3% positive agreement (sensitivity) and 98.4% negative agreement (specificity). Further, in the 161 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.0% positive agreement (sensitivity).
+        * Further, in the 129 patients with high viral titers (Ct <33), and therefore most likely to transmit virus,
+        * ID NOW showed performance of 98.4% positive agreement (sensitivity).
+    Performance of 94.6% positive agreement (sensitivity) and 97.6% negative agreement (specificity) in symptomatic subjects. Further, in the 136 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.8% positive agreement (sensitivity).
+        '''
+
+        inds = np.unique(inds)
+        self.tested[inds] = True
+        self.date_tested[inds] = self.t # Only keep the last time they tested
+        self.date_results[inds] = self.t + delay # Keep date when next results will be returned
+
+        ppl = self.school.sim.people
+        t = self.school.sim.t
+
+        is_infectious = cvu.itruei(ppl.infectious, inds)
+        pos_test      = cvu.n_binomial(test_sensitivity, len(is_infectious))
+        is_inf_pos    = is_infectious[pos_test]
+
+        not_diagnosed = is_inf_pos[np.isnan(ppl.date_diagnosed[is_inf_pos])]
+        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
+        final_inds    = not_diagnosed[not_lost]
+
+        # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive
+        ppl.date_diagnosed[final_inds] = t + delay
+        ppl.date_pos_test[final_inds] = t
+
+        return
+
+
     def update(self):
         '''
         Check for testing today and conduct tests if needed.
+        True positives return via date_diagnosed, false positives are returned via this function.
 
         Fields include:
             * 'start_date': '2020-08-29',
@@ -350,9 +409,15 @@ class SchoolTesting():
             if self.school.sim.t in test['t_vec']:
                 undiagnosed_uids = cvu.ifalsei(ppl.diagnosed, np.array(test['uids']))
                 uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
-                self.n_tested += len(uids_to_test)
-                ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
+                self.n_tested[test['type']] += len(uids_to_test)
+
                 if self.school.verbose: print(self.school.sim.t, f'School {self.school.sid} of type {self.school.stype} is testing {len(uids_to_test)} today')
+
+                #if test['is_antigen']:
+                #    ag_pos_uids = self.antigen_test(uids_to_test)
+                #else:
+                ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
+
 
                 # Handle false positives here?
                 if test['specificity'] < 1 :
@@ -448,7 +513,7 @@ class School():
 
         for uid in false_positive_uids:
             # Assume figure out it was a false positive using PCR within a few days:
-            self.uids_at_home[uid] = self.sim.t + 2 # Can come back in a few days, TODO: make a parameter
+            self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period']
 
         # Look for newly diagnosed people
         newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace

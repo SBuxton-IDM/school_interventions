@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib as mplt
 import matplotlib.pyplot as plt
 import seaborn as sns
+import datetime as dt
 from calibrate_model import evaluate_sim
 
 # Global plotting styles
@@ -48,23 +49,31 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-cachefn = os.path.join(folder, 'msims', 'combined3.msim')
+cachefn = os.path.join(folder, 'msims', 'combined4.msim')
 msim = load_single(cachefn)
-#fns = [os.path.join(folder, 'msims', fn) for fn in ['combined2.msim', 'pars3_newscenarios_0-20.msim']]
+#fns = [os.path.join(folder, 'msims', fn) for fn in ['combined3.msim', 'pars4_k5_0-20.msim']]
 #msim = load_multi(fns, cachefn)
 
 results = []
 byschool = []
 groups = ['students', 'teachers', 'staff']
 
-scen_names = {
+scen_names = { # key1
     'as_normal': 'As Normal',
     'with_screening': 'Normal with\nCountermeasures',
     'all_hybrid': 'Hybrid with\nCountermeasures',
+    'k5': 'K-5 In-Person\nOthers Remote',
     'all_remote': 'All Remote',
 }
+scen_order = [
+    'as_normal',
+    'with_screening',
+    'all_hybrid',
+    'k5',
+    'all_remote',
+]
 
-test_names = {
+test_names = { # key2
     'None': 'None',
     'PCR 1w prior': 'PCR one week prior, 1d delay',
     'Antigen every 1w teach&staff': 'Weekly antigen for teachers & staff, no delay',
@@ -78,6 +87,7 @@ test_names = {
 
 for sim in msim.sims:
     sim.key2 = test_names[sim.key2]
+
 hue_order = [test_names[x] for x in [
     'None',
     'PCR 1w prior',
@@ -141,7 +151,6 @@ for sim in msim.sims:
 
         if debug_plot and sim.key1=='as_normal' and sim.key2 == 'None':# and sum([inf_at_sch[g][first_school_day] for g in groups]) > 0:
             f = plt.figure(figsize=(16,10))
-            import datetime as dt
             for grp in ['students', 'teachers', 'staff']:
                 #plt.plot(sim.results['date'], inf[grp], label=grp)
                 plt.plot(sim.results['date'], stats['infectious_arrive_at_school'][grp], ls='-', label=f'{grp} arrived')
@@ -179,12 +188,14 @@ for name in ['all', 'no_normal']:
     d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
     d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 
-    print(d.head())
+    so = scen_order
     if name == 'no_normal':
         d = d.loc[d['key1']!='as_normal'] # Remove normal
+        so = so[1:]
 
     g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-    g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=hue_order)
+
+    g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=hue_order, order=so)
     if name == 'all':
         g.add_legend()
     g.set_titles(row_template="{row_name}")
@@ -197,10 +208,9 @@ for name in ['all', 'no_normal']:
 
 # Frac in-person days lost
 d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
-print(d)
 d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=hue_order, palette='Reds')
+g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=hue_order, order=scen_order, palette='Reds')
 g.add_legend()
 g.set_titles(row_template="{row_name}", fontsize=24)
 xtl = g.axes[1,0].get_xticklabels()
@@ -212,7 +222,7 @@ cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'), dpi=300)
 
 # Re
 fig, ax = plt.subplots(figsize=(12,8))
-sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=hue_order)
+sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=hue_order, order=scen_order)
 ax.set_ylim([0.8, 1.45])
 ax.set_ylabel(r'Average $R_e$')
 ax.set_xlabel('')

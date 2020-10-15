@@ -26,7 +26,9 @@ def generate_scenarios():
 
     # Create a single sim to get parameters (make_pars is close, but not quite)
     sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size, folder=folder)
-    base_beta_s = sim.pars['beta_layer']['s']
+
+    # Increase beta (multiplier) in schools from default of 0.6 to 1.5 (makes normal school R0>1, as to be expected based on global data (Israel), but with Hybrid + 2w PCR testing, R0<1, again as expected from global exemplars.
+    base_beta_s = 1.5 #sim.pars['beta_layer']['s']
 
     scns = sc.odict()
 
@@ -114,7 +116,7 @@ def generate_testing():
     }]
 
     # TODO: Propoer antigen testing in covasim
-    Antigen_every_1w_starting_1wprior_staff = [{
+    Antigen_every_1w_starting_1wprior_teachersstaff = [{
         'start_date': '2020-10-26',
         'repeat': 7,
         'groups': ['teachers', 'staff'], # No students
@@ -163,6 +165,7 @@ def generate_testing():
         'sensitivity': 0.8, # Lower sensitiviy, 80% is a modeling assumption as the true sensitivity is unknown at this time.  Should be high when viral load is high, but unsure how low at lower viral loads.
         'specificity': 0.9, # 90% specificity is a modeling assumption
         'delay': 0,          # No delay
+        'is_antigen': True
     }]
 
 
@@ -172,9 +175,9 @@ def generate_testing():
         'PCR every 2w': PCR_every_2w_starting_1wprior,
         'PCR every 1w': PCR_every_1w_starting_1wprior,
         'PCR every 1d': PCR_every_1d_starting_1wprior,
-        'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_staff,
+        'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_teachersstaff,
         'PCR every 2w 50%': PCR_every_2w_50cov,
-        'PCR every 1m 15%': PCR_every_1m_15cov,
+        #'PCR every 1m 15%': PCR_every_1m_15cov,
         'Antigen every 1w': Antigen_every_1w_starting_1wprior_all,
     }
 
@@ -198,6 +201,7 @@ if __name__ == '__main__':
         'change_beta': 0.62,
     }
 
+    # Now ignoring pars_v1 an pars_v2, using calibrated values instead:
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
 
     sims = []
@@ -224,7 +228,6 @@ if __name__ == '__main__':
                 for stype, spec in this_scen.items():
                     if spec is not None:
                         spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
-                        spec['beta_s'] = 1.5 # Increase beta (multiplier) in schools from default of 0.6 to 1.5 (makes normal school R0>1, as to be expected based on global data (Israel), but with Hybrid + 2w PCR testing, R0<1, again as expected from global exemplars.
 
                 ns = new_schools(this_scen)
                 sim['interventions'] += [ns]
