@@ -10,7 +10,7 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 do_run = True
 
-par_inds = (0,1) # First and last parameters to run
+par_inds = (0,10) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
