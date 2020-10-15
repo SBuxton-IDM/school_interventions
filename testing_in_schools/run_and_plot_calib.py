@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import covasim as cv
 import create_sim as cs
 import sciris as sc
@@ -6,7 +7,7 @@ import matplotlib.pyplot as plt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 
-do_run = True
+do_run = False
 
 par_inds = (0,25) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
@@ -101,41 +102,48 @@ if __name__ == '__main__':
                 'prevalence',
             ],
         })
-    fig = plt.figure(figsize=(16,10))
-    ms.plot(to_plot=to_plot, n_cols=2, interval=30, legend_args={'show_legend':False}, do_show=False, fig=fig) # , dateformat='%B'
+    #fig = plt.figure(figsize=(16,10))
+    #ms.plot(to_plot=to_plot, n_cols=2, interval=30, legend_args={'show_legend':False}, do_show=False, fig=fig) # , dateformat='%B'
 
-    s0 = ms.sims[0]
-    for axi, ax in enumerate(fig.axes):
-        if axi < len(fig.axes)-2:
-            ax.xaxis.set_visible(False)
-        ax.axvline(x=s0.day('2020-11-01'), color='c', ls='--')
+    f, axv = plt.subplots(3,2, figsize=(12,8))
+    chs = sc.odict({
+        'new_infections': { 'title': 'New Infections per 100k', 'ref':None },
+        'new_diagnoses': { 'title': 'New Diagnoses over 14d per 100k', 'ref': 75 },
+        'test_yield': { 'title': 'Test Yield', 'ref': 0.022 },
+        'r_eff': { 'title': 'Reproduction Number', 'ref': 1.0 },
+        'new_tests': { 'title': 'New Tests per 100k', 'ref': 225 },
+        'prevalence': { 'title': 'Prevalence', 'ref': 0.002 },
+    })
 
+    ri=ci=0
+    for ch,info in chs.items():
+        if ri == 3:
+            ri=0
+            ci=1
 
-    ''' WIP
-    scale = 1e5 / s0.pars['pop_size'] * s0.pars['pop_scale']
-    scale_ax = [0,1,4]
-    for axi, ax in enumerate(fig.axes):
-        #if axi not in scale_ax: # Surely a better way to do this!
-        #    continue
-        ytl = list(ax.get_yticklabels()) #[yt for yt in ax.get_yticklabels()]
-        if axi==0:
-            ax.set_yticklabels(['1', '2', '3'])
+        rvec = []
+        for sim in msim.sims:
+            r = sim.results[ch].values
+            ps = 100000 / sim.pars['pop_size']*sim.pars['pop_scale']
+            if ch in ['new_diagnoses']:
+                r *= 14 * ps
+            if ch in ['new_infections', 'new_tests']:
+                r *= ps
+            rvec.append(r)
 
-        if axi==2:
-            ax.set_yticklabels(['4', '5', '6'])
-        print(ytl)
-    '''
+        ax = axv[ri,ci]
+        med = np.median(rvec, axis=0)
+        sd = np.std(rvec, axis=0)
+        ax.fill_between(sim.results['date'], med+2*sd, med-2*sd, color='lightgray')
+        ax.plot(sim.results['date'], med+2*sd, color='gray', lw=1)
+        ax.plot(sim.results['date'], med-2*sd, color='gray', lw=1)
+        ax.plot(sim.results['date'], med, color='k', lw=2)
+        if 'ref' in info and info['ref'] is not None:
+            ax.axhline(y=info['ref'], color='r', ls='--', lw=2)
+        ax.set_title(info['title'])
 
+        ri+=1
 
-    # Agh, x-axis is not a datetime!
-    #import matplotlib.dates as mdates
-    #months = mdates.MonthLocator(interval=1)  # every month
-    #fig.axes[-1].xaxis.set_major_locator(months)
-
-    #from matplotlib.dates import DateFormatter
-    #date_form = DateFormatter('%B')#"%m-%d")
-    #fig.axes[-1].xaxis.set_major_formatter(date_form)
-
-    fig.tight_layout()
-    cv.savefig(os.path.join(folder, 'img', f'calibration_{int(pop_size)}.png'))
+    f.tight_layout()
+    cv.savefig(os.path.join(folder, 'img', f'calibration_djk_{int(pop_size)}.png'), dpi=300)
 
