@@ -4,9 +4,9 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-par_inds = (0,20)
+par_inds = (0,15)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 16
+batch_size = 32
 
 folder = 'v20201015_225k'
 stem = f'batch_{par_inds[0]}-{par_inds[1]}'
@@ -199,7 +199,7 @@ def generate_testing():
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    #scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
+    scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
 
     testing = generate_testing()
     #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'PCR every 1d']}
@@ -254,7 +254,7 @@ if __name__ == '__main__':
                     print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
                     msim = cv.MultiSim(sims)
                     msims.append(msim)
-                    msim.run(reseed=False, par_args={'ncpus': 16}, noise=0.0, keep_people=False)
+                    msim.run(reseed=False, par_args={'ncpus': 32}, noise=0.0, keep_people=False)
                     sims = []
 
         print(f'*** Saving after completing {skey}')
