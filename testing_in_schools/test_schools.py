@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     entry = sc.loadjson(calibfile)[0]
     params = sc.dcp(entry['pars'])
-    params['rand_seed'] = 1 #############################int(entry['index'])
+    params['rand_seed'] = int(entry['index'])
 
     scen = generate_scenarios()['all_remote']
     testing = generate_testing()['None']#['Antigen every 1w PCR f/u']
