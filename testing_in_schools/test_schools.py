@@ -28,7 +28,7 @@ if __name__ == '__main__':
     params['rand_seed'] = int(entry['index'])
 
     scen = generate_scenarios()['as_normal']
-    testing = generate_testing()['Antigen every 1w, PCR f/u']
+    testing = generate_testing()['PCR every 1d']
     #testing[0]['delay'] = 0
     for stype, spec in scen.items():
         if spec is not None:

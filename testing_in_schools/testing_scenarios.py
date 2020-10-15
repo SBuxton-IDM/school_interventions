@@ -8,9 +8,9 @@ par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
-folder = 'v20201013_225k_v2'
-stem = f'pars4_k5_{par_inds[0]}-{par_inds[1]}'
-calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_v2_pop_size=225000.json')
+folder = 'v20201015_225k'
+stem = f'batch_{par_inds[0]}-{par_inds[1]}'
+calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 def scenario(es, ms, hs):
     return {
@@ -24,11 +24,11 @@ def scenario(es, ms, hs):
 def generate_scenarios():
     ''' Generate scenarios (dictionaries of parameters) for the school intervention '''
 
-    # Create a single sim to get parameters (make_pars is close, but not quite)
-    sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size, folder=folder)
-
     # Increase beta (multiplier) in schools from default of 0.6 to 1.5 (makes normal school R0>1, as to be expected based on global data (Israel), but with Hybrid + 2w PCR testing, R0<1, again as expected from global exemplars.
-    base_beta_s = 1.5 #sim.pars['beta_layer']['s']
+    ### Create a single sim to get parameters (make_pars is close, but not quite)
+    ### sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size, folder=folder)
+    ### base_beta_s = sim.pars['beta_layer']['s']
+    base_beta_s = 1.5 #
 
     scns = sc.odict()
 
@@ -180,7 +180,7 @@ def generate_testing():
         'other_sensitivity': 0.90, # Modeling assumption
         'specificity': 0.979, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
         'PCR_followup_perc': 0,
-        'PCR_followup_delay': None, # Does not matter with no PCR follow-up
+        'PCR_followup_delay': 0, # Does not matter with no PCR follow-up
     }]
 
 
@@ -199,7 +199,7 @@ def generate_testing():
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
+    #scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
 
     testing = generate_testing()
     #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'PCR every 1d']}

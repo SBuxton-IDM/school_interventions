@@ -19,7 +19,7 @@ mplt.rcParams['font.family'] = font_style
 
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
-folder = 'v20201013_225k_v2'
+folder = 'v20201015_225k'
 imgdir = os.path.join(folder, 'img')
 debug_plot = False
 
@@ -49,9 +49,10 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-cachefn = os.path.join(folder, 'msims', 'combined4.msim')
-msim = load_single(cachefn)
-#fns = [os.path.join(folder, 'msims', fn) for fn in ['combined3.msim', 'pars4_k5_0-20.msim']]
+cachefn = os.path.join(folder, 'msims', 'combined.msim')
+#msim = load_single(cachefn)
+fns = [os.path.join(folder, 'msims', fn) for fn in ['batch_0-1.msim']] # 'combined.msim', 
+msim = load_single(fns[0])
 #msim = load_multi(fns, cachefn)
 
 results = []
@@ -76,13 +77,14 @@ scen_order = [
 test_names = { # key2
     'None': 'None',
     'PCR 1w prior': 'PCR one week prior, 1d delay',
-    'Antigen every 1w teach&staff': 'Weekly antigen for teachers & staff, no delay',
     'PCR every 2w': 'Fortnightly PCR, 1d delay',
     'PCR every 1w': 'Weekly PCR, 1d delay',
     'PCR every 1d': 'Daily PCR, no delay',
     'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
     'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
-    'Antigen every 1w': 'Weekly antigen for all, no delay',
+    'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, no delay, PCR f/u',
+    'Antigen every 1w, PCR f/u': 'Weekly antigen for all, no delay, PCR f/u',
+    'Antigen every 1w, no f/u': 'Weekly antigen for all, no delay, no f/u',
 }
 
 for sim in msim.sims:
@@ -92,12 +94,13 @@ hue_order = [test_names[x] for x in [
     'None',
     'PCR 1w prior',
     #'PCR every 1m 15%',
-    'Antigen every 1w teach&staff',
+    'Antigen every 1w teach&staff, PCR f/u',
     'PCR every 2w 50%',
     'PCR every 2w',
     'PCR every 1w',
-    'Antigen every 1w',
+    'Antigen every 1w, PCR f/u',
     'PCR every 1d',
+    'Antigen every 1w, no f/u',
 ]]
 
 for sim in msim.sims:
