@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 
-do_run = False
+do_run = True
 
 par_inds = (0,10) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 25
+batch_size = 24
 
 folder = 'v20201015_225k'
 imgdir = os.path.join(folder, 'img')
@@ -28,7 +28,8 @@ if __name__ == '__main__':
     testing = {}
     for start_date in ['2020-10-26', '2020-10-27', '2020-10-28', '2020-10-29', '2020-10-30', '2020-10-31', '2020-11-01', '2020-11-02']:
         t = sc.dcp(test)
-        t[0]['start_day'] = start_date
+        t[0]['start_date'] = start_date
+        t[0]['delay'] = 0
 
         testing[start_date] = t
 
