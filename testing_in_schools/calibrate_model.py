@@ -7,6 +7,7 @@ import create_sim as cs
 from school_intervention import new_schools
 
 pop_size = 2.25e5
+folder = 'v20201015_225k'
 to_fit = {
     'cases_begin':  75, # per 100k over 2-weeks
     'cases_end':    75, # per 100k over 2-weeks
@@ -26,11 +27,10 @@ weight = {
 }
 
 label     = '_'.join([f'{k}={v}' for k,v in to_fit.items()])
-label    += '_v2'
-name      = os.path.join('opt', f'pars_{label}_pop_size={int(pop_size)}')
+name      = os.path.join(folder, f'pars_{label}_pop_size={int(pop_size)}')
 storage   = f'sqlite:///{name}.db'
-n_workers = 24
-n_trials  = 5 # Each worker does n_trials
+n_workers = 32
+n_trials  = 20 # Each worker does n_trials
 save_json = True
 
 def scenario(es, ms, hs):
@@ -51,7 +51,7 @@ def objective(trial, kind='default'):
         pars[key] = trial.suggest_uniform(key, *bound)
     pars['rand_seed'] = trial.number
 
-    sim = cs.create_sim(pars, pop_size=pop_size)
+    sim = cs.create_sim(pars, pop_size=pop_size, folder=folder)
 
     remote = { # <-- Used for calibration
         'start_day': '2020-11-02',
