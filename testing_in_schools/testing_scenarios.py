@@ -4,12 +4,12 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-par_inds = (5,10)
+par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
 folder = 'v20201013_225k_v2'
-stem = f'pars2_{par_inds[0]}-{par_inds[1]}'
+stem = f'pars4_k5_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_v2_pop_size=225000.json')
 
 def scenario(es, ms, hs):
@@ -26,21 +26,11 @@ def generate_scenarios():
 
     # Create a single sim to get parameters (make_pars is close, but not quite)
     sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size, folder=folder)
-    base_beta_s = sim.pars['beta_layer']['s']
+
+    # Increase beta (multiplier) in schools from default of 0.6 to 1.5 (makes normal school R0>1, as to be expected based on global data (Israel), but with Hybrid + 2w PCR testing, R0<1, again as expected from global exemplars.
+    base_beta_s = 1.5 #sim.pars['beta_layer']['s']
 
     scns = sc.odict()
-
-    remote = {
-        'start_day': '2020-11-02',
-        'schedule': 'Remote',
-        'screen_prob': 0,
-        'test_prob': 0,
-        'trace_prob': 0,
-        'quar_prob': 0,
-        'ili_prob': 0,
-        'beta_s': 0, # NOTE: No transmission in school layers
-        'testing': None,
-    }
 
     normal = {
         'start_day': '2020-11-02',
@@ -76,7 +66,20 @@ def generate_scenarios():
     scns['all_hybrid'] = scenario(es=hybrid, ms=hybrid, hs=hybrid)
 
     # All remote
+    remote = {
+        'start_day': '2020-11-02',
+        'schedule': 'Remote',
+        'screen_prob': 0,
+        'test_prob': 0,
+        'trace_prob': 0,
+        'quar_prob': 0,
+        'ili_prob': 0,
+        'beta_s': 0, # NOTE: No transmission in school layers
+        'testing': None,
+    }
     scns['all_remote'] = scenario(es=remote, ms=remote, hs=remote)
+
+    scns['k5'] = scenario(es=full_with_countermeasures, ms=remote, hs=remote)
 
     return scns
 
@@ -112,28 +115,8 @@ def generate_testing():
         'delay': 1,
     }]
 
-    PCR_every_1m_15cov = [{
-        'start_date': '2020-11-02',
-        'repeat': 30,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 0.15,
-        'sensitivity': 1,
-        'specificity': 1,
-        'delay': 1,
-    }]
-
-    PCR_every_2w_50cov = [{ # TODO
-        'start_date': '2020-11-02',
-        'repeat': 14,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 0.50,
-        'sensitivity': 1,
-        'specificity': 1,
-        'delay': 1,
-    }]
-
     # TODO: Propoer antigen testing in covasim
-    Antigen_every_1w_starting_1wprior_staff = [{
+    Antigen_every_1w_starting_1wprior_teachersstaff = [{
         'start_date': '2020-10-26',
         'repeat': 7,
         'groups': ['teachers', 'staff'], # No students
@@ -153,20 +136,54 @@ def generate_testing():
         'delay': 0, # NOTE: no delay!
     }]
 
+    # pars3_newscenarios ----------------- 
+    PCR_every_2w_50cov = [{ # TODO
+        'start_date': '2020-11-02',
+        'repeat': 14,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 0.50,
+        'sensitivity': 1,
+        'specificity': 1,
+        'delay': 1,
+    }]
+
+    PCR_every_1m_15cov = [{
+        'start_date': '2020-11-02',
+        'repeat': 30,
+        'groups': ['students', 'teachers', 'staff'],
+        'coverage': 0.15,
+        'sensitivity': 1,
+        'specificity': 1,
+        'delay': 1,
+    }]
+
+    Antigen_every_1w_starting_1wprior_all = [{
+        'start_date': '2020-10-26',
+        'repeat': 7,
+        'groups': ['students', 'teachers', 'staff'], # No students
+        'coverage': 1,
+        'sensitivity': 0.8, # Lower sensitiviy, 80% is a modeling assumption as the true sensitivity is unknown at this time.  Should be high when viral load is high, but unsure how low at lower viral loads.
+        'specificity': 0.9, # 90% specificity is a modeling assumption
+        'delay': 0,          # No delay
+        'is_antigen': True
+    }]
+
+
     return {
         'None': None,
         'PCR 1w prior': PCR_1w_prior,
         'PCR every 2w': PCR_every_2w_starting_1wprior,
         'PCR every 1w': PCR_every_1w_starting_1wprior,
         'PCR every 1d': PCR_every_1d_starting_1wprior,
+        'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_teachersstaff,
+        'PCR every 2w 50%': PCR_every_2w_50cov,
         #'PCR every 1m 15%': PCR_every_1m_15cov,
-        #'PCR every 2w 50%': PCR_every_2w_50cov,
-        'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_staff,
+        'Antigen every 1w': Antigen_every_1w_starting_1wprior_all,
     }
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    #scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
+    scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
 
     testing = generate_testing()
     #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'PCR every 1d']}
@@ -184,6 +201,7 @@ if __name__ == '__main__':
         'change_beta': 0.62,
     }
 
+    # Now ignoring pars_v1 an pars_v2, using calibrated values instead:
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
 
     sims = []
@@ -210,7 +228,6 @@ if __name__ == '__main__':
                 for stype, spec in this_scen.items():
                     if spec is not None:
                         spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
-                        spec['beta_s'] = 1.5 # Increase beta (multiplier) in schools from default of 0.6 to 1.5 (makes normal school R0>1, as to be expected based on global data (Israel), but with Hybrid + 2w PCR testing, R0<1, again as expected from global exemplars.
 
                 ns = new_schools(this_scen)
                 sim['interventions'] += [ns]

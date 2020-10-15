@@ -49,7 +49,7 @@ if __name__ == '__main__':
                     for stype, spec in this_scen.items():
                         if spec is not None:
                             spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
-                            spec['beta_s'] = 1.0 # Shouldn't matter considering schools are closed in the 'all_remote' scenario
+                            spec['beta_s'] = 1.5 # Shouldn't matter considering schools are closed in the 'all_remote' scenario
 
                     ns = new_schools(this_scen)
                     sim['interventions'] += [ns]
