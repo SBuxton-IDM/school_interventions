@@ -10,7 +10,7 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 do_run = False
 
-par_inds = (0,10) # First and last parameters to run
+par_inds = (0,1) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 25
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     testing = {}
     for start_date in ['2020-10-26', '2020-10-27', '2020-10-28', '2020-10-29', '2020-10-30', '2020-10-31', '2020-11-01', '2020-11-02']:
         t = sc.dcp(test)
-        t[0]['start_day'] = start_date
+        t[0]['start_date'] = start_date
 
         testing[start_date] = t
 
@@ -38,7 +38,6 @@ if __name__ == '__main__':
         sims = []
         msims = []
         tot = len(scenarios) * len(testing) * len(par_list)
-        print(len(scenarios), len(testing), len(par_list))
         proc = 0
         for skey, scen in scenarios.items():
             for tidx, (tkey, test) in enumerate(testing.items()):
@@ -112,6 +111,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(figsize=(12,8))
     for key, dat in d.groupby('key2'):
         sns.regplot(data=dat, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'s':5}, label=key, ax=ax)
+    plt.legend()
     #g.set_titles(col_template="{col_name}", row_template="{row_name}")
     #g.set_axis_labels(x_var='School size (students)', y_var='Infection on First Day (%)')
     #for ax in g.axes.flat:
