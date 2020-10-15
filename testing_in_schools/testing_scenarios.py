@@ -37,6 +37,7 @@ def generate_scenarios():
         'schedule': 'Full',
         'screen_prob': 0,
         'test_prob': 0, # Amongst those who screen positive
+        'screen2pcr': 3, # Days from screening to receiving PCR results
         'trace_prob': 0, # Fraction of newly diagnosed index cases who are traced
         'quar_prob': 0, # Of those reached by contact tracing, this fraction will quarantine
         'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
@@ -50,6 +51,7 @@ def generate_scenarios():
         'schedule': 'Full',
         'screen_prob': 0.9,
         'test_prob': 0.5, # Amongst those who screen positive
+        'screen2pcr': 3, # Days from screening to receiving PCR results
         'trace_prob': 0.75, # Fraction of newly diagnosed index cases who are traced
         'quar_prob': 0.75, # Of those reached by contact tracing, this fraction will quarantine
         'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
@@ -71,6 +73,7 @@ def generate_scenarios():
         'schedule': 'Remote',
         'screen_prob': 0,
         'test_prob': 0,
+        'screen2pcr': 3, # Days from screening to receiving PCR results
         'trace_prob': 0,
         'quar_prob': 0,
         'ili_prob': 0,

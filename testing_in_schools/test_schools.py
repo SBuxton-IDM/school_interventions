@@ -27,8 +27,8 @@ if __name__ == '__main__':
     params = sc.dcp(entry['pars'])
     params['rand_seed'] = int(entry['index'])
 
-    scen = generate_scenarios()['all_remote']
-    testing = generate_testing()['None']#['Antigen every 1w PCR f/u']
+    scen = generate_scenarios()['as_normal']
+    testing = generate_testing()['Antigen every 1w, PCR f/u']
     #testing[0]['delay'] = 0
     for stype, spec in scen.items():
         if spec is not None:
@@ -36,8 +36,8 @@ if __name__ == '__main__':
     scen['testing'] = testing
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
-    sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
-    #sim = cs.create_sim(params, pop_size=1e4, folder=None)
+    ######3sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
+    sim = cs.create_sim(params, pop_size=1e4, folder=None)
 
     ns = new_schools(scen)
     sim['interventions'] += [ns]

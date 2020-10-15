@@ -292,6 +292,7 @@ class SchoolStats():
             'scheduled': self.scheduled,
             'in_person': self.in_person,
             'num_school_days': self.num_school_days,
+            'n_tested': self.school.testing.n_tested,
         }
 
 
@@ -338,7 +339,7 @@ class SchoolTesting():
             test['uids'] = uids
 
 
-    def antigen_test(self, inds, sym7d_sens=1.0, other_sens=1.0, loss_prob=0.0):
+    def antigen_test(self, inds, sym7d_sens=1.0, other_sens=1.0, specificity=1, loss_prob=0.0):
         '''
         Adapted from the test() method on sim.people to do antigen testing. Main change is that sensitivity is now broken into those symptomatic in the past week and others.
 
@@ -392,11 +393,11 @@ class SchoolTesting():
         #ppl.date_pos_test[true_positive_uids] = t
 
         # False positivies
-        if test['specificity'] < 1:
-            non_infectious_uids = cvu.ifalse(ppl.infectious[uids_to_test], np.array(uids_to_test))
-            false_positive_uids = cvu.binomial_filter(1-test['specificity'], non_infectious_uids)
+        if specificity < 1:
+            non_infectious_uids = np.setdiff1d(inds, is_infectious)
+            false_positive_uids = cvu.binomial_filter(1-specificity, non_infectious_uids)
 
-        return np.concatenate(true_positive_uids, false_positive_uids)
+        return np.concatenate((true_positive_uids, false_positive_uids))
 
 
     def update(self):
@@ -416,6 +417,7 @@ class SchoolTesting():
 
         false_positive_uids = []
         ppl = self.school.sim.people
+        t = self.school.sim.t
         ids_to_iso = {}
         for test in self.testing:
             if self.school.sim.t in test['t_vec']:
@@ -426,15 +428,16 @@ class SchoolTesting():
                 if self.school.verbose: print(self.school.sim.t, f'School {self.school.sid} of type {self.school.stype} is testing {len(uids_to_test)} today')
 
                 if test['is_antigen']:
-                    ag_pos_uids = self.antigen_test(uids_to_test, sym7d_sens=test['symp7d_sensitivity'], other_sens=test['other_sensitivity'])
+                    ag_pos_uids = self.antigen_test(uids_to_test, sym7d_sens=test['symp7d_sensitivity'], other_sens=test['other_sensitivity'], specificity=test['specificity'])
+
                     pcr_fu_uids = cvu.binomial_filter(test['PCR_followup_perc'], ag_pos_uids)
+
                     ppl.test(pcr_fu_uids, test_sensitivity=1.0, test_delay=test['PCR_followup_delay'])
+                    self.n_tested['PCR'] += len(pcr_fu_uids) # Add follow-up PCR tests
+
                     ids_to_iso = {uid:t+test['PCR_followup_delay'] for uid in pcr_fu_uids}
                     non_pcr_uids = np.setdiff1d(ag_pos_uids, pcr_fu_uids)
                     ids_to_iso.update({uid:t+self.school.sim.pars['quar_period'] for uid in non_pcr_uids})
-
-                    self.n_tested['Antigen'] += len(uids_to_test)
-                    self.n_tested['PCR'] += len(pcr_fu_uids)
                 else:
                     ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
                     # N.B. No false positives for PCR
@@ -446,16 +449,25 @@ class School():
     ''' Represent a single school '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
-                start_day, screen_prob, test_prob, trace_prob, quar_prob, schedule, beta_s, ili_prob, testing, verbose=False, **kwargs):
+                start_day, screen_prob, screen2pcr, test_prob, trace_prob, quar_prob, schedule, beta_s, ili_prob, testing, verbose=False, **kwargs):
         '''
         Initialize the School
 
-        ili_prev    (float or dict)     : Prevalence of influenza-like-illness symptoms in the population
-        num_pos     (int)               : number of covid positive cases per school that triggers school closure
-        trace       (float)             : probability of tracing contacts of diagnosed covid+
-        test        (float)             : probability of testing screen positive
-        test_freq   (int)               : frequency of testing teachers (1 = daily, 2 = every other day, ...)
-        schedule    (str)               : school schedule: full, hybrid, or remote
+        sim          (covasim Sim)  : Pointer to the simulation object
+        school_id    (int)          : ID of this school
+        school_type  (str)          : Type of this school in pk, es, ms, hs, uv
+        uids         (array)        : Array of ids of individuals associated with this school
+        layer        (Layer)        : The fragment of the original 's' network associated with this school
+        start_day    (str)          : Opening day for school
+        screen_prob  (float)        : Coverage of screening
+        test_prob    (float)        : Probability of PCR testing on screen +
+        screen2pcr   (int)          : Days between positive screening receiving PCR results, for those testing
+        trace_prob   (float)        : Probability of tracing from PCR+
+        quar_prob    (float)        : Probability school contacts quarantine on trace
+        schedule     (str)          : Full, Hybrid, or Remote
+        beta_s       (float)        : beta for this school
+        ili_prob     (float)        : Daily probability of ILI
+        testing      (struct)       : List of dictionaries of parameters for SchoolTesting
         '''
 
         self.sim = sim
@@ -464,6 +476,7 @@ class School():
         self.uids = uids
         self.start_day = start_day
         self.screen_prob = screen_prob
+        self.screen2pcr = screen2pcr
         self.test_prob = test_prob
         self.trace_prob = trace_prob
         self.quar_prob = quar_prob
@@ -567,11 +580,7 @@ class School():
             for uid in uids_to_quar:
                 self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
-        '''
-        if not self.ct_mgr.school_day:
-            # No school today, nothing more to do - return an empty layer
-            return cvb.Layer()
-        '''
+            # N.B. Not intentionally testing those in quarantine other than what covasim already does
 
         # Determine who will arrive at school (used in screen() and stats.update())
         self.uids_arriving_at_school = [u for u in self.scheduled_uids if u not in self.uids_at_home.keys()]
@@ -580,13 +589,18 @@ class School():
         screen_pos_ids = self.screen()
 
         if len(screen_pos_ids) > 0:
-            # Send the screen positives home
-            for uid in screen_pos_ids:
-                self.uids_at_home[uid] = self.sim.t + 2 # Can come back in a few days, TODO: make a parameter
-
             # Perform follow-up testing on some
             uids_to_test = cvu.binomial_filter(self.test_prob, screen_pos_ids)
-            self.sim.people.test(uids_to_test, test_delay=1) # one day test delay, TODO: Make a parameter!
+            self.sim.people.test(uids_to_test, test_delay=self.screen2pcr)
+            self.testing.n_tested['PCR'] += len(uids_to_test) # Ugly, move all testing in to the SchoolTesting class!
+
+            # Send the screen positives home - quar_period if no PCR and otherwise the time to the PCR
+            for uid in uids_to_test:
+                self.uids_at_home[uid] = self.sim.t + self.screen2pcr # Can come back after PCR results are in
+
+            for uid in np.setdiff1d(screen_pos_ids, uids_to_test):
+                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
+
 
         # Determine (for tracking, mostly) who has arrived at school and passed symptom screening
         self.uids_passed_screening = [u for u in self.scheduled_uids if u not in self.uids_at_home.keys()]
