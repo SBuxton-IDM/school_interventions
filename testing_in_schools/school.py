@@ -338,7 +338,7 @@ class SchoolTesting():
             test['uids'] = uids
 
 
-    def antigen_test(self, inds, sym7d_sens=1.0, other_sens=1.0, loss_prob=0.0, delay=0):
+    def antigen_test(self, inds, sym7d_sens=1.0, other_sens=1.0, loss_prob=0.0):
         '''
         Adapted from the test() method on sim.people to do antigen testing. Main change is that sensitivity is now broken into those symptomatic in the past week and others.
 
@@ -359,33 +359,44 @@ class SchoolTesting():
 
         https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
         * Performance of 95.0% positive agreement (sensitivity) and 97.9% negative agreement (specificity) in subjects within seven days post symptom onset.
-        * Overall performance of 93.3% positive agreement (sensitivity) and 98.4% negative agreement (specificity). Further, in the 161 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.0% positive agreement (sensitivity).
-        * Further, in the 129 patients with high viral titers (Ct <33), and therefore most likely to transmit virus,
-        * ID NOW showed performance of 98.4% positive agreement (sensitivity).
-    Performance of 94.6% positive agreement (sensitivity) and 97.6% negative agreement (specificity) in symptomatic subjects. Further, in the 136 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.8% positive agreement (sensitivity).
+        * Overall performance of 93.3% positive agreement (sensitivity) and 98.4% negative agreement (specificity). Further, in the 161 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.0% positive agreement (sensitivity). Further, in the 129 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 98.4% positive agreement (sensitivity).
+        * Performance of 94.6% positive agreement (sensitivity) and 97.6% negative agreement (specificity) in symptomatic subjects. Further, in the 136 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.8% positive agreement (sensitivity).
         '''
-
-        inds = np.unique(inds)
-        self.tested[inds] = True
-        self.date_tested[inds] = self.t # Only keep the last time they tested
-        self.date_results[inds] = self.t + delay # Keep date when next results will be returned
 
         ppl = self.school.sim.people
         t = self.school.sim.t
 
-        is_infectious = cvu.itruei(ppl.infectious, inds)
-        pos_test      = cvu.n_binomial(test_sensitivity, len(is_infectious))
-        is_inf_pos    = is_infectious[pos_test]
+        inds = np.unique(inds)
+        # Antigen tests don't count towards stats (yet)
+        #ppl.tested[inds] = True
+        #ppl.date_tested[inds] = t # Only keep the last time they tested
+        #ppl.date_results[inds] = t + delay # Keep date when next results will be returned
 
-        not_diagnosed = is_inf_pos[np.isnan(ppl.date_diagnosed[is_inf_pos])]
-        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
-        final_inds    = not_diagnosed[not_lost]
+        is_infectious = cvu.itruei(ppl.infectious, inds)
+        symp = is_infectious[~np.isnan(ppl.date_symptomatic[is_infectious])]
+        recently_symp_inds = symp[ t-ppl.date_symptomatic[symp] < 7 ]
+        other_inds = np.setdiff1d(is_infectious, recently_symp_inds)
+
+        is_inf_pos = np.concatenate((
+            cvu.binomial_filter(sym7d_sens, recently_symp_inds), # Higher sensitivity for <7 days
+            cvu.binomial_filter(other_sens, other_inds)          # Lower sensitivity of otheres
+        ))
+
+        not_diagnosed      = is_inf_pos[np.isnan(ppl.date_diagnosed[is_inf_pos])]
+        not_lost           = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
+        true_positive_uids = not_diagnosed[not_lost]
 
         # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive
-        ppl.date_diagnosed[final_inds] = t + delay
-        ppl.date_pos_test[final_inds] = t
+        # Not for antigen tests?  date_diagnosed would interfere with later PCR.
+        #ppl.date_diagnosed[true_positive_uids] = t + delay
+        #ppl.date_pos_test[true_positive_uids] = t
 
-        return
+        # False positivies
+        if test['specificity'] < 1:
+            non_infectious_uids = cvu.ifalse(ppl.infectious[uids_to_test], np.array(uids_to_test))
+            false_positive_uids = cvu.binomial_filter(1-test['specificity'], non_infectious_uids)
+
+        return np.concatenate(true_positive_uids, false_positive_uids)
 
 
     def update(self):
@@ -405,6 +416,7 @@ class SchoolTesting():
 
         false_positive_uids = []
         ppl = self.school.sim.people
+        ids_to_iso = {}
         for test in self.testing:
             if self.school.sim.t in test['t_vec']:
                 undiagnosed_uids = cvu.ifalsei(ppl.diagnosed, np.array(test['uids']))
@@ -413,19 +425,21 @@ class SchoolTesting():
 
                 if self.school.verbose: print(self.school.sim.t, f'School {self.school.sid} of type {self.school.stype} is testing {len(uids_to_test)} today')
 
-                #if test['is_antigen']:
-                #    ag_pos_uids = self.antigen_test(uids_to_test)
-                #else:
-                ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
+                if test['is_antigen']:
+                    ag_pos_uids = self.antigen_test(uids_to_test, sym7d_sens=test['symp7d_sensitivity'], other_sens=test['other_sensitivity'])
+                    pcr_fu_uids = cvu.binomial_filter(test['PCR_followup_perc'], ag_pos_uids)
+                    ppl.test(pcr_fu_uids, test_sensitivity=1.0, test_delay=test['PCR_followup_delay'])
+                    ids_to_iso = {uid:t+test['PCR_followup_delay'] for uid in pcr_fu_uids}
+                    non_pcr_uids = np.setdiff1d(ag_pos_uids, pcr_fu_uids)
+                    ids_to_iso.update({uid:t+self.school.sim.pars['quar_period'] for uid in non_pcr_uids})
 
+                    self.n_tested['Antigen'] += len(uids_to_test)
+                    self.n_tested['PCR'] += len(pcr_fu_uids)
+                else:
+                    ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
+                    # N.B. No false positives for PCR
 
-                # Handle false positives here?
-                if test['specificity'] < 1 :
-                    non_infectious_uids = cvu.ifalse(ppl.infectious[uids_to_test], np.array(uids_to_test))
-                    false_positive_uids = cvu.binomial_filter(1-test['specificity'], non_infectious_uids)
-                    #self.n_tested += len(uids_to_test) # Count the follow-up PCR test, will be negative
-
-        return false_positive_uids
+        return ids_to_iso
 
 
 class School():
@@ -509,13 +523,10 @@ class School():
         ''' Process the day, return the school layer '''
 
         # Even if a school is not yet open, consider testing in the population
-        false_positive_uids = self.testing.update()
+        ids_to_iso = self.testing.update()
+        self.uids_at_home.update(ids_to_iso)
 
-        for uid in false_positive_uids:
-            # Assume figure out it was a false positive using PCR within a few days:
-            self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period']
-
-        # Look for newly diagnosed people
+        # Look for newly diagnosed people (by PCR)
         newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
         if self.verbose and len(newly_dx_inds)>0: print(self.sim.t, f'School {self.sid} has {len(newly_dx_inds)} newly diagnosed: {newly_dx_inds}', [self.sim.people.date_exposed[u] for u in newly_dx_inds], 'recovering', [self.sim.people.date_recovered[u] for u in newly_dx_inds])
 

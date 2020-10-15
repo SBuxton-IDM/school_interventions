@@ -60,14 +60,14 @@ groups = ['students', 'teachers', 'staff']
 
 scen_names = { # key1
     'as_normal': 'As Normal',
-    'with_screening': 'Normal with\nCountermeasures',
+    'with_countermeasures': 'Normal with\nCountermeasures',
     'all_hybrid': 'Hybrid with\nCountermeasures',
     'k5': 'K-5 In-Person\nOthers Remote',
     'all_remote': 'All Remote',
 }
 scen_order = [
     'as_normal',
-    'with_screening',
+    'with_countermeasures',
     'all_hybrid',
     'k5',
     'all_remote',

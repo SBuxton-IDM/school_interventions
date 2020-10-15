@@ -58,7 +58,7 @@ def generate_scenarios():
     }
 
     # Add screening and NPI
-    scns['with_screening'] = scenario(es=full_with_countermeasures, ms=full_with_countermeasures, hs=full_with_countermeasures)
+    scns['with_countermeasures'] = scenario(es=full_with_countermeasures, ms=full_with_countermeasures, hs=full_with_countermeasures)
 
     # Add hybrid scheduling
     hybrid = sc.dcp(full_with_countermeasures)
@@ -91,7 +91,6 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'specificity': 1,
         'delay': 1,
     }]
 
@@ -101,7 +100,6 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'specificity': 1,
         'delay': 1,
     }]
 
@@ -111,19 +109,7 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'specificity': 1,
         'delay': 1,
-    }]
-
-    # TODO: Propoer antigen testing in covasim
-    Antigen_every_1w_starting_1wprior_teachersstaff = [{
-        'start_date': '2020-10-26',
-        'repeat': 7,
-        'groups': ['teachers', 'staff'], # No students
-        'coverage': 1,
-        'sensitivity': 0.8, # Lower sensitiviy, 80% is a modeling assumption as the true sensitivity is unknown at this time.  Should be high when viral load is high, but unsure how low at lower viral loads.
-        'specificity': 0.9, # 90% specificity is a modeling assumption
-        'delay': 0,          # No delay
     }]
 
     PCR_every_1d_starting_1wprior = [{
@@ -132,7 +118,6 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
         'sensitivity': 1,
-        'specificity': 1,
         'delay': 0, # NOTE: no delay!
     }]
 
@@ -143,7 +128,6 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 0.50,
         'sensitivity': 1,
-        'specificity': 1,
         'delay': 1,
     }]
 
@@ -153,19 +137,47 @@ def generate_testing():
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 0.15,
         'sensitivity': 1,
-        'specificity': 1,
         'delay': 1,
     }]
 
-    Antigen_every_1w_starting_1wprior_all = [{
+    Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup = [{
+        'start_date': '2020-10-26',
+        'repeat': 7,
+        'groups': ['teachers', 'staff'], # No students
+        'coverage': 1,
+        'is_antigen': True,
+        'symp7d_sensitivity': 0.95, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'other_sensitivity': 0.90, # Modeling assumption
+        'specificity': 0.979, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'PCR_followup_perc': 1,
+        'PCR_followup_delay': 3,
+    }]
+
+
+    Antigen_every_1w_starting_1wprior_all_PCR_followup = [{
         'start_date': '2020-10-26',
         'repeat': 7,
         'groups': ['students', 'teachers', 'staff'], # No students
         'coverage': 1,
-        'sensitivity': 0.8, # Lower sensitiviy, 80% is a modeling assumption as the true sensitivity is unknown at this time.  Should be high when viral load is high, but unsure how low at lower viral loads.
-        'specificity': 0.9, # 90% specificity is a modeling assumption
-        'delay': 0,          # No delay
-        'is_antigen': True
+        'is_antigen': True,
+        'symp7d_sensitivity': 0.95, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'other_sensitivity': 0.90, # Modeling assumption
+        'specificity': 0.979, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'PCR_followup_perc': 1,
+        'PCR_followup_delay': 3,
+    }]
+
+    Antigen_every_1w_starting_1wprior_all_no_followup = [{
+        'start_date': '2020-10-26',
+        'repeat': 7,
+        'groups': ['students', 'teachers', 'staff'], # No students
+        'coverage': 1,
+        'is_antigen': True,
+        'symp7d_sensitivity': 0.95, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'other_sensitivity': 0.90, # Modeling assumption
+        'specificity': 0.979, # https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
+        'PCR_followup_perc': 0,
+        'PCR_followup_delay': None, # Does not matter with no PCR follow-up
     }]
 
 
@@ -175,10 +187,11 @@ def generate_testing():
         'PCR every 2w': PCR_every_2w_starting_1wprior,
         'PCR every 1w': PCR_every_1w_starting_1wprior,
         'PCR every 1d': PCR_every_1d_starting_1wprior,
-        'Antigen every 1w teach&staff': Antigen_every_1w_starting_1wprior_teachersstaff,
         'PCR every 2w 50%': PCR_every_2w_50cov,
         #'PCR every 1m 15%': PCR_every_1m_15cov,
-        'Antigen every 1w': Antigen_every_1w_starting_1wprior_all,
+        'Antigen every 1w teach&staff, PCR f/u': Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup,
+        'Antigen every 1w, PCR f/u': Antigen_every_1w_starting_1wprior_all_PCR_followup,
+        'Antigen every 1w, no f/u': Antigen_every_1w_starting_1wprior_all_no_followup,
     }
 
 if __name__ == '__main__':

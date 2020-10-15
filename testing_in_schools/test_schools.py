@@ -8,9 +8,9 @@ from testing_scenarios import generate_scenarios, generate_testing
 from calibrate_model import evaluate_sim
 
 debug = False
-folder = 'v20201013_225k_v2'
+folder = 'v20201015_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_v2_pop_size=225000.json')
+calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 def scenario(es, ms, hs):
     return {
@@ -25,10 +25,10 @@ if __name__ == '__main__':
 
     entry = sc.loadjson(calibfile)[0]
     params = sc.dcp(entry['pars'])
-    params['rand_seed'] = int(entry['index'])
+    params['rand_seed'] = 1 #############################int(entry['index'])
 
     scen = generate_scenarios()['all_remote']
-    testing = generate_testing()['None']
+    testing = generate_testing()['None']#['Antigen every 1w PCR f/u']
     #testing[0]['delay'] = 0
     for stype, spec in scen.items():
         if spec is not None:
@@ -37,6 +37,7 @@ if __name__ == '__main__':
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
     sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
+    #sim = cs.create_sim(params, pop_size=1e4, folder=None)
 
     ns = new_schools(scen)
     sim['interventions'] += [ns]
