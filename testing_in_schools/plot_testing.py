@@ -49,11 +49,22 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-cachefn = os.path.join(folder, 'msims', 'combined.msim')
-#msim = load_single(cachefn)
-fns = [os.path.join(folder, 'msims', fn) for fn in ['batch_0-1.msim']] # 'combined.msim', 
-msim = load_single(fns[0])
-#msim = load_multi(fns, cachefn)
+cachefn = os.path.join(folder, 'msims', 'combined_0-30.msim')
+msim = load_single(cachefn)
+'''
+fns = [os.path.join(folder, 'msims', fn) for fn in [
+    'batch_0-15_all_remote.msim',
+    #'batch_15-30_all_remote.msim',
+    'batch_0-15_k5.msim',
+    #'batch_15-30_k5.msim',
+]] # 'combined.msim',
+msim = load_multi(fns, None)
+
+sims = [s for s in msim.sims if s.key2=='None']
+msim = cv.MultiSim(sims)
+msim.save('remote_k5_None.msims')
+'''
+#msim = load_single('remote_k5_None.msims')
 
 results = []
 byschool = []
@@ -88,9 +99,9 @@ test_names = { # key2
 }
 
 for sim in msim.sims:
-    sim.key2 = test_names[sim.key2]
+    sim.key2 = test_names[sim.key2] if sim.key2 in test_names else sim.key2
 
-hue_order = [test_names[x] for x in [
+test_order = [test_names[x] for x in [
     'None',
     'PCR 1w prior',
     #'PCR every 1m 15%',
@@ -98,9 +109,9 @@ hue_order = [test_names[x] for x in [
     'PCR every 2w 50%',
     'PCR every 2w',
     'PCR every 1w',
+    'Antigen every 1w, no f/u',
     'Antigen every 1w, PCR f/u',
     'PCR every 1d',
-    'Antigen every 1w, no f/u',
 ]]
 
 for sim in msim.sims:
@@ -113,8 +124,8 @@ for sim in msim.sims:
         'key2': sim.key2,
     }
 
-    stats = evaluate_sim(sim)
-    ret.update(stats)
+    perf = evaluate_sim(sim)
+    ret.update(perf)
 
     n_schools = {'es':0, 'ms':0, 'hs':0}
     n_schools_with_inf_d1 = {'es':0, 'ms':0, 'hs':0}
@@ -153,7 +164,7 @@ for sim in msim.sims:
             n_schools_with_inf_d1[stats['type']] += 1
 
         if debug_plot and sim.key1=='as_normal' and sim.key2 == 'None':# and sum([inf_at_sch[g][first_school_day] for g in groups]) > 0:
-            f = plt.figure(figsize=(16,10))
+            f = plt.figure(figsize=(12,8))
             for grp in ['students', 'teachers', 'staff']:
                 #plt.plot(sim.results['date'], inf[grp], label=grp)
                 plt.plot(sim.results['date'], stats['infectious_arrive_at_school'][grp], ls='-', label=f'{grp} arrived')
@@ -184,6 +195,7 @@ for sim in msim.sims:
 
     results.append(ret)
 
+plt.show() # TEMP
 df = pd.DataFrame(results)
 
 # Attack rate
@@ -198,9 +210,11 @@ for name in ['all', 'no_normal']:
 
     g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
 
-    g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=hue_order, order=so)
+    g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so)
     if name == 'all':
-        g.add_legend()
+        g.add_legend(fontsize=14)
+        #for ax in g.axes.flat: plt.setp(ax.get_legend().get_texts(), fontsize=14)  # for legend text
+
     g.set_titles(row_template="{row_name}")
     xtl = g.axes[1,0].get_xticklabels()
     xtl = [l.get_text() for l in xtl]
@@ -213,8 +227,9 @@ for name in ['all', 'no_normal']:
 d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
 d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=hue_order, order=scen_order, palette='Reds')
-g.add_legend()
+g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=test_order, order=scen_order, palette='Reds')
+g.add_legend(fontsize=14)
+#for ax in g.axes.flat: plt.setp(ax.get_legend().get_texts(), fontsize=14)  # for legend text
 g.set_titles(row_template="{row_name}", fontsize=24)
 xtl = g.axes[1,0].get_xticklabels()
 xtl = [l.get_text() for l in xtl]
@@ -225,7 +240,7 @@ cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'), dpi=300)
 
 # Re
 fig, ax = plt.subplots(figsize=(12,8))
-sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=hue_order, order=scen_order)
+sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=test_order, order=scen_order)
 ax.set_ylim([0.8, 1.45])
 ax.set_ylabel(r'Average $R_e$')
 ax.set_xlabel('')
@@ -259,7 +274,8 @@ for ax in g.axes.flat:
     ax.set_yticks(yt)
     ax.set_yticklabels([int(100*t) for t in yt])
     ax.grid(True)
-g.add_legend()
+g.add_legend(fontsize=14)
+#for ax in g.axes.flat: plt.setp(ax.get_legend().get_texts(), fontsize=14)  # for legend text
 plt.tight_layout()
 cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg.png'), dpi=300)
 
