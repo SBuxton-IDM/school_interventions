@@ -1,6 +1,6 @@
 import sciris as sc
 
-files = sc.getfilelist('./inputs')
+files = sc.getfilelist('v20201016_225k/inputs')
 n_files = len(files)
 
 pops = []
@@ -19,6 +19,8 @@ for p,pop in enumerate(pops):
     teachers = {}
     staff = {}
     for st, sids in pop.school_types.items():
+        if st in ['pk', 'uv']:
+            continue
         students[st] = 0
         teachers[st] = 0
         staff[st] = 0

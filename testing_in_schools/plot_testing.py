@@ -2,6 +2,7 @@
 
 import os
 import covasim as cv
+import sciris as sc
 import covasim.misc as cvm
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime as dt
 from calibrate_model import evaluate_sim
+from pathlib import Path
 
 # Global plotting styles
 font_size = 16
@@ -19,9 +21,12 @@ mplt.rcParams['font.family'] = font_style
 
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
-folder = 'v20201015_225k'
-imgdir = os.path.join(folder, 'img')
+folder = 'v20201016_225k'
+variant = '_final_20-30_ar'
 debug_plot = False
+
+imgdir = os.path.join(folder, 'img'+variant)
+Path(imgdir).mkdir(parents=True, exist_ok=True)
 
 
 def load_single(fn):
@@ -50,11 +55,15 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-cachefn = os.path.join(folder, 'msims', 'combined_0-30.msim') ###### combined_new_antigen_0-30.msim
+#cachefn = os.path.join(folder, 'msims', 'combined_new_antigen_0-30.msim')
+cachefn = os.path.join(folder, 'msims', 'batch_final_20-30.msim')
+#cachefn = os.path.join(folder, 'msims', 'batch_sm_0-1.msim')
+
 print(f'loading {cachefn}')
 msim = load_single(cachefn)
+"""
 print('extracting sims')
-sims = [s.shrink() for s in msim.sims if 'Antigen' not in s.key2]
+sims = [s.shrink(in_place=False) for s in msim.sims if 'Antigen' not in s.key2]
 msim = 0
 
 fns = [os.path.join(folder, 'msims', fn) for fn in [
@@ -65,7 +74,7 @@ print('load_multi')
 msim_new_antigen = load_multi(fns, None)
 
 print('shrink')
-sims += [s.shrink() for s in msim_new_antigen.sims]
+sims += [s.shrink(in_place=False) for s in msim_new_antigen.sims]
 print('creating MultiSim')
 msim = cv.MultiSim(sims)
 print('saving')
@@ -79,6 +88,7 @@ msim = cv.MultiSim(sims)
 msim.save('remote_k5_None.msims')
 #msim = load_single('remote_k5_None.msims')
 '''
+"""
 
 results = []
 byschool = []
@@ -103,30 +113,32 @@ test_names = sc.odict({ # key2
     'None': 'None',
     'PCR 1w prior': 'PCR one week prior, 1d delay',
     'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, PCR f/u',
-    'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
+    #'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
     'PCR every 2w': 'Fortnightly PCR, 1d delay',
+    'Antigen every 2w, no f/u': 'Fortnightly antigen, no f/u',
+    'Antigen every 2w, PCR f/u': 'Fortnightly antigen, PCR f/u',
     'PCR every 1w': 'Weekly PCR, 1d delay',
 
     #'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
     #'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, no delay, PCR f/u',
     #'Antigen every 1w, PCR f/u': 'Weekly antigen for all, no delay, PCR f/u',
     #'Antigen every 1w, no f/u': 'Weekly antigen for all, no delay, no f/u',
-    'Antigen every 2w, PCR f/u': 'Fortnightly antigen, PCR f/u',
-    'Antigen every 2w, no f/u': 'Fortnightly antigen, no f/u',
     'PCR every 1d': 'Daily PCR, no delay',
 })
 test_order = test_names.values()
 test_hue = {
-    'None': 'slategray',
-    'PCR one week prior, 1d delay': 'lightsteelblue',
-    'Weekly antigen for teachers & staff, PCR f/u': 'indianred',
-    'Fortnightly PCR, 50% coverage': 'cornflowerblue',
-    'Fortnightly PCR, 1d delay': 'royalblue',
-    'Weekly PCR, 1d delay': 'dodgerblue',
-    'Fortnightly antigen, PCR f/u': 'firebrick',
-    'Fortnightly antigen, no f/u': 'darkred',
-    'Daily PCR, no delay': 'deeppink',
+    'None':                                         'gray',
+    'PCR one week prior, 1d delay':                 (0.8584083044982699, 0.9134486735870818, 0.9645674740484429, 1.0),
+    'Weekly antigen for teachers & staff, PCR f/u': (0.9882352941176471, 0.732072279892349, 0.6299269511726259, 1.0),
+    'Fortnightly PCR, 50% coverage':                (0.7309496347558632, 0.8394771241830065, 0.9213225682429834, 1.0),
+    'Fortnightly PCR, 1d delay':                    (0.5356862745098039, 0.746082276047674, 0.8642522106881968, 1.0),
+    'Fortnightly antigen, PCR f/u':                 (0.7925720876585928, 0.09328719723183392, 0.11298731257208766, 1.0),
+    'Fortnightly antigen, no f/u':                  (0.9835755478662053, 0.4127950788158401, 0.28835063437139563, 1.0),
+    'Weekly PCR, 1d delay':                         (0.32628988850442137, 0.6186236063052672, 0.802798923490965, 1.0),
+    'Daily PCR, no delay':                          (0.16696655132641292, 0.48069204152249134, 0.7291503267973857, 1.0),
 }
+#n_antigen = len([i for i in test_order if 'antigen' in i.lower()])
+#cmap = plt.cm.get_cmap('Blues')
 
 for sim in msim.sims:
     sim.key2 = test_names[sim.key2] if sim.key2 in test_names else sim.key2
@@ -134,15 +146,12 @@ for sim in msim.sims:
 
 tests = []
 for sim in msim.sims:
-    # Note: The objective function has recently changed, so mismatch will not match!
     first_school_day = sim.day('2020-11-02')
     last_school_day = sim.day('2021-01-31')
-    rdf = pd.DataFrame(sim.results)
     ret = {
         'key1': sim.key1,
         'key2': sim.key2,
     }
-
 
     perf = evaluate_sim(sim)
     ret.update(perf)
@@ -153,9 +162,15 @@ for sim in msim.sims:
     grp_dict = {'Students': ['students'], 'Teachers & Staff': ['teachers', 'staff']}
     perc_inperson_days_lost = {k:[] for k in grp_dict.keys()}
     attackrate = {k:[] for k in grp_dict.keys()}
+    count = {k:0 for k in grp_dict.keys()}
+    exposed = {k:0 for k in grp_dict.keys()}
+    inperson_days = {k:0 for k in grp_dict.keys()}
+    possible_days = {k:0 for k in grp_dict.keys()}
 
-    first = sim.day('2020-11-02')
-    last = sim.day('2021-01-31')
+    first_date = '2020-11-02'
+    first = sim.day(first_date)
+    last_date = '2021-01-31'
+    last = sim.day(last_date)
     #tests.append([sim.key1, sim.key2, np.sum(sim.results['new_tests'][first:last])])
     #tests.append([sim.key1, sim.key2, sim.results['new_tests']]) # [first:last]
 
@@ -168,6 +183,7 @@ for sim in msim.sims:
         in_person = stats['in_person']
         exp = stats['newly_exposed']
         num_school_days = stats['num_school_days']
+        possible_school_days = np.busday_count(first_date, last_date)
         n_exp = {}
         for grp in groups:
             n_exp[grp] = np.sum(exp[grp])
@@ -183,6 +199,11 @@ for sim in msim.sims:
                 100*(scheduled_person_days - in_person_days)/scheduled_person_days if scheduled_person_days > 0 else 100
             )
             attackrate[gkey].append( 100 * num_exposed / num_people)
+
+            exposed[gkey] += n_exp[grp]
+            count[gkey] += stats['num'][grp]
+            inperson_days[gkey] += in_person_days
+            possible_days[gkey] += possible_school_days*num_people
 
         n_schools[stats['type']] += 1
         if inf_at_sch['students'][first_school_day] + inf_at_sch['teachers'][first_school_day] + inf_at_sch['staff'][first_school_day] > 0:
@@ -200,29 +221,33 @@ for sim in msim.sims:
             plt.legend()
             plt.show()
 
-        d1scenario = 'with_countermeasures' #'as_normal'
-        if sim.key1 == d1scenario:
-            byschool.append({
-                'type': stats['type'],
-                'key1': sim.key1, # Filtered to just one scenario (key1)
-                'key2': sim.key2,
-                'n_students': stats['num']['students'], #sum([stats['num'][g] for g in groups]),
-                'd1 infectious': sum([inf_at_sch[g][first_school_day] for g in groups]),
-                'd1 bool': sum([inf_at_sch[g][first_school_day] for g in groups]) > 0,
-                'PCR': stats['n_tested']['PCR'],
-                'Antigen': stats['n_tested']['Antigen'],
-            })
+        byschool.append({
+            'sid': sid,
+            'type': stats['type'],
+            'key1': sim.key1, # Filtered to just one scenario (key1)
+            'key2': sim.key2,
+            'n_students': stats['num']['students'], #sum([stats['num'][g] for g in groups]),
+            'n': sum([stats['num'][g] for g in groups]),
+            'd1 infectious': sum([inf_at_sch[g][first_school_day] for g in groups]),
+            'd1 bool': sum([inf_at_sch[g][first_school_day] for g in groups]) > 0,
+            'PCR': stats['n_tested']['PCR'],
+            'Antigen': stats['n_tested']['Antigen'],
+            'Days': last_school_day - first_school_day,
+            'Pop*Scale': sim.pars['pop_size']*sim.pars['pop_scale'],
+        })
 
     for stype in ['es', 'ms', 'hs']:
         ret[f'{stype}_perc_d1'] = 100 * n_schools_with_inf_d1[stype] / n_schools[stype]
 
+    # Deciding between district and school perspective here
     for gkey in grp_dict.keys():
-        ret[f'perc_inperson_days_lost_{gkey}'] = np.mean(perc_inperson_days_lost[gkey])
-        ret[f'attackrate_{gkey}'] = np.mean(attackrate[gkey])
+        ret[f'perc_inperson_days_lost_{gkey}'] = 100*(possible_days[gkey]-inperson_days[gkey])/possible_days[gkey] #np.mean(perc_inperson_days_lost[gkey])
+        ret[f'attackrate_{gkey}'] = 100*exposed[gkey] / count[gkey] #np.mean(attackrate[gkey])
+        ret[f'count_{gkey}'] = np.sum(count[gkey])
 
     results.append(ret)
 
-
+df = pd.DataFrame(results)
 '''
 d = pd.DataFrame(byschool)
 print( d.groupby('key2')[['PCR', 'Antigen']].mean() )
@@ -239,7 +264,6 @@ for i,t in tests.iterrows():
 plt.show()
 '''
 
-df = pd.DataFrame(results)
 
 # Attack rate
 for name in ['all', 'no_normal']:
@@ -295,9 +319,9 @@ cv.savefig(os.path.join(imgdir, '3mAverageRe.png'), dpi=300)
 
 # Percent of schools with infections on day 1
 fig = plt.figure(figsize=(12,8))
-extract = df.groupby(['key1', 'key2'])[['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1']].mean().loc[d1scenario].reset_index()
+extract = df.groupby(['key1', 'key2'])[['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1']].mean().loc['as_normal'].reset_index()
 melt = pd.melt(extract, id_vars=['key2'], value_vars=['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'], var_name='School Type', value_name='Schools with First-Day Infections')
-sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2', palette=test_hue)
+sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2')
 plt.legend()
 plt.tight_layout()
 cv.savefig(os.path.join(imgdir, 'SchoolsWithFirstDayInfections.png'), dpi=300)
@@ -319,7 +343,30 @@ g.add_legend(fontsize=14)
 plt.tight_layout()
 cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg.png'), dpi=300)
 
+# Tests required
+fig, ax = plt.subplots(figsize=(12,8))
+d = pd.DataFrame(byschool)
+# Additional tests per 100,000 population
+print(d.groupby('type').sum())
+d['PCR'] *= 100000 / d['Days'] / d['Pop*Scale']
+d['Antigen'] *= 100000 / d['Days'] / d['Pop*Scale']
+test_order.reverse()
+
+d['Total'] = d['PCR'] + d['Antigen']
+d = d.loc[d['key1'] == 'with_countermeasures']
+d = d.groupby('key2').mean().loc[test_order][['n', 'PCR', 'Antigen', 'Total']].reset_index()
+ax.barh(d['key2'], d['Total'], color='r', label='Antigen')
+ax.barh(d['key2'], d['PCR'], color='b', label='PCR')
+ax.grid(axis='x')
+ax.set_xlabel('Additional tests required (daily per 100k population)')
+fig.tight_layout()
+plt.legend()
+cv.savefig(os.path.join(imgdir, f'NumTests.png'), dpi=300)
+
+
+
 # Save mean to CSV
 df.groupby(['key1', 'key2']).mean().to_csv(os.path.join(imgdir, 'Mean.csv'))
+
 
 #plt.show()

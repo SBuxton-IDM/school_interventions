@@ -152,8 +152,8 @@ def generate_testing():
         'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
         'other_sensitivity': 0.90, # Modeling assumption
         'specificity': 0.985, # https://www.fda.gov/media/141570/download
-        'PCR_followup_perc': 1,
-        'PCR_followup_delay': 3,
+        'PCR_followup_perc': 1.0,
+        'PCR_followup_delay': 3.0,
     }]
 
 
@@ -166,8 +166,8 @@ def generate_testing():
         'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
         'other_sensitivity': 0.90, # Modeling assumption
         'specificity': 0.985, # https://www.fda.gov/media/141570/download
-        'PCR_followup_perc': 1,
-        'PCR_followup_delay': 3,
+        'PCR_followup_perc': 1.0,
+        'PCR_followup_delay': 3.0,
     }]
 
     Antigen_every_2w_starting_1wprior_all_no_followup = [{
@@ -179,8 +179,8 @@ def generate_testing():
         'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
         'other_sensitivity': 0.90, # Modeling assumption
         'specificity': 0.985, # https://www.fda.gov/media/141570/download
-        'PCR_followup_perc': 0,
-        'PCR_followup_delay': 0, # Does not matter with no PCR follow-up
+        'PCR_followup_perc': 0.0,
+        'PCR_followup_delay': 0.0, # Does not matter with no PCR follow-up
     }]
 
 

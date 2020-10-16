@@ -396,6 +396,8 @@ class SchoolTesting():
         if specificity < 1:
             non_infectious_uids = np.setdiff1d(inds, is_infectious)
             false_positive_uids = cvu.binomial_filter(1-specificity, non_infectious_uids)
+        else:
+            false_positive_uids = np.empty(0, dtype=np.int64)
 
         return np.concatenate((true_positive_uids, false_positive_uids))
 
@@ -431,7 +433,6 @@ class SchoolTesting():
                     ag_pos_uids = self.antigen_test(uids_to_test, sym7d_sens=test['symp7d_sensitivity'], other_sens=test['other_sensitivity'], specificity=test['specificity'])
 
                     pcr_fu_uids = cvu.binomial_filter(test['PCR_followup_perc'], ag_pos_uids)
-
                     ppl.test(pcr_fu_uids, test_sensitivity=1.0, test_delay=test['PCR_followup_delay'])
                     #self.school.sim.results['new_tests'][t] += len(pcr_fu_uids)
                     self.n_tested['PCR'] += len(pcr_fu_uids) # Also add follow-up PCR tests
