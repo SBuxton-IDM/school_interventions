@@ -51,17 +51,26 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
 cachefn = os.path.join(folder, 'msims', 'combined_0-30.msim') ###### combined_new_antigen_0-30.msim
+print(f'loading {cachefn}')
 msim = load_single(cachefn)
+print('extracting sims')
+sims = [s.shrink() for s in msim.sims if 'Antigen' not in s.key2]
+msim = 0
+
 fns = [os.path.join(folder, 'msims', fn) for fn in [
     'new_antigen_tests_0-15.msim',
     'new_antigen_tests_15-30.msim',
 ]]
+print('load_multi')
 msim_new_antigen = load_multi(fns, None)
 
-sims = [s.shrink() for s in msim.sims if 'Antigen' not in s.key2]
+print('shrink')
 sims += [s.shrink() for s in msim_new_antigen.sims]
+print('creating MultiSim')
 msim = cv.MultiSim(sims)
+print('saving')
 msim.save(os.path.join(folder, 'msims', 'combined_new_antigen_0-30.msim'))
+print('done!')
 
 '''
 msim = load_single(os.path.join(folder, 'msims','batch_sm_0-5.msim'))
