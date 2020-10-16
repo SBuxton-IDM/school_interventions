@@ -4,12 +4,12 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-par_inds = (0,15)
+par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 32
+batch_size = 24
 
-folder = 'v20201015_225k'
-stem = f'batch_{par_inds[0]}-{par_inds[1]}'
+folder = 'v20201016_225k'
+stem = f'batch_final_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 def scenario(es, ms, hs):
@@ -190,7 +190,7 @@ def generate_testing():
         'PCR every 2w': PCR_every_2w_starting_1wprior,
         'PCR every 1w': PCR_every_1w_starting_1wprior,
         'PCR every 1d': PCR_every_1d_starting_1wprior,
-        'PCR every 2w 50%': PCR_every_2w_50cov,
+        #'PCR every 2w 50%': PCR_every_2w_50cov,
         #'PCR every 1m 15%': PCR_every_1m_15cov,
         'Antigen every 1w teach&staff, PCR f/u': Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup,
         'Antigen every 2w, PCR f/u': Antigen_every_2w_starting_1wprior_all_PCR_followup,
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     #scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
 
     testing = generate_testing()
-    testing = {k:v for k,v in testing.items() if 'Antigen' in k}
+    #testing = {k:v for k,v in testing.items() if 'Antigen' in k}
 
     # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
     pars_v1 = { # 100k pop
