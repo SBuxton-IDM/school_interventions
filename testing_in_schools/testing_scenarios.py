@@ -4,12 +4,12 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 
-par_inds = (0,15)
+par_inds = (0,5)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 32
+batch_size = 16
 
 folder = 'v20201015_225k'
-stem = f'batch_{par_inds[0]}-{par_inds[1]}'
+stem = f'batch_sm_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 def scenario(es, ms, hs):
@@ -199,10 +199,10 @@ def generate_testing():
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    #scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
+    scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
 
     testing = generate_testing()
-    testing = {k:v for k,v in testing.items() if 'Antigen' in k}
+    testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 1w', 'Antigen every 2w, PCR f/u']}
 
     # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
     pars_v1 = { # 100k pop

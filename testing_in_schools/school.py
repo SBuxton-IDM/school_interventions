@@ -433,13 +433,15 @@ class SchoolTesting():
                     pcr_fu_uids = cvu.binomial_filter(test['PCR_followup_perc'], ag_pos_uids)
 
                     ppl.test(pcr_fu_uids, test_sensitivity=1.0, test_delay=test['PCR_followup_delay'])
-                    self.n_tested['PCR'] += len(pcr_fu_uids) # Add follow-up PCR tests
+                    #self.school.sim.results['new_tests'][t] += len(pcr_fu_uids)
+                    self.n_tested['PCR'] += len(pcr_fu_uids) # Also add follow-up PCR tests
 
                     ids_to_iso = {uid:t+test['PCR_followup_delay'] for uid in pcr_fu_uids}
                     non_pcr_uids = np.setdiff1d(ag_pos_uids, pcr_fu_uids)
                     ids_to_iso.update({uid:t+self.school.sim.pars['quar_period'] for uid in non_pcr_uids})
                 else:
                     ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
+                    #self.school.sim.results['new_tests'][t] += len(uids_to_test)
                     # N.B. No false positives for PCR
 
         return ids_to_iso
@@ -592,6 +594,7 @@ class School():
             # Perform follow-up testing on some
             uids_to_test = cvu.binomial_filter(self.test_prob, screen_pos_ids)
             self.sim.people.test(uids_to_test, test_delay=self.screen2pcr)
+            #self.sim.results['new_tests'][t] += len(uids_to_test)
             self.testing.n_tested['PCR'] += len(uids_to_test) # Ugly, move all testing in to the SchoolTesting class!
 
             # Send the screen positives home - quar_period if no PCR and otherwise the time to the PCR
