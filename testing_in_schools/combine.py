@@ -5,12 +5,11 @@ import os
 folder = 'v20201015_225k'
 
 fns = [
-        'batch_0-15_as_normal.msim',
-        'batch_0-15_with_countermeasures.msim',
-        'batch_0-15_all_hybrid.msim',
-        'batch_0-15_all_remote.msim',
-        'batch_0-15_k5.msim',
-        'batch_0-15.msim',
+'batch_final_0-20_all_remote.msim',
+'batch_final_0-20_k5.msim',
+'batch_final_0-20_all_hybrid.msim',
+'batch_final_0-20_as_normal.msim',
+'batch_final_0-20_with_countermeasures.msim',
 ]
 
 fns = [os.path.join(folder, 'msims', fn) for fn in fns]
