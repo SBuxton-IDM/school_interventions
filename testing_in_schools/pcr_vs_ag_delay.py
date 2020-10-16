@@ -16,13 +16,13 @@ font_style = 'Roboto Condensed'
 mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
-do_run = True
+do_run = False
 
-par_inds = (0,5) # First and last parameters to run
+par_inds = (0,20) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
-folder = 'v20201015_225k'
+folder = 'v20201016_225k'
 imgdir = os.path.join(folder, 'img')
 stem = f'pcr_vs_ag_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
@@ -100,6 +100,7 @@ if __name__ == '__main__':
         msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'{stem}.msim'))
 
 
+    grp_dict = {'Students': ['students'], 'Teachers & Staff': ['teachers', 'staff']}
     groups = ['students', 'teachers', 'staff']
     results = []
 
@@ -112,7 +113,6 @@ if __name__ == '__main__':
             'eidx': sim.eidx,
         }
 
-        grp_dict = {'Students': ['students'], 'Teachers & Staff': ['teachers', 'staff']}
         exposed = {k:0 for k in grp_dict.keys()}
         count = {k:0 for k in grp_dict.keys()}
 
@@ -138,5 +138,37 @@ if __name__ == '__main__':
 
     df = pd.DataFrame(results)
 
-    print(df)
+    #print(df)
+    df.replace({'key2':
+        {
+            0: 'PCR results same day',
+            1: 'PCR results next day',
+            2: 'PCR results in two days',
+            3: 'PCR results in three days',
+            4: 'PCR results in four days',
+            'Antigen': 'Antigen w/PCR follow-up',
+        }
+    }, inplace=True)
 
+    blues = plt.cm.get_cmap('Blues')
+    reds = plt.cm.get_cmap('Reds')
+    cdict = {
+        'PCR results same day': blues(4/5),
+        'PCR results next day': blues(3/5),
+        'PCR results in two days': blues(2/5),
+        'PCR results in three days': blues(1/5),
+        'PCR results in four days': blues(0/5),
+        'Antigen w/PCR follow-up': reds(1/2),
+        'Perfect antigen': reds(2/2),
+    }
+
+    d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
+    d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
+
+    f, ax = plt.subplots(figsize=(9,6))
+    sns.barplot(data=d, x='Group', y='Cum Inc (%)', hue='key2', ax=ax, hue_order=['PCR results in three days', 'PCR results in two days', 'PCR results next day', 'PCR results same day', 'Antigen w/PCR follow-up', 'Perfect antigen'], palette=cdict)
+    ax.set_ylabel("3-Month Attack Rate (%)")
+    ax.set_xlabel("")
+    ax.legend(title=None)
+    plt.tight_layout()
+    cv.savefig(os.path.join(imgdir, f'PCR_vs_Ag_3mAttackRate.png'), dpi=300)

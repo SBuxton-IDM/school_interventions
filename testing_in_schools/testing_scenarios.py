@@ -235,6 +235,7 @@ if __name__ == '__main__':
                 sim.label = f'{skey} + {tkey}'
                 sim.key1 = skey
                 sim.key2 = tkey
+                sim.eidx = eidx
                 sim.scen = scen
                 sim.tscen = test
                 sim.dynamic_par = par
