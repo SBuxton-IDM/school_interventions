@@ -1,4 +1,4 @@
-'''Fitting for theoretical reopening'''
+# Main script to create a simulation, the base on which analysis is conducted.  Used in calibration and other downstream activities.
 
 import covasim as cv
 import sciris as sc

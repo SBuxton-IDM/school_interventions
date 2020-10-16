@@ -1,3 +1,5 @@
+# Script for quick and dirty single run of a school-based intervention
+
 import os
 import covasim as cv
 import numpy as np
@@ -36,7 +38,7 @@ if __name__ == '__main__':
     scen['testing'] = testing
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
-    ######3sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
+    ###### sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
     sim = cs.create_sim(params, pop_size=1e4, folder=None)
 
     ns = new_schools(scen)

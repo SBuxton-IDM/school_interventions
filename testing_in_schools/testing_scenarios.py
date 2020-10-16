@@ -1,3 +1,5 @@
+# Workhorse script to commission testing scenarios
+
 import os
 import covasim as cv
 import create_sim as cs

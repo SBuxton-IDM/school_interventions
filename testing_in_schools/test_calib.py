@@ -1,3 +1,5 @@
+# Run a calibration-like simulation to see if the resulting objective function value matches that from calibration
+
 import os
 import covasim as cv
 import numpy as np

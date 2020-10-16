@@ -1,3 +1,5 @@
+# Script compares PCR testing of various return delays to antigen testing, either with default parameters or with perfect sensitivity and specificity
+
 import os
 import numpy as np
 import pandas as pd
@@ -138,7 +140,6 @@ if __name__ == '__main__':
 
     df = pd.DataFrame(results)
 
-    #print(df)
     df.replace({'key2':
         {
             0: 'PCR results same day',

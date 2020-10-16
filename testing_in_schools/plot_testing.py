@@ -1,4 +1,4 @@
-# Main script to generate plots from scenario simulations.  Sims are saved into the msim folder of the respective analysis folder, e.g. v20201013. Often we distribute computing by seeds, generating several *.msim files, which are combined here before plotting.
+# Main workhorse script to generate plots from scenario simulations.  Sims are saved into the msim folder of the respective analysis folder, e.g. v20201013. Often we distribute computing by seeds, generating several *.msim files, which are combined here before plotting.
 
 import os
 import covasim as cv
@@ -137,8 +137,6 @@ test_hue = {
     'Weekly PCR, 1d delay':                         (0.32628988850442137, 0.6186236063052672, 0.802798923490965, 1.0),
     'Daily PCR, no delay':                          (0.16696655132641292, 0.48069204152249134, 0.7291503267973857, 1.0),
 }
-#n_antigen = len([i for i in test_order if 'antigen' in i.lower()])
-#cmap = plt.cm.get_cmap('Blues')
 
 for sim in msim.sims:
     sim.key2 = test_names[sim.key2] if sim.key2 in test_names else sim.key2
@@ -367,6 +365,3 @@ cv.savefig(os.path.join(imgdir, f'NumTests.png'), dpi=300)
 
 # Save mean to CSV
 df.groupby(['key1', 'key2']).mean().to_csv(os.path.join(imgdir, 'Mean.csv'))
-
-
-#plt.show()

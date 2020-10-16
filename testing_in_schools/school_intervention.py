@@ -1,3 +1,5 @@
+# This is the front end to the Schools class intervention.  Not much here, it's a sub-class of covasim's Intervention class.  The one piece of computation done here is to split the original school 's' network into individual schools.  (Each school was already a separate component, but the code figures out which component goes with which school and extracts the subgraph.)
+
 from covasim.interventions import Intervention
 import covasim.base as cvb
 from school import School

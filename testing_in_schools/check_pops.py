@@ -1,3 +1,5 @@
+# Simple script to load in population files and print some useful information about schools
+
 import sciris as sc
 
 files = sc.getfilelist('v20201016_225k/inputs')

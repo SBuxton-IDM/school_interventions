@@ -1,3 +1,5 @@
+# Main class to implement school-based interventions
+
 import covasim.base as cvb
 import covasim.utils as cvu
 import numpy as np
@@ -349,19 +351,6 @@ class SchoolTesting():
             other_sens (float): probability of a true positive in others
             loss_prob (float): probability of loss to follow-up
             delay (int): number of days before test results are ready
-
-
-        https://www.fda.gov/media/141570/download
-        Within 7-days of symptom onset:
-        * Positive Agreement:  34/35        97.1% (95% CI:  85.1% -99.9%)  (The one missed was Ct>33)
-        * Negative Agreement: 66/67         98.5% (95% CI:  92.0% -100%)
-
-        Symptom onset greater than seven days: Although  the  sample  size  was  relatively  small,  the  positive  agreement  in  this  cohort was 75% (9/12) and negative agreement was 92% (11/12).
-
-        https://abbott.mediaroom.com/2020-10-07-Abbott-Releases-ID-NOW-TM-COVID-19-Interim-Clinical-Study-Results-from-1-003-People-to-Provide-the-Facts-on-Clinical-Performance-and-to-Support-Public-Health
-        * Performance of 95.0% positive agreement (sensitivity) and 97.9% negative agreement (specificity) in subjects within seven days post symptom onset.
-        * Overall performance of 93.3% positive agreement (sensitivity) and 98.4% negative agreement (specificity). Further, in the 161 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.0% positive agreement (sensitivity). Further, in the 129 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 98.4% positive agreement (sensitivity).
-        * Performance of 94.6% positive agreement (sensitivity) and 97.6% negative agreement (specificity) in symptomatic subjects. Further, in the 136 patients with high viral titers (Ct <33), and therefore most likely to transmit virus, ID NOW showed performance of 97.8% positive agreement (sensitivity).
         '''
 
         ppl = self.school.sim.people

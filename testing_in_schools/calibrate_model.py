@@ -1,3 +1,5 @@
+# This code is used to build the pars_* file containing parameter configuations and corresponding rand_seed values.
+
 import os
 import sciris as sc
 import optuna as op
@@ -8,6 +10,8 @@ from school_intervention import new_schools
 
 pop_size = 2.25e5
 folder = 'v20201015_225k'
+
+# This is the data we're trying to fit
 to_fit = {
     'cases_begin':  75, # per 100k over 2-weeks
     'cases_end':    75, # per 100k over 2-weeks
@@ -17,6 +21,7 @@ to_fit = {
     'tests':        225,   # per 100k (per day) - 225 is 5000 tests in 2.23M pop per day
 }
 
+# And here are the weights for each element
 weight = {
     'cases_begin':  1, # per 100k over 2-weeks
     'cases_end':    1, # per 100k over 2-weeks
@@ -55,7 +60,6 @@ def evaluate_sim(sim):
         'yield': np.mean(sim.results['test_yield'][first:last]),
         'tests': np.mean(sim.results['new_tests'][first:last]) * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale']),
     }
-    #cases_during = np.mean(sim.results['new_diagnoses'][first:last]) * 14 * 1e5 / (sim.pars['pop_size'] * sim.pars['pop_scale'])
 
     mismatch = 0
     wsum = 0
@@ -141,7 +145,7 @@ if __name__ == '__main__':
 
     sc.heading('Making results structure...')
     results = []
-    #n_trials = len(study.trials)
+
     failed_trials = []
     for trial in study.trials:
         data = {'index': trial.number, 'mismatch': trial.value}
