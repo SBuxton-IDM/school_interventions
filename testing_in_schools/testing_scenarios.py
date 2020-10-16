@@ -199,7 +199,7 @@ def generate_testing():
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    #scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
+    scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
 
     testing = generate_testing()
     #testing = {k:v for k,v in testing.items() if 'Antigen' in k}

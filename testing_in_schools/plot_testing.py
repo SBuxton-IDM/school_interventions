@@ -40,6 +40,7 @@ def load_multi(fns, cachefn=None):
 
 def load_and_replace(fn1, scenarios_to_remove, fn2):
     # TODO: WIP
+    exit()
     msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_not_remote_{int(pop_size)}.msim'))
     print(len(msim.sims))
     # Replace "all_remote" sims with update
@@ -49,21 +50,35 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-cachefn = os.path.join(folder, 'msims', 'combined_0-30.msim')
-#msim = load_single(cachefn)
+cachefn = os.path.join(folder, 'msims', 'combined_0-30.msim') ###### combined_new_antigen_0-30.msim
+print(f'loading {cachefn}')
+msim = load_single(cachefn)
+print('extracting sims')
+sims = [s.shrink() for s in msim.sims if 'Antigen' not in s.key2]
+msim = 0
 
 fns = [os.path.join(folder, 'msims', fn) for fn in [
-    'pcr_days_sweep_0-10.msim',
-    'pcr_days_sweep_10-20.msim',
-]] # 'combined.msim',
-msim = load_multi(fns, 'pcr_days_sweep_0-20.msim')
+    'new_antigen_tests_0-15.msim',
+    'new_antigen_tests_15-30.msim',
+]]
+print('load_multi')
+msim_new_antigen = load_multi(fns, None)
 
-exit()
+print('shrink')
+sims += [s.shrink() for s in msim_new_antigen.sims]
+print('creating MultiSim')
+msim = cv.MultiSim(sims)
+print('saving')
+msim.save(os.path.join(folder, 'msims', 'combined_new_antigen_0-30.msim'))
+print('done!')
 
+'''
+msim = load_single(os.path.join(folder, 'msims','batch_sm_0-5.msim'))
 sims = [s for s in msim.sims if s.key2=='None']
 msim = cv.MultiSim(sims)
 msim.save('remote_k5_None.msims')
 #msim = load_single('remote_k5_None.msims')
+'''
 
 results = []
 byschool = []
@@ -84,35 +99,40 @@ scen_order = [
     'all_remote',
 ]
 
-test_names = { # key2
+test_names = sc.odict({ # key2
     'None': 'None',
     'PCR 1w prior': 'PCR one week prior, 1d delay',
+    'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, PCR f/u',
+    'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
     'PCR every 2w': 'Fortnightly PCR, 1d delay',
     'PCR every 1w': 'Weekly PCR, 1d delay',
+
+    #'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
+    #'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, no delay, PCR f/u',
+    #'Antigen every 1w, PCR f/u': 'Weekly antigen for all, no delay, PCR f/u',
+    #'Antigen every 1w, no f/u': 'Weekly antigen for all, no delay, no f/u',
+    'Antigen every 2w, PCR f/u': 'Fortnightly antigen, PCR f/u',
+    'Antigen every 2w, no f/u': 'Fortnightly antigen, no f/u',
     'PCR every 1d': 'Daily PCR, no delay',
-    'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
-    'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
-    'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, no delay, PCR f/u',
-    'Antigen every 1w, PCR f/u': 'Weekly antigen for all, no delay, PCR f/u',
-    'Antigen every 1w, no f/u': 'Weekly antigen for all, no delay, no f/u',
+})
+test_order = test_names.values()
+test_hue = {
+    'None': 'slategray',
+    'PCR one week prior, 1d delay': 'lightsteelblue',
+    'Weekly antigen for teachers & staff, PCR f/u': 'indianred',
+    'Fortnightly PCR, 50% coverage': 'cornflowerblue',
+    'Fortnightly PCR, 1d delay': 'royalblue',
+    'Weekly PCR, 1d delay': 'dodgerblue',
+    'Fortnightly antigen, PCR f/u': 'firebrick',
+    'Fortnightly antigen, no f/u': 'darkred',
+    'Daily PCR, no delay': 'deeppink',
 }
 
 for sim in msim.sims:
     sim.key2 = test_names[sim.key2] if sim.key2 in test_names else sim.key2
 
-test_order = [test_names[x] for x in [
-    'None',
-    'PCR 1w prior',
-    #'PCR every 1m 15%',
-    'Antigen every 1w teach&staff, PCR f/u',
-    'PCR every 2w 50%',
-    'PCR every 2w',
-    'PCR every 1w',
-    'Antigen every 1w, no f/u',
-    'Antigen every 1w, PCR f/u',
-    'PCR every 1d',
-]]
 
+tests = []
 for sim in msim.sims:
     # Note: The objective function has recently changed, so mismatch will not match!
     first_school_day = sim.day('2020-11-02')
@@ -123,6 +143,7 @@ for sim in msim.sims:
         'key2': sim.key2,
     }
 
+
     perf = evaluate_sim(sim)
     ret.update(perf)
 
@@ -132,6 +153,11 @@ for sim in msim.sims:
     grp_dict = {'Students': ['students'], 'Teachers & Staff': ['teachers', 'staff']}
     perc_inperson_days_lost = {k:[] for k in grp_dict.keys()}
     attackrate = {k:[] for k in grp_dict.keys()}
+
+    first = sim.day('2020-11-02')
+    last = sim.day('2021-01-31')
+    #tests.append([sim.key1, sim.key2, np.sum(sim.results['new_tests'][first:last])])
+    #tests.append([sim.key1, sim.key2, sim.results['new_tests']]) # [first:last]
 
     for sid,stats in sim.school_stats.items():
         if stats['type'] not in ['es', 'ms', 'hs']:
@@ -174,7 +200,7 @@ for sim in msim.sims:
             plt.legend()
             plt.show()
 
-        d1scenario = 'as_normal'
+        d1scenario = 'with_countermeasures' #'as_normal'
         if sim.key1 == d1scenario:
             byschool.append({
                 'type': stats['type'],
@@ -183,6 +209,8 @@ for sim in msim.sims:
                 'n_students': stats['num']['students'], #sum([stats['num'][g] for g in groups]),
                 'd1 infectious': sum([inf_at_sch[g][first_school_day] for g in groups]),
                 'd1 bool': sum([inf_at_sch[g][first_school_day] for g in groups]) > 0,
+                'PCR': stats['n_tested']['PCR'],
+                'Antigen': stats['n_tested']['Antigen'],
             })
 
     for stype in ['es', 'ms', 'hs']:
@@ -194,7 +222,23 @@ for sim in msim.sims:
 
     results.append(ret)
 
-plt.show() # TEMP
+
+'''
+d = pd.DataFrame(byschool)
+print( d.groupby('key2')[['PCR', 'Antigen']].mean() )
+tests = pd.DataFrame(tests, columns=['Scen', 'Testing', 'Tests'])
+col = {
+    'Antigen every 2w, PCR f/u': 'r',
+    'Weekly PCR, 1d delay': 'b',
+    'None': 'k',
+}
+
+f,ax = plt.subplots()
+for i,t in tests.iterrows():
+    ax.plot(t['Tests'], color=col[t['Testing']], marker='.', lw=0)
+plt.show()
+'''
+
 df = pd.DataFrame(results)
 
 # Attack rate
@@ -209,10 +253,9 @@ for name in ['all', 'no_normal']:
 
     g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
 
-    g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so)
+    g.map_dataframe( sns.barplot, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
     if name == 'all':
         g.add_legend(fontsize=14)
-        #for ax in g.axes.flat: plt.setp(ax.get_legend().get_texts(), fontsize=14)  # for legend text
 
     g.set_titles(row_template="{row_name}")
     xtl = g.axes[1,0].get_xticklabels()
@@ -226,9 +269,8 @@ for name in ['all', 'no_normal']:
 d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
 d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=test_order, order=scen_order, palette='Reds')
+g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=test_order, order=scen_order, palette=test_hue) #'Reds'
 g.add_legend(fontsize=14)
-#for ax in g.axes.flat: plt.setp(ax.get_legend().get_texts(), fontsize=14)  # for legend text
 g.set_titles(row_template="{row_name}", fontsize=24)
 xtl = g.axes[1,0].get_xticklabels()
 xtl = [l.get_text() for l in xtl]
@@ -239,7 +281,7 @@ cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'), dpi=300)
 
 # Re
 fig, ax = plt.subplots(figsize=(12,8))
-sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=test_order, order=scen_order)
+sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=test_order, order=scen_order, palette=test_hue)
 ax.set_ylim([0.8, 1.45])
 ax.set_ylabel(r'Average $R_e$')
 ax.set_xlabel('')
@@ -255,7 +297,7 @@ cv.savefig(os.path.join(imgdir, '3mAverageRe.png'), dpi=300)
 fig = plt.figure(figsize=(12,8))
 extract = df.groupby(['key1', 'key2'])[['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1']].mean().loc[d1scenario].reset_index()
 melt = pd.melt(extract, id_vars=['key2'], value_vars=['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'], var_name='School Type', value_name='Schools with First-Day Infections')
-sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2')
+sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2', palette=test_hue)
 plt.legend()
 plt.tight_layout()
 cv.savefig(os.path.join(imgdir, 'SchoolsWithFirstDayInfections.png'), dpi=300)
@@ -274,7 +316,6 @@ for ax in g.axes.flat:
     ax.set_yticklabels([int(100*t) for t in yt])
     ax.grid(True)
 g.add_legend(fontsize=14)
-#for ax in g.axes.flat: plt.setp(ax.get_legend().get_texts(), fontsize=14)  # for legend text
 plt.tight_layout()
 cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg.png'), dpi=300)
 
