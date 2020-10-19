@@ -7,7 +7,7 @@ import sciris as sc
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing, scenario
 
-par_inds = (0,20)
+par_inds = (0,5)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 16
 
@@ -43,12 +43,12 @@ def children_equally_sus(sim, scen, test):
     sim['interventions'] += [ns]
 
 def lower_sens_spec(sim, scen, test):
-    if test['is_antigen']:
-        test['symp7d_sensitivity'] = 0.9
-        test['other_sensitivity'] = 0.6
-        test['specificity'] = 0.6
-    else:
-        test['sensitivity']: 99.8,
+    if test is not None and 'is_antigen' in test[0] and test[0]['is_antigen']:
+        test[0]['symp7d_sensitivity'] = 0.9
+        test[0]['other_sensitivity'] = 0.6
+        test[0]['specificity'] = 0.6
+    elif test is not None:
+        test[0]['sensitivity']: 99.8
 
     # Modify scen with test
     for stype, spec in scen.items():
@@ -90,7 +90,8 @@ def no_screening(sim, scen, test):
     sim['interventions'] += [ns]
 
 def lower_coverage(sim, scen, test):
-    test['coverage'] = 0.5
+    if test is not None:
+        test[0]['coverage'] = 0.5
 
     # Modify scen with test
     for stype, spec in scen.items():
@@ -101,16 +102,30 @@ def lower_coverage(sim, scen, test):
     ns = new_schools(scen)
     sim['interventions'] += [ns]
 
+def parents_return_to_work(sim, scen, test):
+    # Modify scen with test
+    for stype, spec in scen.items():
+        if spec is not None:
+            spec['testing'] = test # dcp probably not needed because deep copied in new_schools
+
+    ns = new_schools(scen)
+    sim['interventions'] += [ns]
+
+    ce = cv.clip_edges(days='2020-11-02', changes=0.80, layers=['w', 'c'], label='open_work_community_to_80%'),
+    sim['interventions'] += [ce]
+
+
 if __name__ == '__main__':
     scenarios = generate_scenarios()
-    scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
+    scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures', 'all_hybrid', 'k5', 'all_remote']}
 
     testing = generate_testing()
-    testing = {k:v for k,v in testing.items() if k in ['Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
+    testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 2w', 'Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
 
     sensitivity = {
         # Baseline
         'baseline': baseline,
+
         # -------- EASY --------
         # What if younger children aren't less susceptible?
         # --> Change the sensitivity parameters [Need a way to inform parameters from a scenario!]
@@ -135,7 +150,7 @@ if __name__ == '__main__':
         # -------- HARD --------
         # Parents/guardians of school children return to work
         # --> Remove and restore edges, HH+students --> work/community
-        #'parents_return_to_work',
+        'parents_return_to_work': parents_return_to_work,
 
         # What if cohorting doesn't work all that well due to bussing, after-school care, recess/lunch, or friends?
         # --> Add a % of the old school network back in.  It's _more_ transmission, so would need to balance?  Match R0 (analytical?)
@@ -152,7 +167,7 @@ if __name__ == '__main__':
 
     sims = []
     msims = []
-    tot = len(scenarios) * len(testing) * len(par_list) * len(scenarios)
+    tot = len(scenarios) * len(testing) * len(par_list) * len(sensitivity)
     proc = 0
 
     for senskey, builder in sensitivity.items():

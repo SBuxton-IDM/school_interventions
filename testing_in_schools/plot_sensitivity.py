@@ -55,7 +55,7 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-cachefn = os.path.join(folder, 'msims', 'batch_first_0-8.msim')
+cachefn = os.path.join(folder, 'msims', 'batch_first_0-5.msim')
 
 print(f'loading {cachefn}')
 msim = load_single(cachefn)
@@ -237,10 +237,10 @@ plt.show()
 
 
 # Attack rate
-d = pd.melt(df, id_vars=['key3', 'key2'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
+d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
 d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 print(d)
-g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
+g = sns.FacetGrid(data=d, row='Group', col='key1', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
 
 g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3')#, hue_order=test_order, order=sens_order, palette=test_hue)
 g.add_legend(fontsize=14)
