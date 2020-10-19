@@ -7,12 +7,12 @@ import sciris as sc
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing, scenario
 
-par_inds = (0,5)
+par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 16
+batch_size = 24
 
 folder = 'v20201016_225k_sensitivity'
-stem = f'batch_first_{par_inds[0]}-{par_inds[1]}'
+stem = f'batch_v2_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 
@@ -111,8 +111,10 @@ def parents_return_to_work(sim, scen, test):
     ns = new_schools(scen)
     sim['interventions'] += [ns]
 
-    ce = cv.clip_edges(days='2020-11-02', changes=0.80, layers=['w', 'c'], label='open_work_community_to_80%'),
-    sim['interventions'] += [ce]
+    intv = [i for i in sim['interventions'] if i.label != 'close_work_community']
+    ce = cv.clip_edges(days=['2020-09-01', '2020-11-02'], changes=[0.65, 0.80], layers=['w', 'c'], label='close_and_reopen_work_community')
+    intv += [ce]
+    sim['interventions'] += intv
 
 
 if __name__ == '__main__':
@@ -160,7 +162,7 @@ if __name__ == '__main__':
         # Easy enough to have in School some uids persistently at home!
         #'remote_students',
     }
-    #sensitivity = {k:v for k,v in sensitivity.items() if k in ['lower_sens_spec']}
+    sensitivity = {k:v for k,v in sensitivity.items() if k in ['parents_return_to_work']}
 
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
