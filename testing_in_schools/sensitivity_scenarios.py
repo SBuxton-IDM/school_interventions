@@ -178,12 +178,19 @@ if __name__ == '__main__':
     tot = len(scenarios) * len(testing) * len(par_list) * len(sensitivity)
     proc = 0
 
+    # Save time by pre-generating the base simulations
+    base_sims = []
+    for eidx, entry in enumerate(par_list):
+        par = sc.dcp(entry['pars'])
+        par['rand_seed'] = int(entry['index'])
+        base_sims.append( cs.create_sim(par, pop_size=pop_size, folder=folder) )
+
     for senskey, builder in sensitivity.items():
         for eidx, entry in enumerate(par_list):
-            par = sc.dcp(entry['pars'])
+            par = entry['pars']
             par['rand_seed'] = int(entry['index'])
+            sim_base = base_sims[eidx]
 
-            sim_base = cs.create_sim(par, pop_size=pop_size, folder=folder) # Can I make the par list exterior, create one sim, and copy it for others - faster?
             for sidx, (skey, scen) in enumerate(scenarios.items()):
                 for tidx, (tkey, test) in enumerate(testing.items()):
                     sim = sim_base.copy()
@@ -207,11 +214,11 @@ if __name__ == '__main__':
                         print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
                         msim = cv.MultiSim(sims)
                         msims.append(msim)
-                        msim.run(reseed=False, par_args={'ncpus': 2}, noise=0.0, keep_people=False)
+                        msim.run(reseed=False, par_args={'ncpus': 32}, noise=0.0, keep_people=False)
                         sims = []
 
         print(f'*** Saving after completing {senskey}')
-        sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == senskey]
+        sims_this_scenario = [s for msim in msims for s in msim.sims if s.key3 == senskey]
         msim = cv.MultiSim(sims_this_scenario)
         cv.save(os.path.join(folder, 'msims', f'{stem}_{senskey}.msim'), msim)
 
