@@ -22,7 +22,8 @@ mplt.rcParams['font.family'] = font_style
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201016_225k_sensitivity'
-variant = '_first'
+variant = '_v2'
+cachefn = os.path.join(folder, 'msims', 'batch_v2_0-1.msim')
 debug_plot = False
 
 imgdir = os.path.join(folder, 'img'+variant)
@@ -55,7 +56,6 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-cachefn = os.path.join(folder, 'msims', 'batch_first_0-5.msim')
 
 print(f'loading {cachefn}')
 msim = load_single(cachefn)

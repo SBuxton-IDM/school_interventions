@@ -166,7 +166,9 @@ if __name__ == '__main__':
         # Easy enough to have in School some uids persistently at home!
         #'remote_students',
     }
-    sensitivity = {k:v for k,v in sensitivity.items() if k in ['parents_return_to_work']}
+
+    # Select a subset, if desired:
+    #sensitivity = {k:v for k,v in sensitivity.items() if k in ['parents_return_to_work']}
 
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
@@ -205,11 +207,11 @@ if __name__ == '__main__':
                         print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
                         msim = cv.MultiSim(sims)
                         msims.append(msim)
-                        msim.run(reseed=False, par_args={'ncpus': 32}, noise=0.0, keep_people=False)
+                        msim.run(reseed=False, par_args={'ncpus': 2}, noise=0.0, keep_people=False)
                         sims = []
 
         print(f'*** Saving after completing {senskey}')
-        sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == skey]
+        sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == senskey]
         msim = cv.MultiSim(sims_this_scenario)
         cv.save(os.path.join(folder, 'msims', f'{stem}_{senskey}.msim'), msim)
 
