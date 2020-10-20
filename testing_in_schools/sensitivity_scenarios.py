@@ -2,14 +2,17 @@
 
 import os
 import covasim as cv
+import covasim.base as cvb
 import create_sim as cs
+import numpy as np
+import pandas as pd
 import sciris as sc
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing, scenario
 import synthpops as sp
 cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (0,1)
+par_inds = (0,3)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
@@ -50,7 +53,7 @@ def lower_sens_spec(sim, scen, test):
         test[0]['other_sensitivity'] = 0.6
         test[0]['specificity'] = 0.6
     elif test is not None:
-        test[0]['sensitivity']: 99.8
+        test[0]['sensitivity']: 0.995
 
     # Modify scen with test
     for stype, spec in scen.items():
@@ -122,6 +125,63 @@ def parents_return_to_work(sim, scen, test):
     ce = cv.clip_edges(days=['2020-09-01', '2020-11-02'], changes=[0.65, 0.80], layers=['w', 'c'], label='close_and_reopen_work_community')
     sim['interventions'][ce_idx] = ce
 
+def broken_bubbles(sim, scen, test):
+    frac_edges_to_rewire = 0.5
+    np.random.seed(1)
+
+    # Modify scen with test
+    for stype, spec in scen.items():
+        if spec is not None:
+            spec['testing'] = test # dcp probably not needed because deep copied in new_schools
+
+    school_contacts = []
+
+    sdf = sim.people.contacts['s'].to_df()
+    student_flag = np.array(sim.people.student_flag, dtype=bool)
+    sdf['p1_student'] = student_flag[sdf['p1']]
+    sdf['p2_student'] = student_flag[sdf['p1']]
+    school_types = sim.people.school_types
+    for school_type, scids in school_types.items():
+        for school_id in scids:
+            uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
+            edges_this_school = sdf.loc[ ((sdf['p1'].isin(uids)) | (sdf['p2'].isin(uids))) ]
+            if scen[school_type] is None:
+                school_contacts.append(edges_this_school)
+            else:
+                student_to_student_edge_bool = ( edges_this_school['p1_student'] & edges_this_school['p2_student'] )
+                student_to_student_edges = edges_this_school.loc[ student_to_student_edge_bool ]
+                inds_to_rewire = np.random.choice(student_to_student_edges.index, size=int(frac_edges_to_rewire*student_to_student_edges.shape[0]), replace=False)
+                inds_to_keep = np.setdiff1d(student_to_student_edges.index, inds_to_rewire)
+
+                edges_to_rewire = student_to_student_edges.loc[inds_to_rewire]
+                stublist = np.concatenate(( edges_to_rewire['p1'], edges_to_rewire['p2'] ))
+
+                p1_inds = np.random.choice(len(stublist), size=len(stublist)//2, replace=False)
+                p2_inds = np.setdiff1d(range(len(stublist)), p1_inds)
+                p1 = stublist[p1_inds]
+                p2 = stublist[p2_inds]
+                new_edges = pd.DataFrame({'p1':p1, 'p2':p2})
+                new_edges['beta'] = 1.0
+                # Remove self loops
+                new_edges = new_edges.loc[new_edges['p1'] != new_edges['p2']]
+
+                rewired_student_to_student_edges = pd.concat([
+                    student_to_student_edges.loc[inds_to_keep, ['p1', 'p2', 'beta']], # Keep these
+                    new_edges])
+
+                #print(f'During rewiring, the number of student-student edges went from {student_to_student_edges.shape[0]} to {rewired_student_to_student_edges.shape[0]}')
+
+                other_edges = edges_this_school.loc[ (~edges_this_school['p1_student']) | (~edges_this_school['p2_student']) ]
+                rewired_edges_this_school = pd.concat([rewired_student_to_student_edges, other_edges])
+                school_contacts.append(rewired_edges_this_school)
+
+
+    all_school_contacts = pd.concat(school_contacts)
+    sim.people.contacts['s'] = cvb.Layer().from_df(all_school_contacts)
+
+    ns = new_schools(scen)
+    sim['interventions'] += [ns]
+
 
 if __name__ == '__main__':
     scenarios = generate_scenarios()
@@ -164,7 +224,7 @@ if __name__ == '__main__':
 
         # What if cohorting doesn't work all that well due to bussing, after-school care, recess/lunch, or friends?
         # --> Add a % of the old school network back in.  It's _more_ transmission, so would need to balance?  Match R0 (analytical?)
-        #'broken_bubbles',
+        'broken_bubbles': broken_bubbles,
 
         # How much might it help if some (30%?) of children choose remote learning?
         # Easy enough to have in School some uids persistently at home!
@@ -172,8 +232,7 @@ if __name__ == '__main__':
     }
 
     # Select a subset, if desired:
-    #sensitivity = {k:v for k,v in sensitivity.items() if k in ['parents_return_to_work']}
-
+    sensitivity = {k:v for k,v in sensitivity.items() if k in ['baseline', 'broken_bubbles']}
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
 
