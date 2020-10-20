@@ -63,5 +63,5 @@ class new_schools(Intervention):
             # Only needed on final time step:
             for school in self.schools:
                 sim.school_stats[school.sid].update( school.get_stats() )
-            #self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
+            self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
 
