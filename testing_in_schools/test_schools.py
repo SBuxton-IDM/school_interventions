@@ -8,6 +8,8 @@ import sciris as sc
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 from calibrate_model import evaluate_sim
+import synthpops as sp
+cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 debug = False
 # NOTE: The following may be bypassed below by hard-coded pop_size and folder
@@ -60,5 +62,5 @@ if __name__ == '__main__':
     else:
         sim.plot()
 
-    sim.save('test.sim')
+    #sim.save('test.sim')
     #cv.savefig('sim.png')

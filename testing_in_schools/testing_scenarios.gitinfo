@@ -1,0 +1,21 @@
+{
+  "covasim": {
+    "version": "1.7.2",
+    "branch": "schools",
+    "hash": "7483de7",
+    "date": "2020-10-06T10:17:40-07:00"
+  },
+  "called_by": {
+    "branch": "master",
+    "hash": "02dfb63",
+    "date": "2020-10-19T22:35:59-07:00",
+    "filename": "/home/dklein/GIT/covid-schools/testing_in_schools/testing_scenarios.py"
+  },
+  "comments": {
+    "SynthPops": {
+      "branch": "master",
+      "hash": "dfcc4f4",
+      "date": "2020-09-10T19:05:16-07:00"
+    }
+  }
+}

@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mplt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
+import synthpops as sp
+cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 # Global plotting styles
 font_size = 16

@@ -3,6 +3,9 @@ import covasim as cv
 import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
+import synthpops as sp
+cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+
 
 res = [1.0]
 incs = [20, 100, 150] #[20, 50, 110]

@@ -6,6 +6,8 @@ import create_sim as cs
 import sciris as sc
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing, scenario
+import synthpops as sp
+cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 par_inds = (0,1)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
@@ -127,7 +129,8 @@ if __name__ == '__main__':
     scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
 
     testing = generate_testing()
-    testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 2w', 'Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
+    #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 2w', 'Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
+    testing = {k:v for k,v in testing.items() if k in ['Antigen every 2w, PCR f/u']}
 
     sensitivity = {
         # Baseline
@@ -218,10 +221,11 @@ if __name__ == '__main__':
                         msim.run(reseed=False, par_args={'ncpus': 32}, noise=0.0, keep_people=False)
                         sims = []
 
-        print(f'*** Saving after completing {senskey}')
+        fn = os.path.join(folder, 'msims', f'{stem}_{senskey}.msim')
+        print(f'*** Saving to {fn} after completing {senskey}')
         sims_this_scenario = [s for msim in msims for s in msim.sims if s.key3 == senskey]
         msim = cv.MultiSim(sims_this_scenario)
-        cv.save(os.path.join(folder, 'msims', f'{stem}_{senskey}.msim'), msim)
+        cv.save(fn, msim)
 
     msim = cv.MultiSim.merge(msims)
     cv.save(os.path.join(folder, 'msims', f'{stem}.msim'), msim)

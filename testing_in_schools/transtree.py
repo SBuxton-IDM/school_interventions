@@ -7,6 +7,8 @@ import sciris as sc
 import matplotlib.pyplot as plt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
+import synthpops as sp
+cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 do_run = False
 

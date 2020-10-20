@@ -62,7 +62,7 @@ print(f'loading {cachefn}')
 msim = load_multi([os.path.join(folder, 'msims', fn) for fn in [
     'batch_v2_0-1_baseline.msim',
     'batch_v2_0-1_children_equally_sus.msim',
-    'batch_v2_0-1_lower_sens_spec.msim',
+    #'batch_v2_0-1_lower_sens_spec.msim',
 ]], None)
 
 results = []
@@ -153,7 +153,6 @@ for sim in msim.sims:
         if stats['type'] not in ['es', 'ms', 'hs']:
             continue
 
-        print(stats)
         inf = stats['infectious']
         inf_at_sch = stats['infectious_stay_at_school'] # stats['infectious_arrive_at_school'] stats['infectious_stay_at_school']
         in_person = stats['in_person']

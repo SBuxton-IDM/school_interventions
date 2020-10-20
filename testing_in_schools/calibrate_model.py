@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 import create_sim as cs
 from school_intervention import new_schools
+import covasim as cv
+import synthpops as sp
+cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 pop_size = 2.25e5
 folder = 'v20201015_225k'
