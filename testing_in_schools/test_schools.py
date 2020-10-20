@@ -60,4 +60,5 @@ if __name__ == '__main__':
     else:
         sim.plot()
 
+    sim.save('test.sim')
     #cv.savefig('sim.png')

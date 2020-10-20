@@ -61,6 +61,7 @@ class new_schools(Intervention):
 
         if sim.t == sim.npts-1:
             # Only needed on final time step:
-            sim.school_stats[school.sid].update( school.get_stats() )
-            self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
+            for school in self.schools:
+                sim.school_stats[school.sid].update( school.get_stats() )
+            #self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
 
