@@ -10,18 +10,9 @@ from testing_scenarios import generate_scenarios, generate_testing
 from calibrate_model import evaluate_sim
 
 debug = False
-folder = 'v20201015_225k'
+folder = 'v20201016_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
-
-def scenario(es, ms, hs):
-    return {
-        'pk': None,
-        'es': sc.dcp(es),
-        'ms': sc.dcp(ms),
-        'hs': sc.dcp(hs),
-        'uv': None,
-    }
 
 if __name__ == '__main__':
 

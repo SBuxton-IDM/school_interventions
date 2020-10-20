@@ -37,7 +37,7 @@ class FullTimeContactManager():
             uids = self.uids
         else:
             self.layer = cvb.Layer() # Empty
-            uids = []
+            uids = np.empty(0, dtype='int64')
 
         return uids # Everyone is scheduled for school today, unless it's a weekend
 
@@ -83,15 +83,15 @@ class HybridContactManager():
 
     def split_layer(self):
         ''' Split the layer into A- and B-sublayers '''
-        students = [uid for uid in self.uids if self.sim.people.student_flag[uid]]
-        self.staff = [uid for uid in self.uids if self.sim.people.staff_flag[uid]]
-        self.teachers = [uid for uid in self.uids if self.sim.people.teacher_flag[uid]]
+        students = cvu.itruei(self.sim.people.student_flag, self.uids)
+        self.staff = cvu.itruei(self.sim.people.staff_flag, self.uids)
+        self.teachers = cvu.itruei(self.sim.people.teacher_flag, self.uids)
 
-        self.A_students = cvu.binomial_filter(0.5, np.array(students)).tolist()
-        self.B_students = [uid for uid in students if uid not in self.A_students]
+        self.A_students = cvu.binomial_filter(0.5, students)
+        self.B_students = np.setdiff1d(students, self.A_students)
 
-        self.A_group = self.A_students + self.teachers + self.staff
-        self.B_group = self.B_students + self.teachers + self.staff
+        self.A_group = np.concatenate((self.A_students, self.teachers, self.staff))
+        self.B_group = np.concatenate((self.B_students, self.teachers, self.staff))
 
         A_layer = sc.dcp(self.base_layer)
         rows = np.concatenate((
@@ -119,7 +119,7 @@ class HybridContactManager():
             self.layer = sc.dcp(self.B_base_layer) # needed?
             uids = self.B_group
         else:
-            uids = []
+            uids = np.empty(0, dtype='int64')
             self.layer = cvb.Layer() # Empty
 
         return uids # Hybrid scheduling
@@ -160,7 +160,7 @@ class RemoteContactManager():
         ''' Called at the beginning of each day to configure the school layer '''
 
         self.layer = cvb.Layer() # Empty
-        uids = []
+        uids = np.empty(0, dtype='int64')
 
         return uids
 
@@ -170,7 +170,7 @@ class RemoteContactManager():
 
     def find_contacts(self, uids):
         ''' No contacts because remote, return empty list '''
-        return np.empty(0)
+        return np.empty(0, dtype='int64')
 
     def get_layer(self):
         ''' Return the (empty) layer '''
@@ -187,9 +187,9 @@ class SchoolStats():
 
         ppl = self.school.sim.people
         pop_scale = self.school.sim.pars['pop_scale']
-        student_uids = [uid for uid in self.school.uids if ppl.student_flag[uid]]
-        teacher_uids = [uid for uid in self.school.uids if ppl.teacher_flag[uid]]
-        staff_uids = [uid for uid in self.school.uids if ppl.staff_flag[uid]]
+        student_uids = cvu.itruei(ppl.student_flag, self.school.uids)
+        teacher_uids = cvu.itruei(ppl.teacher_flag, self.school.uids)
+        staff_uids = cvu.itruei(ppl.staff_flag, self.school.uids)
         self.num = {
             'students':   len(student_uids) * pop_scale,
             'teachers':   len(teacher_uids) * pop_scale,
@@ -244,9 +244,9 @@ class SchoolStats():
         if self.school.ct_mgr.school_day:
             self.num_school_days += 1
 
-        student_uids = [uid for uid in self.school.uids if ppl.student_flag[uid]]
-        teacher_uids = [uid for uid in self.school.uids if ppl.teacher_flag[uid]]
-        staff_uids = [uid for uid in self.school.uids if ppl.staff_flag[uid]]
+        student_uids = cvu.itruei(ppl.student_flag, self.school.uids)
+        teacher_uids = cvu.itruei(ppl.teacher_flag, self.school.uids)
+        staff_uids = cvu.itruei(ppl.staff_flag, self.school.uids)
 
         for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
             self.infectious[group][t] = len(cvu.true(ppl.infectious[ids])) * rescale
@@ -256,17 +256,19 @@ class SchoolStats():
 
         # Tracing statistics to compare against previous work:
         if len(self.school.uids_arriving_at_school) > 0:
-            school_infectious = cvu.itrue(ppl.infectious[np.array(self.school.uids_arriving_at_school)], np.array(self.school.uids_arriving_at_school))
+            school_infectious = cvu.itrue(ppl.infectious[self.school.uids_arriving_at_school], self.school.uids_arriving_at_school)
         else:
-            school_infectious = []
+            school_infectious = np.empty(0, dtype='int64')
 
         # Options here: (TODO - avoid code replication)
         # 1. Use ids of students who arrived as school (pre-screening): self.school.uids_arriving_at_school (pre-screening)
         # 2. Use ids of students who passed screening: self.school.uids_passed_screening
         # First "infectious_arrive_at_school" assumes there is a transmission risk even pre-screening (e.g. bus)
-        students_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.student_flag[uid]]
-        teachers_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.teacher_flag[uid]]
-        staff_at_school_uids = [uid for uid in self.school.uids_arriving_at_school if ppl.staff_flag[uid]]
+
+        students_at_school_uids = cvu.itruei(ppl.student_flag, self.school.uids_arriving_at_school)
+        teachers_at_school_uids = cvu.itruei(ppl.teacher_flag, self.school.uids_arriving_at_school)
+        staff_at_school_uids = cvu.itruei(ppl.staff_flag, self.school.uids_arriving_at_school)
+
         for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
             self.infectious_arrive_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
 
@@ -298,8 +300,6 @@ class SchoolStats():
         }
 
 
-
-
 class SchoolTesting():
     '''
     Conduct testing in school students and staff.
@@ -316,7 +316,6 @@ class SchoolTesting():
         for test in self.testing:
             if 'is_antigen' not in test:
                 test['is_antigen'] = False
-            test['type'] = 'Antigen' if test['is_antigen'] else 'PCR'
 
         self.n_tested = { 'PCR': 0, 'Antigen': 0 }
 
@@ -333,12 +332,12 @@ class SchoolTesting():
             uids = []
             ppl = self.school.sim.people
             if 'students' in test['groups']:
-                uids += [uid for uid in self.school.uids if ppl.student_flag[uid]]
+                uids.append( cvu.itruei(ppl.student_flag, self.school.uids) )
             if 'staff' in test['groups']:
-                uids += [uid for uid in self.school.uids if ppl.staff_flag[uid]]
+                uids.append( cvu.itruei(ppl.staff_flag, self.school.uids) )
             if 'teachers' in test['groups']:
-                uids += [uid for uid in self.school.uids if ppl.teacher_flag[uid]]
-            test['uids'] = uids
+                uids.append( cvu.itruei(ppl.teacher_flag, self.school.uids) )
+            test['uids'] = np.concatenate(uids)
 
 
     def antigen_test(self, inds, sym7d_sens=1.0, other_sens=1.0, specificity=1, loss_prob=0.0):
@@ -362,19 +361,19 @@ class SchoolTesting():
         #ppl.date_tested[inds] = t # Only keep the last time they tested
         #ppl.date_results[inds] = t + delay # Keep date when next results will be returned
 
-        is_infectious = cvu.itruei(ppl.infectious, inds)
-        symp = is_infectious[~np.isnan(ppl.date_symptomatic[is_infectious])]
-        recently_symp_inds = symp[ t-ppl.date_symptomatic[symp] < 7 ]
-        other_inds = np.setdiff1d(is_infectious, recently_symp_inds)
+        is_infectious_not_dx = cvu.itruei(ppl.infectious * ~ppl.diagnosed, inds)
+        symp = cvu.itruei(ppl.symptomatic, is_infectious_not_dx)
+        recently_symp_inds = symp[t-ppl.date_symptomatic[symp] < 7]
+
+        other_inds = np.setdiff1d(is_infectious_not_dx, recently_symp_inds)
 
         is_inf_pos = np.concatenate((
             cvu.binomial_filter(sym7d_sens, recently_symp_inds), # Higher sensitivity for <7 days
             cvu.binomial_filter(other_sens, other_inds)          # Lower sensitivity of otheres
         ))
 
-        not_diagnosed      = is_inf_pos[np.isnan(ppl.date_diagnosed[is_inf_pos])]
-        not_lost           = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
-        true_positive_uids = not_diagnosed[not_lost]
+        not_lost           = cvu.n_binomial(1.0-loss_prob, len(is_inf_pos))
+        true_positive_uids = is_inf_pos[not_lost]
 
         # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive
         # Not for antigen tests?  date_diagnosed would interfere with later PCR.
@@ -383,11 +382,12 @@ class SchoolTesting():
 
         # False positivies
         if specificity < 1:
-            non_infectious_uids = np.setdiff1d(inds, is_infectious)
+            non_infectious_uids = np.setdiff1d(inds, is_infectious_not_dx)
             false_positive_uids = cvu.binomial_filter(1-specificity, non_infectious_uids)
         else:
             false_positive_uids = np.empty(0, dtype=np.int64)
 
+        # At low prevalence, true_positive_uids will likely outnumber false_positive_uids
         return np.concatenate((true_positive_uids, false_positive_uids))
 
 
@@ -412,13 +412,13 @@ class SchoolTesting():
         ids_to_iso = {}
         for test in self.testing:
             if self.school.sim.t in test['t_vec']:
-                undiagnosed_uids = cvu.ifalsei(ppl.diagnosed, np.array(test['uids']))
+                undiagnosed_uids = cvu.ifalsei(ppl.diagnosed, test['uids'])
                 uids_to_test = cvu.binomial_filter(test['coverage'], undiagnosed_uids)
-                self.n_tested[test['type']] += len(uids_to_test)
 
                 if self.school.verbose: print(self.school.sim.t, f'School {self.school.sid} of type {self.school.stype} is testing {len(uids_to_test)} today')
 
                 if test['is_antigen']:
+                    self.n_tested['Antigen'] += len(uids_to_test)
                     ag_pos_uids = self.antigen_test(uids_to_test, sym7d_sens=test['symp7d_sensitivity'], other_sens=test['other_sensitivity'], specificity=test['specificity'])
 
                     pcr_fu_uids = cvu.binomial_filter(test['PCR_followup_perc'], ag_pos_uids)
@@ -430,6 +430,7 @@ class SchoolTesting():
                     non_pcr_uids = np.setdiff1d(ag_pos_uids, pcr_fu_uids)
                     ids_to_iso.update({uid:t+self.school.sim.pars['quar_period'] for uid in non_pcr_uids})
                 else:
+                    self.n_tested['PCR'] += len(uids_to_test)
                     ppl.test(uids_to_test, test_sensitivity=test['sensitivity'], test_delay=test['delay'])
                     #self.school.sim.results['new_tests'][t] += len(uids_to_test)
                     # N.B. No false positives for PCR
@@ -465,7 +466,7 @@ class School():
         self.sim = sim
         self.sid = school_id
         self.stype = school_type
-        self.uids = uids
+        self.uids = np.array(uids)
         self.start_day = start_day
         self.screen_prob = screen_prob
         self.screen2pcr = screen2pcr
@@ -477,16 +478,21 @@ class School():
         self.ili_prob = ili_prob
         self.verbose = verbose
 
+        # TODO: these flags should have been arrays in population.py, but weren't.  Convert here for performance.
+        sim.people.student_flag = np.array(sim.people.student_flag, dtype=bool)
+        sim.people.teacher_flag = np.array(sim.people.teacher_flag, dtype=bool)
+        sim.people.staff_flag = np.array(sim.people.staff_flag, dtype=bool)
+
         self.is_open = False # Schools start closed
 
         self.uids_at_home = {} # Dict from uid to release date
 
         if self.schedule.lower() == 'hybrid':
-            self.ct_mgr = HybridContactManager(sim, uids, layer)
+            self.ct_mgr = HybridContactManager(sim, self.uids, layer)
         elif self.schedule.lower() == 'full':
-            self.ct_mgr = FullTimeContactManager(sim, uids, layer)
+            self.ct_mgr = FullTimeContactManager(sim, self.uids, layer)
         elif self.schedule.lower() == 'remote':
-            self.ct_mgr = RemoteContactManager(sim, uids, layer)
+            self.ct_mgr = RemoteContactManager(sim, self.uids, layer)
         else:
             print(f'Warning: Unrecognized schedule ({self.schedule}) passed to School class.')
 
@@ -497,9 +503,9 @@ class School():
         ''' Screen those individuals who are arriving at school '''
 
         # Inclusion criteria: diagnosed or symptomatic but not recovered and not dead
-        inds_to_screen = cvu.binomial_filter(self.screen_prob, np.array(self.uids_arriving_at_school))
+        inds_to_screen = cvu.binomial_filter(self.screen_prob, self.uids_arriving_at_school)
         if len(inds_to_screen) == 0:
-            return []
+            return np.empty(0)
 
         symp = self.sim.people.symptomatic[inds_to_screen]
 
@@ -508,14 +514,11 @@ class School():
             self.sim.people.dead[inds_to_screen])
 
         screen_pos = np.logical_and(symp, ~rec_or_dead)
-        screen_pos_uids = cvu.itrue(screen_pos, np.array(inds_to_screen))
-
-        inf = [z for z in self.uids_arriving_at_school if self.sim.people.infectious[z]]
-        inf_post_screen = [z for z in inf if z not in screen_pos_uids]
+        screen_pos_uids = cvu.itrue(screen_pos, inds_to_screen)
 
         # Add in screen positives from ILI amongst those who were screened negative
         if self.ili_prob is not None and self.ili_prob > 0:
-            screen_neg_uids = np.array(inds_to_screen)[~screen_pos]
+            screen_neg_uids = cvu.ifalse(screen_pos, inds_to_screen)
             n_ili = np.random.binomial(len(screen_neg_uids), self.ili_prob) # Poisson
             if n_ili > 0:
                 ili_pos_uids = np.random.choice(screen_neg_uids, n_ili, replace=False)
@@ -532,7 +535,7 @@ class School():
         self.uids_at_home.update(ids_to_iso)
 
         # Look for newly diagnosed people (by PCR)
-        newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, np.array(self.uids)) # Diagnosed this time step, time to trace
+        newly_dx_inds = cvu.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, self.uids) # Diagnosed this time step, time to trace
 
         if self.verbose and len(newly_dx_inds)>0: print(self.sim.t, f'School {self.sid} has {len(newly_dx_inds)} newly diagnosed: {newly_dx_inds}', [self.sim.people.date_exposed[u] for u in newly_dx_inds], 'recovering', [self.sim.people.date_recovered[u] for u in newly_dx_inds])
 
@@ -549,7 +552,7 @@ class School():
                 if self.verbose:
                     print(self.sim.t, self.sid, f'School {self.sid} is opening today with {len(self.uids_at_home)} at home: {self.uids_at_home}')
 
-                    infectious_uids = cvu.itrue(self.sim.people.infectious[self.uids], np.array(self.uids))
+                    infectious_uids = cvu.itrue(self.sim.people.infectious[self.uids], self.uids)
                     print(self.sim.t, self.sid, 'Infectious:', len(cvu.true(self.sim.people.infectious[self.uids])) * self.sim.rescale_vec[self.sim.t], len(infectious_uids) )
                     print(self.sim.t, self.sid, 'Iuids:', infectious_uids)
                     print(self.sim.t, self.sid, 'Itime:', [self.sim.people.date_exposed[u] for u in infectious_uids])
@@ -575,7 +578,7 @@ class School():
             # N.B. Not intentionally testing those in quarantine other than what covasim already does
 
         # Determine who will arrive at school (used in screen() and stats.update())
-        self.uids_arriving_at_school = [u for u in self.scheduled_uids if u not in self.uids_at_home.keys()]
+        self.uids_arriving_at_school = np.setdiff1d(self.scheduled_uids, np.fromiter(self.uids_at_home.keys(), dtype=int))
 
         # Perform symptom screening
         screen_pos_ids = self.screen()
@@ -596,10 +599,11 @@ class School():
 
 
         # Determine (for tracking, mostly) who has arrived at school and passed symptom screening
-        self.uids_passed_screening = [u for u in self.scheduled_uids if u not in self.uids_at_home.keys()]
+        uids_at_home_array = np.fromiter(self.uids_at_home.keys(), dtype=int)
+        self.uids_passed_screening = np.setdiff1d(self.scheduled_uids, uids_at_home_array)
 
         # Remove individuals at home from the network
-        self.ct_mgr.remove_individuals(list(self.uids_at_home.keys()))
+        self.ct_mgr.remove_individuals(uids_at_home_array)
 
         self.stats.update()
         if self.sim.t == self.sim.npts-1:

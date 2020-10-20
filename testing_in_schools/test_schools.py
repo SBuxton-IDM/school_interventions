@@ -10,6 +10,8 @@ from testing_scenarios import generate_scenarios, generate_testing
 from calibrate_model import evaluate_sim
 
 debug = False
+# NOTE: The following may be bypassed below by hard-coded pop_size and folder
+bypass = True
 folder = 'v20201015_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
@@ -29,8 +31,8 @@ if __name__ == '__main__':
     params = sc.dcp(entry['pars'])
     params['rand_seed'] = int(entry['index'])
 
-    scen = generate_scenarios()['as_normal']
-    testing = generate_testing()['PCR every 1d']
+    scen = generate_scenarios()['with_countermeasures']
+    testing = generate_testing()['Antigen every 2w, PCR f/u']
     #testing[0]['delay'] = 0
     for stype, spec in scen.items():
         if spec is not None:
@@ -38,8 +40,11 @@ if __name__ == '__main__':
     scen['testing'] = testing
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
-    ###### sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
-    sim = cs.create_sim(params, pop_size=1e4, folder=None)
+    # BYPASS option:
+    if bypass:
+        sim = cs.create_sim(params, pop_size=1e4, folder=None)
+    else:
+        sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
 
     ns = new_schools(scen)
     sim['interventions'] += [ns]
@@ -55,4 +60,4 @@ if __name__ == '__main__':
     else:
         sim.plot()
 
-    cv.savefig('sim.png')
+    #cv.savefig('sim.png')

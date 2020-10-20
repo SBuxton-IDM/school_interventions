@@ -27,9 +27,6 @@ class new_schools(Intervention):
         for school_type, scids in self.school_types.items():
             for school_id in scids:
                 uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
-                students = [u for u in uids if sim.people.student_flag[u]]
-                staff = [u for u in uids if sim.people.staff_flag[u]]
-                teachers = [u for u in uids if sim.people.teacher_flag[u]]
 
                 stats = {
                     'type':         school_type,
@@ -61,6 +58,9 @@ class new_schools(Intervention):
         for school in self.schools:
             layer = school.update()
             sim.people.contacts[school.sid] = layer
+
+        if sim.t == sim.npts-1:
             # Only needed on final time step:
             sim.school_stats[school.sid].update( school.get_stats() )
+            self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
 

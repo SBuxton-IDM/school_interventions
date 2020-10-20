@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from school_intervention import new_schools
 from testing_scenarios import generate_scenarios, generate_testing
 
-do_run = True
+do_run = False
 
 par_inds = (0,20) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
