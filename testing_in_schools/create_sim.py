@@ -25,7 +25,7 @@ def define_pars(which='best', kind='default', ):
 
     return output
 
-def create_sim(params, pop_size=2.25e5, folder=None):
+def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False):
 
     pop_scale = 1# 2.25e6 / pop_size
 
@@ -79,6 +79,13 @@ def create_sim(params, pop_size=2.25e5, folder=None):
     n_popfiles = 5
     popfile = popfile_stem + str(params['rand_seed'] % n_popfiles) + '.ppl'
     sim = cv.Sim(pars, popfile=popfile, load_pop=True)
+
+    if children_equally_sus:
+        prog = sim.pars['prognoses']
+        ages = prog['age_cutoffs']
+        sus_ORs = prog['sus_ORs']
+        sus_ORs[ages<=20] = 1
+        prog['sus_ORs'] = sus_ORs
 
     interventions = [
         cv.test_prob(start_day='2020-09-01', **tp),

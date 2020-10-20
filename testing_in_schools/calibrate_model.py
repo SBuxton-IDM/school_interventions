@@ -12,7 +12,8 @@ import synthpops as sp
 cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 pop_size = 2.25e5
-folder = 'v20201015_225k'
+folder = 'v20201019'
+children_equally_sus = True
 
 # This is the data we're trying to fit
 to_fit = {
@@ -36,6 +37,8 @@ weight = {
 
 label     = '_'.join([f'{k}={v}' for k,v in to_fit.items()])
 name      = os.path.join(folder, f'pars_{label}_pop_size={int(pop_size)}')
+if children_equally_sus:
+    name += '_children_equally_sus'
 storage   = f'sqlite:///{name}.db'
 n_workers = 24
 n_trials  = 10 # Each worker does n_trials
@@ -84,13 +87,14 @@ def objective(trial, kind='default'):
         pars[key] = trial.suggest_uniform(key, *bound)
     pars['rand_seed'] = trial.number
 
-    sim = cs.create_sim(pars, pop_size=pop_size, folder=folder)
+    sim = cs.create_sim(pars, pop_size=pop_size, folder=folder, children_equally_sus=children_equally_sus)
 
-    remote = { # <-- Used for calibration
+    remote = {
         'start_day': '2020-11-02',
         'schedule': 'Remote',
         'screen_prob': 0,
         'test_prob': 0,
+        'screen2pcr': 3, # Days from screening to receiving PCR results
         'trace_prob': 0,
         'quar_prob': 0,
         'ili_prob': 0,

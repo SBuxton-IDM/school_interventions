@@ -7,9 +7,9 @@
   },
   "called_by": {
     "branch": "master",
-    "hash": "cb04ff3",
-    "date": "2020-10-19T23:06:33-07:00",
-    "filename": "/home/dklein/GIT/covid-schools/testing_in_schools/calibrate_model.py"
+    "hash": "5c4252c",
+    "date": "2020-10-19T23:32:23-07:00",
+    "filename": "/home/dklein/covid-schools/testing_in_schools/calibrate_model.py"
   },
   "comments": {
     "SynthPops": {
