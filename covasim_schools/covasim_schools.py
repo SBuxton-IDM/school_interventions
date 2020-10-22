@@ -10,6 +10,7 @@ import covasim as cv
 import numpy as np
 import sciris as sc
 
+__all__ = ['schools_manager', 'School']
 
 class schools_manager(cv.Intervention):
     '''
@@ -398,6 +399,7 @@ class SchoolTesting(sc.prettyobj):
         return ids_to_iso
 
 
+
 class SchoolStats():
     ''' Reporter for tracking statistics associated with a school '''
 
@@ -565,7 +567,6 @@ class FullTimeContactManager(ContactManager):
 
 
 
-
 class HybridContactManager(ContactManager):
     ''' Contact manager for hybrid school '''
 
@@ -638,6 +639,7 @@ class HybridContactManager(ContactManager):
             self.A_base_layer.find_contacts(uids),
             self.B_base_layer.find_contacts(uids) ))
         return contacts
+
 
 
 class RemoteContactManager(ContactManager):
