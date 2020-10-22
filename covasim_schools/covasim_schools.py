@@ -10,6 +10,9 @@ import covasim as cv
 import numpy as np
 import sciris as sc
 
+
+layer = cv.Layer()
+
 __all__ = ['schools_manager', 'School']
 
 class schools_manager(cv.Intervention):
@@ -69,20 +72,26 @@ class schools_manager(cv.Intervention):
         self.initialized = True
 
     def apply(self, sim):
+        print('sodfi', sim.t)
+        sc.tic()
         for school in self.schools:
-            layer = school.update()
-            sim.people.contacts[school.sid] = layer
+            pass
+            # layer = school.update()
+            # sid = school.sid
+            # sim.people.contacts[sid] = layer
 
-        if sim.t == sim.npts-1:
-            # Only needed on final time step:
-            for school in self.schools:
-                sim.school_stats[school.sid].update( school.get_stats() )
-            self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
+        # if sim.t == sim.npts-1:
+        #     # Only needed on final time step:
+        #     for school in self.schools:
+        #         sim.school_stats[school.sid].update( school.get_stats() )
+        #     self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
+
+        sc.toc()
+        return
 
 
-
-class School(sc.prettyobj):
-    ''' Represent a single school '''
+class School():
+    ''' Represent a single school -- do not use prettyobj since highly nested '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
                 start_day, screen_prob, screen2pcr, test_prob, trace_prob, quar_prob, schedule, beta_s, ili_prob, testing, verbose=False, **kwargs):
@@ -107,10 +116,10 @@ class School(sc.prettyobj):
         '''
 
         self.sim = sim
-        self.sid = school_id
+        self.sid = 's' + str(school_id) # Convert to a string
         self.stype = school_type
         self.uids = np.array(uids)
-        self.start_day = start_day
+        self.start_day = sim.day(start_day)
         self.screen_prob = screen_prob
         self.screen2pcr = screen2pcr
         self.test_prob = test_prob
@@ -141,6 +150,8 @@ class School(sc.prettyobj):
 
         self.stats = SchoolStats(self)
         self.testing = SchoolTesting(self, testing)
+        self.empty_layer = cv.Layer() # Cache an empty layer
+        return
 
     def screen(self):
         ''' Screen those individuals who are arriving at school '''
@@ -173,87 +184,88 @@ class School(sc.prettyobj):
     def update(self):
         ''' Process the day, return the school layer '''
 
-        # Even if a school is not yet open, consider testing in the population
-        ids_to_iso = self.testing.update()
-        self.uids_at_home.update(ids_to_iso)
+        # # Even if a school is not yet open, consider testing in the population
+        # ids_to_iso = self.testing.update()
+        # self.uids_at_home.update(ids_to_iso)
 
-        # Look for newly diagnosed people (by PCR)
-        newly_dx_inds = cv.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, self.uids) # Diagnosed this time step, time to trace
+        # # Look for newly diagnosed people (by PCR)
+        # newly_dx_inds = cv.itrue(self.sim.people.date_diagnosed[self.uids] == self.sim.t, self.uids) # Diagnosed this time step, time to trace
 
-        if self.verbose and len(newly_dx_inds)>0: print(self.sim.t, f'School {self.sid} has {len(newly_dx_inds)} newly diagnosed: {newly_dx_inds}', [self.sim.people.date_exposed[u] for u in newly_dx_inds], 'recovering', [self.sim.people.date_recovered[u] for u in newly_dx_inds])
+        # if self.verbose and len(newly_dx_inds)>0: print(self.sim.t, f'School {self.sid} has {len(newly_dx_inds)} newly diagnosed: {newly_dx_inds}', [self.sim.people.date_exposed[u] for u in newly_dx_inds], 'recovering', [self.sim.people.date_recovered[u] for u in newly_dx_inds])
 
-        # Isolate newly diagnosed individuals - could happen before school starts
-        for uid in newly_dx_inds:
-            self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
+        # # Isolate newly diagnosed individuals - could happen before school starts
+        # for uid in newly_dx_inds:
+        #     self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
-        # If any individuals are done with quarantine, return them to school
-        self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date >= self.sim.t} # >= or =?
+        # # If any individuals are done with quarantine, return them to school
+        # self.uids_at_home = {uid:date for uid,date in self.uids_at_home.items() if date >= self.sim.t} # >= or =?
 
-        # Check if school is open
-        if not self.is_open:
-            if self.sim.t == self.sim.day(self.start_day):
-                if self.verbose:
-                    print(self.sim.t, self.sid, f'School {self.sid} is opening today with {len(self.uids_at_home)} at home: {self.uids_at_home}')
+        # # Check if school is open
+        # if not self.is_open:
+        #     if self.sim.t == self.start_day:
+        #         if self.verbose:
+        #             print(self.sim.t, self.sid, f'School {self.sid} is opening today with {len(self.uids_at_home)} at home: {self.uids_at_home}')
 
-                    infectious_uids = cv.itrue(self.sim.people.infectious[self.uids], self.uids)
-                    print(self.sim.t, self.sid, 'Infectious:', len(cv.true(self.sim.people.infectious[self.uids])) * self.sim.rescale_vec[self.sim.t], len(infectious_uids) )
-                    print(self.sim.t, self.sid, 'Iuids:', infectious_uids)
-                    print(self.sim.t, self.sid, 'Itime:', [self.sim.people.date_exposed[u] for u in infectious_uids])
-                self.is_open = True
-            else:
-                # CLOSED SCHOOLS DO NOT PASS THIS POINT!
-                return cv.Layer() # Might be faster to cache
+        #             infectious_uids = cv.itrue(self.sim.people.infectious[self.uids], self.uids)
+        #             print(self.sim.t, self.sid, 'Infectious:', len(cv.true(self.sim.people.infectious[self.uids])) * self.sim.rescale_vec[self.sim.t], len(infectious_uids) )
+        #             print(self.sim.t, self.sid, 'Iuids:', infectious_uids)
+        #             print(self.sim.t, self.sid, 'Itime:', [self.sim.people.date_exposed[u] for u in infectious_uids])
+        #         self.is_open = True
+        #     else:
+        #         # CLOSED SCHOOLS DO NOT PASS THIS POINT!
+        #         return self.empty_layer
 
-        date = self.sim.date(self.sim.t)
-        self.scheduled_uids = self.ct_mgr.begin_day(date) # Call at the beginning of the update
+        # date = self.sim.date(self.sim.t)
+        # self.scheduled_uids = self.ct_mgr.begin_day(date) # Call at the beginning of the update
 
-        # Quarantine contacts of newly diagnosed individuals - # TODO: Schedule in a delay
-        if len(newly_dx_inds) > 0:
-            # Identify school contacts to quarantine
-            uids_to_trace = cv.binomial_filter(self.trace_prob, newly_dx_inds)
-            uids_reached_by_tracing = self.ct_mgr.find_contacts(uids_to_trace) # Assume all contacts of traced individuals will quarantine
-            uids_to_quar = cv.binomial_filter(self.quar_prob, uids_reached_by_tracing)
+        # # Quarantine contacts of newly diagnosed individuals - # TODO: Schedule in a delay
+        # if len(newly_dx_inds) > 0:
+        #     # Identify school contacts to quarantine
+        #     uids_to_trace = cv.binomial_filter(self.trace_prob, newly_dx_inds)
+        #     uids_reached_by_tracing = self.ct_mgr.find_contacts(uids_to_trace) # Assume all contacts of traced individuals will quarantine
+        #     uids_to_quar = cv.binomial_filter(self.quar_prob, uids_reached_by_tracing)
 
-            # Quarantine school contacts
-            for uid in uids_to_quar:
-                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
+        #     # Quarantine school contacts
+        #     for uid in uids_to_quar:
+        #         self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
-            # N.B. Not intentionally testing those in quarantine other than what covasim already does
+        #     # N.B. Not intentionally testing those in quarantine other than what covasim already does
 
-        # Determine who will arrive at school (used in screen() and stats.update())
-        self.uids_arriving_at_school = np.setdiff1d(self.scheduled_uids, np.fromiter(self.uids_at_home.keys(), dtype=int))
+        # # Determine who will arrive at school (used in screen() and stats.update())
+        # self.uids_arriving_at_school = np.setdiff1d(self.scheduled_uids, np.fromiter(self.uids_at_home.keys(), dtype=int))
 
-        # Perform symptom screening
-        screen_pos_ids = self.screen()
+        # # Perform symptom screening
+        # screen_pos_ids = self.screen()
 
-        if len(screen_pos_ids) > 0:
-            # Perform follow-up testing on some
-            uids_to_test = cv.binomial_filter(self.test_prob, screen_pos_ids)
-            self.sim.people.test(uids_to_test, test_delay=self.screen2pcr)
-            #self.sim.results['new_tests'][t] += len(uids_to_test)
-            self.testing.n_tested['PCR'] += len(uids_to_test) # Ugly, move all testing in to the SchoolTesting class!
+        # if len(screen_pos_ids) > 0:
+        #     # Perform follow-up testing on some
+        #     uids_to_test = cv.binomial_filter(self.test_prob, screen_pos_ids)
+        #     self.sim.people.test(uids_to_test, test_delay=self.screen2pcr)
+        #     #self.sim.results['new_tests'][t] += len(uids_to_test)
+        #     self.testing.n_tested['PCR'] += len(uids_to_test) # Ugly, move all testing in to the SchoolTesting class!
 
-            # Send the screen positives home - quar_period if no PCR and otherwise the time to the PCR
-            for uid in uids_to_test:
-                self.uids_at_home[uid] = self.sim.t + self.screen2pcr # Can come back after PCR results are in
+        #     # Send the screen positives home - quar_period if no PCR and otherwise the time to the PCR
+        #     for uid in uids_to_test:
+        #         self.uids_at_home[uid] = self.sim.t + self.screen2pcr # Can come back after PCR results are in
 
-            for uid in np.setdiff1d(screen_pos_ids, uids_to_test):
-                self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
+        #     for uid in np.setdiff1d(screen_pos_ids, uids_to_test):
+        #         self.uids_at_home[uid] = self.sim.t + self.sim.pars['quar_period'] # Can come back after quarantine period
 
 
-        # Determine (for tracking, mostly) who has arrived at school and passed symptom screening
-        uids_at_home_array = np.fromiter(self.uids_at_home.keys(), dtype=int)
-        self.uids_passed_screening = np.setdiff1d(self.scheduled_uids, uids_at_home_array)
+        # # Determine (for tracking, mostly) who has arrived at school and passed symptom screening
+        # uids_at_home_array = np.fromiter(self.uids_at_home.keys(), dtype=int)
+        # self.uids_passed_screening = np.setdiff1d(self.scheduled_uids, uids_at_home_array)
 
-        # Remove individuals at home from the network
-        self.ct_mgr.remove_individuals(uids_at_home_array)
+        # # Remove individuals at home from the network
+        # self.ct_mgr.remove_individuals(uids_at_home_array)
 
-        self.stats.update()
-        if self.sim.t == self.sim.npts-1:
-            self.stats.finalize()
+        # self.stats.update()
+        # if self.sim.t == self.sim.npts-1:
+        #     self.stats.finalize()
 
         # Return what is left of the layer
-        return self.ct_mgr.get_layer()
+        # return self.ct_mgr.get_layer()
+        return layer
 
     def get_stats(self):
         ''' Return a dictionary of statistics '''
