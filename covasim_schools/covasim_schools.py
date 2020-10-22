@@ -596,7 +596,6 @@ class HybridContactManager(ContactManager):
             'Sunday':    'weekend',
         }
 
-
     def split_layer(self):
         ''' Split the layer into A- and B-sublayers '''
         self.A_students = cv.binomial_filter(0.5, self.students)
@@ -617,7 +616,6 @@ class HybridContactManager(ContactManager):
         B_layer.pop_inds(rows)
         return A_layer, B_layer
 
-
     def begin_day(self, date):
         ''' Called at the beginning of each day to configure the school layer '''
         dayname = sc.readdate(date).strftime('%A')
@@ -636,7 +634,6 @@ class HybridContactManager(ContactManager):
             self.layer = cv.Layer() # Empty
 
         return uids # Hybrid scheduling
-
 
     def find_contacts(self, uids):
         ''' Finds contacts of individuals listed in uids, including those who are absent from school.
