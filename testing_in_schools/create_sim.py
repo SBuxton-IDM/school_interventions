@@ -2,7 +2,6 @@
 
 import covasim as cv
 import sciris as sc
-import pandas as pd
 import os
 
 def define_pars(which='best', kind='default', ):

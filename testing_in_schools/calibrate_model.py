@@ -6,7 +6,7 @@ import optuna as op
 import numpy as np
 import pandas as pd
 import create_sim as cs
-from school_intervention import new_schools
+import covasim_schools as cvsch
 import covasim as cv
 import synthpops as sp
 cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
@@ -102,8 +102,8 @@ def objective(trial, kind='default'):
         'testing': None,
     }
     scen = scenario(es=remote, ms=remote, hs=remote)
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    schman = cvsch.schools_manager(scen)
+    sim['interventions'] += [schman]
     sim.run()
 
     mismatch = evaluate_sim(sim)['mismatch']

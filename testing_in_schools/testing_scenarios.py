@@ -4,7 +4,7 @@ import os
 import covasim as cv
 import create_sim as cs
 import sciris as sc
-from school_intervention import new_schools
+import covasim_schools as cvsch
 import synthpops as sp
 cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
@@ -128,7 +128,7 @@ def generate_testing():
         'delay': 0, # NOTE: no delay!
     }]
 
-    # pars3_newscenarios ----------------- 
+    # pars3_newscenarios -----------------
     PCR_every_2w_50cov = [{ # TODO
         'start_date': '2020-11-02',
         'repeat': 14,
@@ -250,8 +250,8 @@ if __name__ == '__main__':
                     if spec is not None:
                         spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
 
-                ns = new_schools(this_scen)
-                sim['interventions'] += [ns]
+                schman = cvsch.schools_manager(scen)
+                sim['interventions'] += [schman]
                 sims.append(sim)
                 proc += 1
 
