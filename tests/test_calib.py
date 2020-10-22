@@ -16,7 +16,8 @@ folder = '../testing_in_schools/v20201016_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
-if __name__ == '__main__':
+
+def test_calib():
 
     entry = sc.loadjson(calibfile)[0]
     params = sc.dcp(entry['pars'])
@@ -48,3 +49,10 @@ if __name__ == '__main__':
         sim.plot()
 
     cv.savefig('sim.png')
+
+    return sim
+
+
+if __name__ == '__main__':
+
+    sim = test_calib()
