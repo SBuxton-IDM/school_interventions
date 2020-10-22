@@ -6,7 +6,7 @@ import create_sim as cs
 import sciris as sc
 import covasim_schools as cvsch
 import synthpops as sp
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5

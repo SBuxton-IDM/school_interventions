@@ -9,7 +9,7 @@ from testing_in_schools import create_sim as cs
 from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
 from testing_in_schools.calibrate_model import evaluate_sim
 
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 debug = False
 # NOTE: The following may be bypassed below by hard-coded pop_size and folder
@@ -48,8 +48,8 @@ def test_schools():
     else:
         sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 
-    sm = cvsch.schools_manager(scen)
-    sim['interventions'] += [sm]
+    # sm = cvsch.schools_manager(scen)
+    # sim['interventions'] += [sm]
 
     sim.run(keep_people=debug)
 
