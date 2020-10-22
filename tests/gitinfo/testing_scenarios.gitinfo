@@ -1,0 +1,21 @@
+{
+  "covasim": {
+    "version": "1.7.5",
+    "branch": "develop",
+    "hash": "5bfc8ff",
+    "date": "2020-10-21T16:07:19-07:00"
+  },
+  "called_by": {
+    "branch": "make-into-module",
+    "hash": "6792a5d",
+    "date": "2020-10-21T23:13:27-07:00",
+    "filename": "/home/cliffk/idm/schools/testing_in_schools/testing_scenarios.py"
+  },
+  "comments": {
+    "SynthPops": {
+      "branch": "trim-memory",
+      "hash": "c47f67f",
+      "date": "2020-10-21T20:28:42-07:00"
+    }
+  }
+}
