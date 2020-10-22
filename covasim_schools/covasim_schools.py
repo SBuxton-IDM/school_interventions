@@ -10,7 +10,7 @@ import covasim as cv
 import numpy as np
 import sciris as sc
 
-__all__ = ['schools_manager', 'School', 'SchoolStats']
+__all__ = ['schools_manager', 'SchoolScenario', 'School', 'SchoolTesting', 'SchoolStats']
 
 
 def int2key(x):
@@ -25,6 +25,34 @@ class schools_manager(cv.Intervention):
     done here is to split the original school 's' network into individual schools.
     (Each school was already a separate component, but the code figures out which
     component goes with which school and extracts the subgraph.)
+
+    The only input argument (aside from standard Intervention ones) is the scenario
+    dict, which has the following example structure:
+
+            scenario = {
+                'start_day': '2020-11-02',
+                'schedule': 'Full',
+                'screen_prob': 0.9,
+                'test_prob': 0.5, # Amongst those who screen positive
+                'screen2pcr': 3, # Days from screening to receiving PCR results
+                'trace_prob': 0.75, # Fraction of newly diagnosed index cases who are traced
+                'quar_prob': 0.75, # Of those reached by contact tracing, this fraction will quarantine
+                'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
+                'beta_s': 0.75 * base_beta_s, # 25% reduction due to NPI
+                'testing': <see below>,
+            }
+
+    The testing parameter is a list of dicts, with the following structure. These
+    coordinating testing interventions in schools:
+
+            testing = [{
+                'start_date': '2020-10-26',
+                'repeat': 7,
+                'groups': ['students', 'teachers', 'staff'],
+                'coverage': 1,
+                'sensitivity': 1,
+                'delay': 1,
+            }]
     '''
 
     def __init__(self, scenario, **kwargs):
@@ -32,7 +60,7 @@ class schools_manager(cv.Intervention):
         self._store_args() # Store the input arguments so that intervention can be recreated
 
         # Store arguments
-        self.scenario = scenario
+        self.scenario = SchoolScenario(scenario)
         self.schools = []
 
     def initialize(self, sim):
@@ -84,6 +112,83 @@ class schools_manager(cv.Intervention):
             for school in self.schools:
                 sim.school_stats[school.sid].update( school.get_stats() )
             self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
+
+
+
+class SchoolScenario(cv.FlexDict):
+    '''
+    Lightweight class for ensuring the scenarios are specified correctly. See
+    schools_manager() for structure and definition.
+
+    Examples:
+
+        SchoolScenario(param_dict)
+        SchoolScenario(**param_dict)
+    '''
+    def __init__(self, *args, **kwargs):
+
+        # Handle input arguments
+        if len(args) == 1: # Handle a dict or SchoolScenarios objet being supplied
+            if isinstance(args[0], dict):
+                kwargs = args[0]
+            else:
+                errormsg = f'If creating a scenario with a single input argument, it must be a dict or a SchoolScenario, not {type(args[0])}'
+                raise TypeError(errormsg)
+
+        # Define the required keys
+        school_type_keys = [
+            'pk', # Preschool/kindergarten
+            'es', # Elementary
+            'ms', # Middle
+            'hs', # High
+            'uv', # University
+            ]
+
+        scen_keys = [
+            'start_day',
+            'schedule',
+            'screen_prob',
+            'test_prob',
+            'screen2pcr',
+            'trace_prob',
+            'quar_prob',
+            'ili_prob',
+            'beta_s',
+            'testing',
+        ]
+
+        test_keys = [
+            'start_date',
+            'repeat',
+            'groups',
+            'coverage',
+            'sensitivity',
+            'delay',
+        ]
+
+        # Validate scenario
+        for st_key,scenario in
+        kwarg_keys = set(kwargs.keys())
+        if kwarg_keys != set(scen_keys):
+            missing = set(scen_keys) - kwarg_keys
+            extra = kwarg_keys - set(scen_keys)
+            errormsg = f'In your scenario definition, you are missing keys "{missing}" and have extra keys "{extra}"'
+            raise ValueError(errormsg)
+        else:
+            for key in scen_keys:
+                self[key] = kwargs[key]
+
+        # Validate testing
+        self['testing'] = sc.promotetolist(self['testing'])
+        for e,entry in enumerate(self['testing']):
+            entry_keys = set(entry.keys())
+            if entry_keys != set(test_keys):
+                missing = set(test_keys) - entry_keys
+                extra = entry_keys - set(test_keys)
+                errormsg = f'In your testing definition (position {e}), you are missing keys "{missing}" and have extra keys "{extra}"'
+                raise ValueError(errormsg)
+
+        return
 
 
 
