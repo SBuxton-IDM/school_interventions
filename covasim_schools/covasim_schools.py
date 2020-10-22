@@ -146,40 +146,42 @@ class SchoolScenario(cv.FlexDict):
             ]
 
         scen_keys = [
-            'start_day',
-            'schedule',
-            'screen_prob',
-            'test_prob',
-            'screen2pcr',
-            'trace_prob',
-            'quar_prob',
-            'ili_prob',
-            'beta_s',
-            'testing',
+            'start_day', # Day the scenario starts
+            'schedule', # Full, hybrid, or remote scheduling
+            'screen_prob', # Probability of a screening test
+            'test_prob', # Probability of a confirmatory PCR test
+            'screen2pcr', # Days from screening to receiving PCR results
+            'trace_prob', # Fraction of newly diagnosed index cases who are traced
+            'quar_prob', # Of those reached by contact tracing, this fraction will quarantine
+            'ili_prob', # Prevalence of influenza-like symptoms
+            'beta_s', # Reduction in beta due to NPI
+            'testing', # Defined below
         ]
 
         optional_scen_keys = ['verbose']
 
-        pcr_test_keys = [
-            'start_date',
-            'repeat',
-            'groups',
-            'coverage',
-            'sensitivity',
-            'delay',
+        # Keys used by both testing interventions
+        shared_test_keys = [
+            'start_date', # Date testing program starts
+            'repeat', # How frequently testing is repeated
+            'groups', # Which out of students, teachers, staff test
+            'coverage', # Proportion tested
+            'is_antigen', # Whether or not it's an antigen test
         ]
 
+        # PCR-specific keys
+        pcr_test_keys = [
+            'sensitivity', # Test sensitivity
+            'delay', # Days until results are returned
+        ]
+
+        # Antigen-specific keys
         antigen_test_keys = [
-            'start_date',
-            'repeat',
-            'groups',
-            'coverage',
-            'is_antigen',
-            'symp7d_sensitivity',
-            'other_sensitivity',
-            'specificity',
-            'PCR_followup_perc',
-            'PCR_followup_delay',
+            'symp7d_sensitivity', # Test sensitivity, within first 7 days of symptoms
+            'other_sensitivity', # Test sensitivity otherwise
+            'specificity', # Test specificity (false positive rate)
+            'PCR_followup_perc', # Proportion who receive PCR follow-up
+            'PCR_followup_delay', # Delay until PCR follow-up
         ]
 
         # Validate scenario
@@ -206,10 +208,10 @@ class SchoolScenario(cv.FlexDict):
                 for e,entry in enumerate(self[st_key]['testing']):
                     entry_keys = set(entry.keys())
                     if 'is_antigen' in entry and entry['is_antigen']: # It's an antigen test
-                        test_keys = antigen_test_keys
+                        test_keys = antigen_test_keys + shared_test_keys
                     else:
-                        test_keys = pcr_test_keys
-                        entry['is_antigen'] = False
+                        test_keys = pcr_test_keys + shared_test_keys
+                        entry['is_antigen'] = False # By default, assume not an antigen test
                     if entry_keys != set(test_keys):
                         missing = set(test_keys) - entry_keys
                         extra = entry_keys - set(test_keys)
