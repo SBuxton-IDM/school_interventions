@@ -92,8 +92,8 @@ def cache_populations(seed=0, popfile=None):
 if __name__ == '__main__':
 
     seeds = [0,1,2,3,4]
-    #parallelize = True
-    parallelize = False
+    parallelize = True
+    # parallelize = False
 
     if parallelize:
         ram = psutil.virtual_memory().available/1e9
