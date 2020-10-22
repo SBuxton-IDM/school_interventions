@@ -1,3 +1,9 @@
+'''
+This is the main script used for commissioning the different testing scenarios
+for the paper results. Run this script first (preferably on an HPC!), then
+run the different plotting scripts.
+'''
+
 # Workhorse script to commission testing scenarios
 
 import os

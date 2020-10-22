@@ -403,6 +403,7 @@ class School(sc.prettyobj):
         return self.stats.get()
 
 
+
 class SchoolTesting(sc.prettyobj):
     '''
     Conduct testing in school students and staff.
