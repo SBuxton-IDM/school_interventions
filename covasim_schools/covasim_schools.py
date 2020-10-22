@@ -81,8 +81,8 @@ class schools_manager(cv.Intervention):
 
 
 
-class School(sc.prettyobj):
-    ''' Represent a single school '''
+class School():
+    ''' Represents a single school; handle the layer updates and coordinating testing and other tasks '''
 
     def __init__(self, sim, school_id, school_type, uids, layer,
                 start_day, screen_prob, screen2pcr, test_prob, trace_prob, quar_prob, schedule, beta_s, ili_prob, testing, verbose=False, **kwargs):

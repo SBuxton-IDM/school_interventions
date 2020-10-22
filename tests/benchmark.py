@@ -14,6 +14,7 @@ from testing_in_schools.calibrate_model import evaluate_sim
 cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 debug = False
+use_intervention = True
 # NOTE: The following may be bypassed below by hard-coded pop_size and folder
 folder = '../testing_in_schools/v20201015_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
@@ -45,8 +46,9 @@ def benchmark_schools():
 
     sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1, end_day='2020-10-31')
 
-    sm = cvsch.schools_manager(scen)
-    sim['interventions'] += [sm]
+    if use_intervention:
+        sm = cvsch.schools_manager(scen)
+        sim['interventions'] += [sm]
 
     sim.run(keep_people=debug)
 
@@ -67,7 +69,7 @@ def benchmark_schools():
 
 if __name__ == '__main__':
 
-    to_profile = 'school_update'
+    to_profile = 'step'
 
     func_options = dict(
         step = cv.Sim.step,
