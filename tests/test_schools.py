@@ -48,8 +48,8 @@ def test_schools():
     else:
         sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 
-    # sm = cvsch.schools_manager(scen)
-    # sim['interventions'] += [sm]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
     sim.run(keep_people=debug)
 
