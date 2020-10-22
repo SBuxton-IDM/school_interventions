@@ -10,7 +10,13 @@ import covasim as cv
 import numpy as np
 import sciris as sc
 
-__all__ = ['schools_manager', 'School']
+__all__ = ['schools_manager', 'School', 'SchoolStats']
+
+
+def int2key(x):
+    ''' Convert an school ID integer to a dict key, e.g. 5 -> 's5' '''
+    return 's' + str(x)
+
 
 class schools_manager(cv.Intervention):
     '''
@@ -46,7 +52,7 @@ class schools_manager(cv.Intervention):
                     'type':         school_type,
                     'scenario':     self.scenario[school_type],
                 }
-                sim.school_stats[school_id] = stats
+                sim.school_stats[int2key(school_id)] = stats
 
                 if self.scenario[school_type] is not None:
                     # Extract 's'-layer associated with this school
@@ -107,7 +113,7 @@ class School(sc.prettyobj):
         testing      (struct)       : List of dictionaries of parameters for SchoolTesting
         '''
 
-        self.sid = school_id
+        self.sid = int2key(school_id) # Convert to an string
         self.stype = school_type
         self.uids = np.array(uids)
         self.start_day = sim.day(start_day)
@@ -401,7 +407,7 @@ class SchoolTesting(sc.prettyobj):
 
 
 
-class SchoolStats():
+class SchoolStats(sc.prettyobj):
     ''' Reporter for tracking statistics associated with a school '''
 
     def __init__(self, school, sim):
