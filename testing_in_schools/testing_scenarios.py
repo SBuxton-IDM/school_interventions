@@ -250,8 +250,8 @@ if __name__ == '__main__':
                     if spec is not None:
                         spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
 
-                schman = cvsch.schools_manager(scen)
-                sim['interventions'] += [schman]
+                sm = cvsch.schools_manager(scen)
+                sim['interventions'] += [sm]
                 sims.append(sim)
                 proc += 1
 

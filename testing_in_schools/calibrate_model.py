@@ -102,8 +102,8 @@ def objective(trial, kind='default'):
         'testing': None,
     }
     scen = scenario(es=remote, ms=remote, hs=remote)
-    schman = cvsch.schools_manager(scen)
-    sim['interventions'] += [schman]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
     sim.run()
 
     mismatch = evaluate_sim(sim)['mismatch']
