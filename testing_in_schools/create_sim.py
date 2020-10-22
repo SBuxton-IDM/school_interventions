@@ -2,8 +2,8 @@
 
 import covasim as cv
 import sciris as sc
-import pandas as pd
 import os
+
 
 def define_pars(which='best', kind='default', ):
     ''' Define the parameter best guesses and bounds '''
@@ -25,7 +25,8 @@ def define_pars(which='best', kind='default', ):
 
     return output
 
-def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False):
+
+def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False, **kwargs):
 
     pop_scale = 1# 2.25e6 / pop_size
 
@@ -76,6 +77,8 @@ def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False)
         'rand_seed': p.rand_seed,
     }
 
+    pars = sc.mergedicts(pars, kwargs)
+
     n_popfiles = 5
     popfile = popfile_stem + str(params['rand_seed'] % n_popfiles) + '.ppl'
     sim = cv.Sim(pars, popfile=popfile, load_pop=True)
@@ -101,6 +104,7 @@ def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False)
         interv.do_plot = False
 
     return sim
+
 
 def run_sim(params):
     sim = create_sim()

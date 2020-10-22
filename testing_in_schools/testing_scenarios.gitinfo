@@ -1,21 +1,21 @@
 {
   "covasim": {
-    "version": "1.7.2",
-    "branch": "schools",
-    "hash": "2b476b1",
-    "date": "2020-10-19T23:16:44-07:00"
+    "version": "1.7.5",
+    "branch": "develop",
+    "hash": "5bfc8ff",
+    "date": "2020-10-21T16:07:19-07:00"
   },
   "called_by": {
-    "branch": "master",
-    "hash": "cb04ff3",
-    "date": "2020-10-19T23:06:33-07:00",
-    "filename": "/home/dklein/GIT/covid-schools/testing_in_schools/testing_scenarios.py"
+    "branch": "make-into-module",
+    "hash": "3e20caf",
+    "date": "2020-10-21T22:57:18-07:00",
+    "filename": "/home/cliffk/idm/schools/testing_in_schools/testing_scenarios.py"
   },
   "comments": {
     "SynthPops": {
-      "branch": "master",
-      "hash": "dfcc4f4",
-      "date": "2020-09-10T19:05:16-07:00"
+      "branch": "trim-memory",
+      "hash": "c47f67f",
+      "date": "2020-10-21T20:28:42-07:00"
     }
   }
 }

@@ -1,20 +1,22 @@
-# Script for quick and dirty single run of a school-based intervention
+'''
+Benchmark the intervention
+'''
 
 import os
-import covasim as cv
-import numpy as np
-import create_sim as cs
 import sciris as sc
-from school_intervention import new_schools
-from testing_scenarios import generate_scenarios, generate_testing
-from calibrate_model import evaluate_sim
+import covasim as cv
 import synthpops as sp
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+import covasim_schools as cvsch
+from testing_in_schools import create_sim as cs
+from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
+from testing_in_schools.calibrate_model import evaluate_sim
+
+cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 debug = False
+use_intervention = True
 # NOTE: The following may be bypassed below by hard-coded pop_size and folder
-bypass = True
-folder = 'v20201015_225k'
+folder = '../testing_in_schools/v20201015_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
@@ -27,7 +29,7 @@ def scenario(es, ms, hs):
         'uv': None,
     }
 
-if __name__ == '__main__':
+def benchmark_schools():
 
     entry = sc.loadjson(calibfile)[0]
     params = sc.dcp(entry['pars'])
@@ -42,14 +44,11 @@ if __name__ == '__main__':
     scen['testing'] = testing
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
-    # BYPASS option:
-    if bypass:
-        sim = cs.create_sim(params, pop_size=1e4, folder=None)
-    else:
-        sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
+    sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1, end_day='2020-10-31')
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    if use_intervention:
+        sm = cvsch.schools_manager(scen)
+        sim['interventions'] += [sm]
 
     sim.run(keep_people=debug)
 
@@ -64,3 +63,17 @@ if __name__ == '__main__':
 
     #sim.save('test.sim')
     #cv.savefig('sim.png')
+
+    return sim
+
+
+if __name__ == '__main__':
+
+    to_profile = 'step'
+
+    func_options = dict(
+        step = cv.Sim.step,
+        school_update = cvsch.School.update,
+        )
+
+    sc.profile(run=benchmark_schools, follow=func_options[to_profile])
