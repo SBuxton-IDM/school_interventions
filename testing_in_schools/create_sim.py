@@ -4,6 +4,7 @@ import covasim as cv
 import sciris as sc
 import os
 
+
 def define_pars(which='best', kind='default', ):
     ''' Define the parameter best guesses and bounds '''
 
@@ -24,7 +25,8 @@ def define_pars(which='best', kind='default', ):
 
     return output
 
-def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False):
+
+def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False, **kwargs):
 
     pop_scale = 1# 2.25e6 / pop_size
 
@@ -100,6 +102,7 @@ def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False)
         interv.do_plot = False
 
     return sim
+
 
 def run_sim(params):
     sim = create_sim()
