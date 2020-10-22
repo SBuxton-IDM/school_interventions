@@ -27,7 +27,7 @@ def scenario(es, ms, hs):
         'uv': None,
     }
 
-if __name__ == '__main__':
+def test_schools():
 
     entry = sc.loadjson(calibfile)[0]
     params = sc.dcp(entry['pars'])
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     if bypass:
         sim = cs.create_sim(params, pop_size=1e4, folder=None)
     else:
-        sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
+        sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 
     sm = cvsch.schools_manager(scen)
     sim['interventions'] += [sm]
@@ -64,3 +64,10 @@ if __name__ == '__main__':
 
     #sim.save('test.sim')
     #cv.savefig('sim.png')
+
+    return sim
+
+
+if __name__ == '__main__':
+
+    sim = test_schools()

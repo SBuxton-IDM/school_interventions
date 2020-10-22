@@ -12,7 +12,7 @@ from testing_in_schools.calibrate_model import evaluate_sim
 cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 debug = False
-folder = 'v20201016_225k'
+folder = '../testing_in_schools/v20201016_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 

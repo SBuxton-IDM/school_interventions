@@ -77,6 +77,8 @@ def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False,
         'rand_seed': p.rand_seed,
     }
 
+    pars = sc.mergedicts(pars, kwargs)
+
     n_popfiles = 5
     popfile = popfile_stem + str(params['rand_seed'] % n_popfiles) + '.ppl'
     sim = cv.Sim(pars, popfile=popfile, load_pop=True)
