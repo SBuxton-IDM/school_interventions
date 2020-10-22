@@ -453,11 +453,13 @@ class SchoolStats(sc.prettyobj):
         teacher_uids = cv.itruei(ppl.teacher_flag, self.school.uids)
         staff_uids = cv.itruei(ppl.staff_flag, self.school.uids)
 
+        infectious_ids = {}
         for group, ids in zip(['students', 'teachers', 'staff'], [student_uids, teacher_uids, staff_uids]):
-            self.infectious[group][t] = len(cv.true(ppl.infectious[ids])) * rescale
+            infectious_ids[group] = cv.true(ppl.infectious[ids])
+            self.infectious[group][t] = len(infectious_ids[group]) * rescale
             self.newly_exposed[group][t] = len(cv.true(ppl.date_exposed[ids] == t-1)) * rescale
-            self.scheduled[group][t] = len([u for u in self.school.scheduled_uids if u in ids]) * rescale # Scheduled
-            self.in_person[group][t] = len([u for u in self.school.uids_passed_screening if u in ids]) * rescale # Post-screening
+            self.scheduled[group][t] = len(np.intersect1d(self.school.scheduled_uids, ids)) * rescale # Scheduled
+            self.in_person[group][t] = len(np.intersect1d(self.school.uids_passed_screening, ids)) * rescale # Post-screening
 
         # Tracing statistics to compare against previous work:
         # if len(self.school.uids_arriving_at_school) > 0:
@@ -475,14 +477,14 @@ class SchoolStats(sc.prettyobj):
         staff_at_school_uids = cv.itruei(ppl.staff_flag, self.school.uids_arriving_at_school)
 
         for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
-            self.infectious_arrive_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
+            self.infectious_arrive_at_school[group][t] = len(infectious_ids[group]) * rescale
 
         # Second "infectious_stay_at_school" effectively assumes "screen-positive" kids would be kept home from school in the first place
         students_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.student_flag[uid]]
         teachers_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.teacher_flag[uid]]
         staff_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.staff_flag[uid]]
         for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
-            self.infectious_stay_at_school[group][t] = sum(ppl.infectious[ids]) * rescale
+            self.infectious_stay_at_school[group][t] = len(infectious_ids[group]) * rescale
 
     # def finalize(self):
     #     ''' Called once on the final time step '''
