@@ -480,9 +480,9 @@ class SchoolStats(sc.prettyobj):
             self.infectious_arrive_at_school[group][t] = len(infectious_ids[group]) * rescale
 
         # Second "infectious_stay_at_school" effectively assumes "screen-positive" kids would be kept home from school in the first place
-        students_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.student_flag[uid]]
-        teachers_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.teacher_flag[uid]]
-        staff_at_school_uids = [uid for uid in self.school.uids_passed_screening if ppl.staff_flag[uid]]
+        students_at_school_uids = cv.itruei(ppl.student_flag, self.school.uids_passed_screening)
+        teachers_at_school_uids = cv.itruei(ppl.teacher_flag, self.school.uids_passed_screening)
+        staff_at_school_uids = cv.itruei(ppl.staff_flag, self.school.uids_passed_screening)
         for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
             self.infectious_stay_at_school[group][t] = len(infectious_ids[group]) * rescale
 

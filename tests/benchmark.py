@@ -69,7 +69,7 @@ def benchmark_schools():
 
 if __name__ == '__main__':
 
-    to_profile = 'school_update'
+    to_profile = 'stats_update'
 
     func_options = dict(
         step = cv.Sim.step,
