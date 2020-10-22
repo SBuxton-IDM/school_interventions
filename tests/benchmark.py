@@ -44,7 +44,7 @@ def benchmark_schools():
     scen['testing'] = testing
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
-    sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1, end_day='2020-10-31')
+    sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 
     if use_intervention:
         sm = cvsch.schools_manager(scen)
@@ -69,11 +69,12 @@ def benchmark_schools():
 
 if __name__ == '__main__':
 
-    to_profile = 'step'
+    to_profile = 'stats_update'
 
     func_options = dict(
         step = cv.Sim.step,
         school_update = cvsch.School.update,
+        stats_update = cvsch.SchoolStats.update,
         )
 
     sc.profile(run=benchmark_schools, follow=func_options[to_profile])
