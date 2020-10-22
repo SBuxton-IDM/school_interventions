@@ -14,19 +14,39 @@ from calibrate_model import evaluate_sim
 from pathlib import Path
 
 # Global plotting styles
-font_size = 16
+font_size = 18
 font_style = 'Roboto Condensed'
 mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
-folder = 'v20201016_225k'
-variant = '_final_0-30'
+folder = 'v20201019'
+variant = '_final_updated_antigen_0-30'
+cachefn = os.path.join(folder, 'msims', 'batch_final_updated_antigen_0-30.sims')
 debug_plot = False
 
 imgdir = os.path.join(folder, 'img'+variant)
 Path(imgdir).mkdir(parents=True, exist_ok=True)
+
+def load_simlist(fn):
+    # Load/combine *.msim objects into a single MultiSim for analysis
+    print(f'loading {fn}')
+    return cv.load(fn)
+
+def load_multi_simlist(fns, cachefn=None):
+    # Load/combine *.msim objects into a single MultiSim for analysis
+    sims = []
+    for fn in fns:
+        print(f'loading {fn}')
+        msim = cv.MultiSim.load(fn)
+        sims += msim.sims
+
+    if cachefn is not None:
+        print(f'Saving to {cachefn}')
+        cv.save(cachefn, sims)
+    return sims
+
 
 
 def load_single(fn):
@@ -55,12 +75,9 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     print(len(msim.sims))
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
-#cachefn = os.path.join(folder, 'msims', 'combined_new_antigen_0-30.msim')
-cachefn = os.path.join(folder, 'msims', 'batch_final_0-30.msim')
-#cachefn = os.path.join(folder, 'msims', 'batch_sm_0-1.msim')
 
-print(f'loading {cachefn}')
-msim = load_single(cachefn)
+#msim = load_single(cachefn)
+sims = load_simlist(cachefn)
 """
 print('extracting sims')
 sims = [s.shrink(in_place=False) for s in msim.sims if 'Antigen' not in s.key2]
@@ -95,9 +112,9 @@ byschool = []
 groups = ['students', 'teachers', 'staff']
 
 scen_names = { # key1
-    'as_normal': 'As Normal',
-    'with_countermeasures': 'Normal with\nCountermeasures',
-    'all_hybrid': 'Hybrid with\nCountermeasures',
+    'as_normal': 'Full Schedule\nNo Countermeasures',
+    'with_countermeasures': 'Full Schedule',
+    'all_hybrid': 'Hybrid',
     'k5': 'K-5 In-Person\nOthers Remote',
     'all_remote': 'All Remote',
 }
@@ -110,7 +127,7 @@ scen_order = [
 ]
 
 test_names = sc.odict({ # key2
-    'None': 'None',
+    'None': 'Testing as part of countermeasures (if any)',
     'PCR 1w prior': 'PCR one week prior, 1d delay',
     'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, PCR f/u',
     #'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
@@ -127,7 +144,7 @@ test_names = sc.odict({ # key2
 })
 test_order = test_names.values()
 test_hue = {
-    'None':                                         'gray',
+    'Testing as part of countermeasures (if any)':  'gray',
     'PCR one week prior, 1d delay':                 (0.8584083044982699, 0.9134486735870818, 0.9645674740484429, 1.0),
     'Weekly antigen for teachers & staff, PCR f/u': (0.9882352941176471, 0.732072279892349, 0.6299269511726259, 1.0),
     'Fortnightly PCR, 50% coverage':                (0.7309496347558632, 0.8394771241830065, 0.9213225682429834, 1.0),
@@ -138,12 +155,12 @@ test_hue = {
     'Daily PCR, no delay':                          (0.16696655132641292, 0.48069204152249134, 0.7291503267973857, 1.0),
 }
 
-for sim in msim.sims:
+for sim in sims:#msim.sims:
     sim.key2 = test_names[sim.key2] if sim.key2 in test_names else sim.key2
 
 
 tests = []
-for sim in msim.sims:
+for sim in sims:#msim.sims:
     first_school_day = sim.day('2020-11-02')
     last_school_day = sim.day('2021-01-31')
     ret = {
@@ -316,6 +333,7 @@ plt.tight_layout()
 cv.savefig(os.path.join(imgdir, '3mAverageRe.png'), dpi=300)
 
 # Percent of schools with infections on day 1
+'''
 fig = plt.figure(figsize=(12,8))
 extract = df.groupby(['key1', 'key2'])[['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1']].mean().loc['as_normal'].reset_index()
 melt = pd.melt(extract, id_vars=['key2'], value_vars=['es_perc_d1', 'ms_perc_d1', 'hs_perc_d1'], var_name='School Type', value_name='Schools with First-Day Infections')
@@ -340,6 +358,7 @@ for ax in g.axes.flat:
 g.add_legend(fontsize=14)
 plt.tight_layout()
 cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg.png'), dpi=300)
+'''
 
 # Tests required
 fig, ax = plt.subplots(figsize=(12,8))
@@ -353,6 +372,7 @@ test_order.reverse()
 d['Total'] = d['PCR'] + d['Antigen']
 d = d.loc[d['key1'] == 'with_countermeasures']
 d = d.groupby('key2').mean().loc[test_order][['n', 'PCR', 'Antigen', 'Total']].reset_index()
+print(d)
 ax.barh(d['key2'], d['Total'], color='r', label='Antigen')
 ax.barh(d['key2'], d['PCR'], color='b', label='PCR')
 ax.grid(axis='x')
