@@ -1,14 +1,14 @@
 # Run a calibration-like simulation to see if the resulting objective function value matches that from calibration
 
 import os
-import covasim as cv
-import numpy as np
-import create_sim as cs
 import sciris as sc
-from school_intervention import new_schools
-from testing_scenarios import generate_scenarios, generate_testing
-from calibrate_model import evaluate_sim
+import covasim as cv
 import synthpops as sp
+import covasim_schools as cvsch
+from testing_in_schools import create_sim as cs
+from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
+from testing_in_schools.calibrate_model import evaluate_sim
+
 cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 debug = False
@@ -33,8 +33,8 @@ if __name__ == '__main__':
 
     sim = cs.create_sim(params, pop_size=pop_size, folder=folder)
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    schman = cvsch.schools_manager(scen)
+    sim['interventions'] += [schman]
 
     sim.run(keep_people=debug)
 
