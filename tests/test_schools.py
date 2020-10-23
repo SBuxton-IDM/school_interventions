@@ -39,7 +39,6 @@ def test_schools():
     for stype, spec in scen.items():
         if spec is not None:
             spec['testing'] = testing
-    scen['testing'] = testing
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
     # BYPASS option:
