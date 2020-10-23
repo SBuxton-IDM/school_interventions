@@ -3,6 +3,7 @@ Generate a SynthPops population for use with the schools code.
 '''
 
 import os
+import numpy as np
 import sciris as sc
 import covasim as cv
 import synthpops as sp
@@ -72,14 +73,60 @@ def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting
     T = sc.tic()
     print(f'Making "{popfile}"...')
 
-    spop = sp.make_population(**pars)
-    popdict = cv.make_synthpop(population=spop, community_contacts=community_contacts)
+    # Make the population
+    population = sp.make_population(**pars)
+
+    # Convert to a popdict
+    popdict = cv.make_synthpop(population=population, community_contacts=community_contacts)
+    school_ids = [None] * int(pop_size)
+    teacher_flag = [False] * int(pop_size)
+    staff_flag = [False] * int(pop_size)
+    student_flag = [False] * int(pop_size)
+    school_types = {'pk': [], 'es': [], 'ms': [], 'hs': [], 'uv': []}
+    school_type_by_person = [None] * int(pop_size)
+    schools = dict()
+
+    for uid,person in population.items():
+        if person['scid'] is not None:
+            school_ids[uid] = person['scid']
+            school_type_by_person[uid] = person['sc_type']
+            if person['scid'] not in school_types[person['sc_type']]:
+                school_types[person['sc_type']].append(person['scid'])
+            if person['scid'] in schools:
+                schools[person['scid']].append(uid)
+            else:
+                schools[person['scid']] = [uid]
+            if person['sc_teacher'] is not None:
+                teacher_flag[uid] = True
+            elif person['sc_student'] is not None:
+                student_flag[uid] = True
+            elif person['sc_staff'] is not None:
+                staff_flag[uid] = True
+
+    popdict['school_id'] = np.array(school_ids)
+    popdict['schools'] = schools
+    popdict['teacher_flag'] = teacher_flag
+    popdict['student_flag'] = student_flag
+    popdict['staff_flag'] = staff_flag
+    popdict['school_types'] = school_types
+    popdict['school_type_by_person'] = school_type_by_person
+
+    # Actually create the people
+    people = cv.People(pars.n, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'],
+                          contacts=popdict['contacts'], school_id=popdict['school_id'],
+                          schools=popdict['schools'], school_types=popdict['school_types'],
+                          student_flag=popdict['student_flag'], teacher_flag=popdict['teacher_flag'],
+                          staff_flag=popdict['staff_flag'], school_type_by_person=popdict['school_type_by_person'])
+
+    # # Modify people object
+    # people.schools = dict()
+    # people.school_types = dict()
 
 
     if do_save:
-        sc.saveobj(popfile, popdict)
+        sc.saveobj(popfile, people)
 
     sc.toc(T)
 
     print('Done')
-    return spop
+    return people
