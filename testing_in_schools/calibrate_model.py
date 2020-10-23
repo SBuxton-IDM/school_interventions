@@ -9,7 +9,7 @@ import create_sim as cs
 import covasim_schools as cvsch
 import covasim as cv
 import synthpops as sp
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+cv.check_save_version('1.7.6', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 pop_size = 2.25e5
 folder = 'v20201019'

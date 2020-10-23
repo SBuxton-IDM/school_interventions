@@ -9,11 +9,11 @@ from testing_in_schools import create_sim as cs
 from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
 from testing_in_schools.calibrate_model import evaluate_sim
 
-cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 debug = False
 # NOTE: The following may be bypassed below by hard-coded pop_size and folder
-bypass = False
+bypass = True
 folder = '../testing_in_schools/v20201015_225k'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
@@ -43,7 +43,9 @@ def test_schools():
 
     # BYPASS option:
     if bypass:
-        sim = cs.create_sim(params, pop_size=1e4, folder=None)
+        pop_size = int(20e3)
+        popfile_stem = os.path.join(os.pardir, 'testing_in_schools', 'inputs', f'kc_clustered_{pop_size}_seed')
+        sim = cs.create_sim(params, pop_size=pop_size, folder=None, popfile_stem=popfile_stem)
     else:
         sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 

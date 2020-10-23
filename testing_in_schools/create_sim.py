@@ -26,7 +26,7 @@ def define_pars(which='best', kind='default', ):
     return output
 
 
-def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False, **kwargs):
+def create_sim(params, pop_size=2.25e5, folder=None, popfile_stem=None, children_equally_sus=False, **kwargs):
 
     pop_scale = 1# 2.25e6 / pop_size
 
@@ -36,7 +36,8 @@ def create_sim(params, pop_size=2.25e5, folder=None, children_equally_sus=False,
         print(f'Note, could not find random seed in {params}! Setting to {seed}')
         p['rand_seed'] = seed  # Ensure this exists
 
-    popfile_stem = os.path.join('inputs', f'kc_synthpops_clustered_{int(pop_size)}_withstaff_seed')
+    if popfile_stem is None:
+        popfile_stem = os.path.join('inputs', f'kc_synthpops_clustered_{int(pop_size)}_withstaff_seed')
     if folder is not None:
         popfile_stem = os.path.join(folder, popfile_stem) # Prepend user folder
 
