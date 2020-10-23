@@ -122,11 +122,6 @@ def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting
                           student_flag=popdict['student_flag'], teacher_flag=popdict['teacher_flag'],
                           staff_flag=popdict['staff_flag'], school_type_by_person=popdict['school_type_by_person'])
 
-    # # Modify people object
-    # people.schools = dict()
-    # people.school_types = dict()
-
-
     if do_save:
         sc.saveobj(popfile, people)
 
