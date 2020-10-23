@@ -112,7 +112,11 @@ def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting
     popdict['school_type_by_person'] = school_type_by_person
 
     # Actually create the people
-    people = cv.People(pars.n, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'],
+    people_pars = dict(
+        pop_size = pars.n,
+        beta_layer = {k:1.0 for k in 'hswcl'} # Since this is used to define hat layers exist
+    )
+    people = cv.People(people_pars, strict=False, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'],
                           contacts=popdict['contacts'], school_id=popdict['school_id'],
                           schools=popdict['schools'], school_types=popdict['school_types'],
                           student_flag=popdict['student_flag'], teacher_flag=popdict['teacher_flag'],
