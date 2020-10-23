@@ -4,105 +4,21 @@ Pre-generate the synthpops population including school types. Takes ~102s per se
 
 import psutil
 import sciris  as sc
-import covasim as cv
-import synthpops as sp
-sp.set_nbrackets(20) # Essential for getting the age distribution right
+import covasim_schools as cvsch
 
-def cache_populations(seed=0, popfile=None):
-    ''' Pre-generate the synthpops population '''
+pop_size = 20e3
+seeds = [0,1,2,3,4]
+parallelize = True
+# parallelize = False
 
-    pars = sc.objdict(
-        # pop_size = 2.25e6,
-        pop_size = 2.25e5, #2.25e5,
-        pop_type = 'synthpops',
-        rand_seed = seed,
-    )
-
-    use_two_group_reduction = True
-    average_LTCF_degree = 20
-    ltcf_staff_age_min = 20
-    ltcf_staff_age_max = 60
-
-    with_school_types = True
-    average_class_size = 20
-    inter_grade_mixing = 0.1
-    average_student_teacher_ratio = 20
-    average_teacher_teacher_degree = 3
-    teacher_age_min = 25
-    teacher_age_max = 75
-
-    with_non_teaching_staff = True
-    # if with_non_teaching_staff is False, but generate is True, then average_all_staff_ratio should be average_student_teacher_ratio or 0
-    average_student_all_staff_ratio = 11
-    average_additional_staff_degree = 20
-    staff_age_min = 20
-    staff_age_max = 75
-
-    # For reference re: school_types
-    # school_mixing_type = 'random' means that students in the school have edges randomly chosen from other students, teachers, and non teaching staff across the school. Students, teachers, and non teaching staff are treated the same in terms of edge generation.
-    # school_mixing_type = 'age_clustered' means that students in the school have edges mostly within their own age/grade, with teachers, and non teaching staff. Strict classrooms are not generated. Teachers have some additional edges with other teachers.
-    # school_mixing_type = 'age_and_class_clustered' means that students are cohorted into classes of students of the same age/grade with at least 1 teacher, and then some have contact with non teaching staff. Teachers have some additional edges with other teachers.
-
-    cohorting = True
-    if cohorting:
-        strategy = 'clustered'  # students in pre-k, elementary, and middle school are cohorted into strict classrooms
-        school_mixing_type = {'pk': 'age_and_class_clustered', 'es': 'age_and_class_clustered', 'ms': 'age_and_class_clustered',
-                              'hs': 'random', 'uv': 'random'}
+if parallelize:
+    ram = psutil.virtual_memory().available/1e9
+    required = 1*len(seeds)*pop_size/225e3 # 8 GB per 225e3 people
+    if required < ram:
+        print(f'You have {ram} GB of RAM, and this is estimated to require {required} GB: you should be fine')
     else:
-        strategy = 'normal'
-        school_mixing_type = {'pk': 'age_clustered', 'es': 'age_clustered', 'ms': 'age_clustered',
-                              'hs': 'random', 'uv': 'random'}
-
-    if popfile is None:
-        popfile = f'inputs/kc_synthpops_{strategy}_{int(pars.pop_size)}_withstaff_seed{pars.rand_seed}.ppl'
-
-    T = sc.tic()
-    print(f'Making "{popfile}"...')
-    sim = cv.Sim(pars)
-    cv.make_people(sim,
-                   popfile=popfile,
-                   save_pop=True,
-                   generate=True,
-                   with_facilities=True,
-                   use_two_group_reduction=use_two_group_reduction,
-                   average_LTCF_degree=average_LTCF_degree,
-                   ltcf_staff_age_min=ltcf_staff_age_min,
-                   ltcf_staff_age_max=ltcf_staff_age_max,
-                   with_school_types=with_school_types,
-                   school_mixing_type=school_mixing_type,
-                   average_class_size=average_class_size,
-                   inter_grade_mixing=inter_grade_mixing,
-                   average_student_teacher_ratio=average_student_teacher_ratio,
-                   average_teacher_teacher_degree=average_teacher_teacher_degree,
-                   teacher_age_min=teacher_age_min,
-                   teacher_age_max=teacher_age_max,
-                   with_non_teaching_staff=with_non_teaching_staff,
-                   average_student_all_staff_ratio=average_student_all_staff_ratio,
-                   average_additional_staff_degree=average_additional_staff_degree,
-                   staff_age_min=staff_age_min,
-                   staff_age_max=staff_age_max,
-                   layer_mapping={'LTCF':'l'},
-                   )
-    sc.toc(T)
-
-    print('Done')
-    return
-
-
-if __name__ == '__main__':
-
-    seeds = [0,1,2,3,4]
-    parallelize = True
-    # parallelize = False
-
-    if parallelize:
-        ram = psutil.virtual_memory().available/1e9
-        required = 80*len(seeds) # 8 GB per 225e3 people
-        if required < ram:
-            print(f'You have {ram} GB of RAM, and this is estimated to require {required} GB: you should be fine')
-        else:
-            print(f'You have {ram:0.2f} GB of RAM, but this is estimated to require {required} GB -- you are in trouble!!!!!!!!!')
-        sc.parallelize(cache_populations, iterarg=seeds) # Run them in parallel
-    else:
-        for seed in seeds:
-            cache_populations(seed)
+        print(f'You have {ram:0.2f} GB of RAM, but this is estimated to require {required} GB -- you are in trouble!!!!!!!!!')
+    sc.parallelize(cvsch.make_population, kwargs={'pop_size':pop_size}, iterkwargs={'rand_seed':seeds}) # Run them in parallel
+else:
+    for seed in seeds:
+        cvsch.make_population(pop_size=pop_size, rand_seed=seed)
