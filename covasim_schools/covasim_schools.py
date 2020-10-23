@@ -10,7 +10,7 @@ import covasim as cv
 import numpy as np
 import sciris as sc
 
-__all__ = ['schools_manager', 'School', 'SchoolStats']
+__all__ = ['schools_manager', 'SchoolScenario', 'School', 'SchoolTesting', 'SchoolStats']
 
 
 def int2key(x):
@@ -25,6 +25,44 @@ class schools_manager(cv.Intervention):
     done here is to split the original school 's' network into individual schools.
     (Each school was already a separate component, but the code figures out which
     component goes with which school and extracts the subgraph.)
+
+    The only input argument (aside from standard Intervention ones) is the scenario
+    dict, which has one entry for each of the five school types, e.g.
+
+        scenario = {
+            'pk': None,
+            'es': es_pars,
+            'ms': ms_pars,
+            'hs': hs_pars,
+            'uv': None,
+        }
+
+    each of which has the following example structure:
+
+            scen_pars = {
+                'start_day': '2020-11-02',
+                'schedule': 'Full',
+                'screen_prob': 0.9,
+                'test_prob': 0.5, # Amongst those who screen positive
+                'screen2pcr': 3, # Days from screening to receiving PCR results
+                'trace_prob': 0.75, # Fraction of newly diagnosed index cases who are traced
+                'quar_prob': 0.75, # Of those reached by contact tracing, this fraction will quarantine
+                'ili_prob': 0.002, # Daily ili probability equates to about 10% incidence over the first 3 months of school
+                'beta_s': 0.75 * base_beta_s, # 25% reduction due to NPI
+                'testing': test_pars,
+            }
+
+    The testing parameters object is a dict (or list of dicts), with the following
+    structure. These coordinate testing interventions in schools:
+
+            test_pars = {
+                'start_date': '2020-10-26',
+                'repeat': 7,
+                'groups': ['students', 'teachers', 'staff'],
+                'coverage': 1,
+                'sensitivity': 1,
+                'delay': 1,
+            }
     '''
 
     def __init__(self, scenario, **kwargs):
@@ -32,7 +70,7 @@ class schools_manager(cv.Intervention):
         self._store_args() # Store the input arguments so that intervention can be recreated
 
         # Store arguments
-        self.scenario = scenario
+        self.scenario = SchoolScenario(scenario)
         self.schools = []
 
     def initialize(self, sim):
@@ -84,6 +122,103 @@ class schools_manager(cv.Intervention):
             for school in self.schools:
                 sim.school_stats[school.sid].update( school.get_stats() )
             self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
+
+
+
+class SchoolScenario(cv.FlexDict):
+    '''
+    Lightweight class for ensuring the scenarios are specified correctly. See
+    schools_manager() for structure and definition.
+
+    Example:
+
+        SchoolScenario(param_dict)
+    '''
+    def __init__(self, scendict):
+
+        # Define the required keys
+        school_type_keys = [
+            'pk', # Preschool/kindergarten
+            'es', # Elementary
+            'ms', # Middle
+            'hs', # High
+            'uv', # University
+            ]
+
+        scen_keys = [
+            'start_day', # Day the scenario starts
+            'schedule', # Full, hybrid, or remote scheduling
+            'screen_prob', # Probability of a screening test
+            'test_prob', # Probability of a confirmatory PCR test
+            'screen2pcr', # Days from screening to receiving PCR results
+            'trace_prob', # Fraction of newly diagnosed index cases who are traced
+            'quar_prob', # Of those reached by contact tracing, this fraction will quarantine
+            'ili_prob', # Prevalence of influenza-like symptoms
+            'beta_s', # Reduction in beta due to NPI
+            'testing', # Defined below
+        ]
+
+        optional_scen_keys = ['verbose']
+
+        # Keys used by both testing interventions
+        shared_test_keys = [
+            'start_date', # Date testing program starts
+            'repeat', # How frequently testing is repeated
+            'groups', # Which out of students, teachers, staff test
+            'coverage', # Proportion tested
+            'is_antigen', # Whether or not it's an antigen test
+        ]
+
+        # PCR-specific keys
+        pcr_test_keys = [
+            'sensitivity', # Test sensitivity
+            'delay', # Days until results are returned
+        ]
+
+        # Antigen-specific keys
+        antigen_test_keys = [
+            'symp7d_sensitivity', # Test sensitivity, within first 7 days of symptoms
+            'other_sensitivity', # Test sensitivity otherwise
+            'specificity', # Test specificity (false positive rate)
+            'PCR_followup_perc', # Proportion who receive PCR follow-up
+            'PCR_followup_delay', # Delay until PCR follow-up
+        ]
+
+        # Validate scenario
+        if set(school_type_keys) != set(scendict.keys()):
+            errormsg = f'Mismatch between expected school types ({school_type_keys}) and supplied ({set(scendict.keys())})'
+            raise ValueError(errormsg)
+        for st_key,scen_pars in scendict.items(): # Loop over school types
+            if scen_pars is None:
+                self[st_key] = None # Just skip
+            else:
+                self[st_key] = cv.FlexDict()
+                kwarg_keys = set(scen_pars.keys())
+                missing = set(scen_keys) - kwarg_keys
+                extra = kwarg_keys - set(scen_keys + optional_scen_keys)
+                if extra or missing: # Loop over scenario parameters
+                    errormsg = f'In your scenario definition, you are missing keys "{missing}" and have extra keys "{extra}"'
+                    raise ValueError(errormsg)
+                else:
+                    for key in scen_keys:
+                        self[st_key][key] = scen_pars[key]
+
+                # Validate testing
+                self[st_key]['testing'] = sc.promotetolist(self[st_key]['testing']) # Ensure it's a list for iteration
+                for e,entry in enumerate(self[st_key]['testing']):
+                    entry_keys = set(entry.keys())
+                    if 'is_antigen' in entry and entry['is_antigen']: # It's an antigen test
+                        test_keys = antigen_test_keys + shared_test_keys
+                    else:
+                        test_keys = pcr_test_keys + shared_test_keys
+                        entry['is_antigen'] = False # By default, assume not an antigen test
+                    if entry_keys != set(test_keys):
+                        missing = set(test_keys) - entry_keys
+                        extra = entry_keys - set(test_keys)
+                        errormsg = f'In your testing definition (position {e}), you are missing keys "{missing}" and have extra keys "{extra}"'
+                        raise ValueError(errormsg)
+
+        return
 
 
 
@@ -266,6 +401,7 @@ class School(sc.prettyobj):
         ''' Return a dictionary of statistics '''
 
         return self.stats.get()
+
 
 
 class SchoolTesting(sc.prettyobj):
