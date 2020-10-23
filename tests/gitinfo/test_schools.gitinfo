@@ -7,15 +7,15 @@
   },
   "called_by": {
     "branch": "covasim-master",
-    "hash": "a726caf",
-    "date": "2020-10-23T14:24:17-07:00",
+    "hash": "b440fb4",
+    "date": "2020-10-23T14:31:33-07:00",
     "filename": "/home/cliffk/idm/schools/tests/test_schools.py"
   },
   "comments": {
     "SynthPops": {
       "branch": "trim-memory",
-      "hash": "248f41c",
-      "date": "2020-10-22T22:52:44-07:00"
+      "hash": "749c420",
+      "date": "2020-10-23T14:48:12-07:00"
     }
   }
 }

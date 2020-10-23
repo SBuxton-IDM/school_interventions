@@ -7,7 +7,7 @@ import sciris as sc
 import covasim as cv
 import synthpops as sp
 
-def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting=True, n_brackets=20, **kwargs):
+def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting=True, n_brackets=20, community_contacts=20,**kwargs):
     '''
     Generate the synthpops population.
 
@@ -18,6 +18,7 @@ def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting
         popfile (str): if so, where to save it to
         cohorting (bool): whether to use cohorting
         n_brackets (int): whether to use 16- or 20-bracket age bins
+        community_contacts (int): how many community contacts there are
         kwargs (dict): passed to sp.make_population()
     '''
 
@@ -72,9 +73,11 @@ def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting
     print(f'Making "{popfile}"...')
 
     spop = sp.make_population(**pars)
+    popdict = cv.make_synthpop(population=spop, community_contacts=community_contacts)
+
 
     if do_save:
-        sc.saveobj(popfile, spop)
+        sc.saveobj(popfile, popdict)
 
     sc.toc(T)
 
