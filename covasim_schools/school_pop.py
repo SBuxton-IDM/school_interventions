@@ -2,6 +2,7 @@
 Generate a SynthPops population for use with the schools code.
 '''
 
+import os
 import sciris as sc
 import covasim as cv
 import synthpops as sp
@@ -10,7 +11,14 @@ def make_population(pop_size, rand_seed=0, do_save=True, popfile=None, cohorting
     '''
     Generate the synthpops population.
 
-
+    Args:
+        pop_size (int): number of people in the model
+        rand_seed (int): random seed to use for generating the population
+        do_save (bool): whether to save the population
+        popfile (str): if so, where to save it to
+        cohorting (bool): whether to use cohorting
+        n_brackets (int): whether to use 16- or 20-bracket age bins
+        kwargs (dict): passed to sp.make_population()
     '''
 
     sp.set_nbrackets(n_brackets) # Essential for getting the age distribution right
@@ -41,6 +49,8 @@ def make_population(pop_size, rand_seed=0, do_save=True, popfile=None, cohorting
         staff_age_max = 75,
     )
 
+    pars = sc.mergedicts(pars, kwargs) # Update any parameters
+
     # For reference re: school_types
     # school_mixing_type = 'random' means that students in the school have edges randomly chosen from other students, teachers, and non teaching staff across the school. Students, teachers, and non teaching staff are treated the same in terms of edge generation.
     # school_mixing_type = 'age_clustered' means that students in the school have edges mostly within their own age/grade, with teachers, and non teaching staff. Strict classrooms are not generated. Teachers have some additional edges with other teachers.
@@ -56,12 +66,13 @@ def make_population(pop_size, rand_seed=0, do_save=True, popfile=None, cohorting
                               'hs': 'random', 'uv': 'random'}
 
     if popfile is None:
-        popfile = f'inputs/kc_{strategy}_{int(pars.n)}_seed{pars.rand_seed}.ppl'
+        popfile = os.path.join('inputs', f'kc_{strategy}_{int(pars.n)}_seed{pars.rand_seed}.ppl')
 
     T = sc.tic()
     print(f'Making "{popfile}"...')
 
     spop = sp.make_population(**pars)
+
 
     sc.toc(T)
 

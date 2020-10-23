@@ -6,16 +6,16 @@
     "date": "2020-10-22T16:06:14-07:00"
   },
   "called_by": {
-    "branch": "improve-documentation",
-    "hash": "ba266e3",
-    "date": "2020-10-22T13:05:57-07:00",
+    "branch": "covasim-master",
+    "hash": "5207a18",
+    "date": "2020-10-23T13:40:04-07:00",
     "filename": "/home/cliffk/idm/schools/testing_in_schools/calibrate_model.py"
   },
   "comments": {
     "SynthPops": {
       "branch": "trim-memory",
-      "hash": "900c726",
-      "date": "2020-10-22T14:04:00-07:00"
+      "hash": "248f41c",
+      "date": "2020-10-22T22:52:44-07:00"
     }
   }
 }
