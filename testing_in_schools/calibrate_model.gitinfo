@@ -2,13 +2,13 @@
   "covasim": {
     "version": "1.7.6",
     "branch": "schools-merge-dev",
-    "hash": "a702533",
-    "date": "2020-10-22T16:06:14-07:00"
+    "hash": "58e28b0",
+    "date": "2020-10-23T15:10:34-07:00"
   },
   "called_by": {
     "branch": "covasim-master",
-    "hash": "b440fb4",
-    "date": "2020-10-23T14:31:33-07:00",
+    "hash": "fac0f1b",
+    "date": "2020-10-23T15:10:23-07:00",
     "filename": "/home/cliffk/idm/schools/testing_in_schools/calibrate_model.py"
   },
   "comments": {
