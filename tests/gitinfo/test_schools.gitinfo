@@ -7,8 +7,8 @@
   },
   "called_by": {
     "branch": "covasim-master",
-    "hash": "5207a18",
-    "date": "2020-10-23T13:40:04-07:00",
+    "hash": "a726caf",
+    "date": "2020-10-23T14:24:17-07:00",
     "filename": "/home/cliffk/idm/schools/tests/test_schools.py"
   },
   "comments": {

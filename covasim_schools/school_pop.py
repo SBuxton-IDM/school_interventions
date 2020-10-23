@@ -7,7 +7,7 @@ import sciris as sc
 import covasim as cv
 import synthpops as sp
 
-def make_population(pop_size, rand_seed=0, do_save=True, popfile=None, cohorting=True, n_brackets=20, **kwargs):
+def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting=True, n_brackets=20, **kwargs):
     '''
     Generate the synthpops population.
 
@@ -49,7 +49,7 @@ def make_population(pop_size, rand_seed=0, do_save=True, popfile=None, cohorting
         staff_age_max = 75,
     )
 
-    pars = sc.mergedicts(pars, kwargs) # Update any parameters
+    pars.update(kwargs) # Update any parameters
 
     # For reference re: school_types
     # school_mixing_type = 'random' means that students in the school have edges randomly chosen from other students, teachers, and non teaching staff across the school. Students, teachers, and non teaching staff are treated the same in terms of edge generation.
@@ -73,6 +73,8 @@ def make_population(pop_size, rand_seed=0, do_save=True, popfile=None, cohorting
 
     spop = sp.make_population(**pars)
 
+    if do_save:
+        sc.saveobj(popfile, spop)
 
     sc.toc(T)
 

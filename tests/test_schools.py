@@ -43,8 +43,8 @@ def test_schools():
 
     # BYPASS option:
     if bypass:
-        pop_size = 20e3
-        popfile_stem = os.path.join(os.pardir, 'inputs', 'kc_clustered_{pop_size}_seed')
+        pop_size = int(20e3)
+        popfile_stem = os.path.join(os.pardir, 'testing_in_schools', 'inputs', f'kc_clustered_{pop_size}_seed')
         sim = cs.create_sim(params, pop_size=pop_size, folder=None, popfile_stem=popfile_stem)
     else:
         sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
