@@ -43,7 +43,7 @@ python setup.py develop
 Install CovasimSchools:
 
 ```
-git clone https://github.com/amath-idm/covasim_schools
+git clone https://github.com/amath-idm/covid-schools
 cd covasim_schools
 python setup.py develop
 ```
