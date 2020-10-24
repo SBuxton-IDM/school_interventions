@@ -1,21 +1,21 @@
 {
   "covasim": {
     "version": "1.7.6",
-    "branch": "schools-merge-dev",
-    "hash": "58e28b0",
-    "date": "2020-10-23T15:10:34-07:00"
+    "branch": "develop",
+    "hash": "a55a849",
+    "date": "2020-10-23T16:15:47-07:00"
   },
   "called_by": {
-    "branch": "covasim-master",
-    "hash": "fac0f1b",
-    "date": "2020-10-23T15:10:23-07:00",
+    "branch": "fix-tests",
+    "hash": "89a5386",
+    "date": "2020-10-23T15:45:34-07:00",
     "filename": "/home/cliffk/idm/schools/testing_in_schools/calibrate_model.py"
   },
   "comments": {
     "SynthPops": {
       "branch": "trim-memory",
-      "hash": "749c420",
-      "date": "2020-10-23T14:48:12-07:00"
+      "hash": "c0bcbe2",
+      "date": "2020-10-23T19:49:36-07:00"
     }
   }
 }

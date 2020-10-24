@@ -1,12 +1,16 @@
-# Main script to create a simulation, the base on which analysis is conducted.  Used in calibration and other downstream activities.
+'''
+Main script to create a simulation, the base on which analysis is conducted.
+Used in calibration and other downstream activities.
+'''
 
+import os
 import covasim as cv
 import sciris as sc
-import os
+import covasim_schools as cvsch
 
 
 def define_pars(which='best', kind='default', ):
-    ''' Define the parameter best guesses and bounds '''
+    ''' Define the parameter best guesses and bounds -- used for calibration '''
 
     pardata = {}
     if kind in ['default', 'both']:
@@ -26,11 +30,29 @@ def define_pars(which='best', kind='default', ):
     return output
 
 
-def create_sim(params, pop_size=2.25e5, folder=None, popfile_stem=None, children_equally_sus=False, **kwargs):
+def create_sim(params=None, pop_size=2.25e5, folder=None, popfile_stem=None, children_equally_sus=False, max_pop_seeds=5, load_pop=True, people=None, **kwargs):
+    '''
+    Create the simulation for use with schools. This is the main function used to
+    create the sim object.
+
+    Args:
+        params (dict): the parameters to use for the simulation
+        pop_size (int): the number of people (merged into parameters)
+        folder (str): where to look for the population file
+        popfile_stem (str): filename of population file, minus random seed (which gets added)
+        children_equally_sus (bool): whether children should be equally susceptible as adults (for sensitivity)
+        max_pop_seeds (int): maximum number of populations to generate (for use with different random seeds)
+        load_pop (bool): whether to load people from disk (otherwise, use supplied or create afresh)
+        people (People): if supplied, use instead of loading from file
+
+    Returns:
+        A sim instance
+    '''
+
 
     pop_scale = 1# 2.25e6 / pop_size
 
-    p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params))
+    p = sc.objdict(sc.mergedicts(define_pars(which='best', kind='both'), params)) # Get default parameter values
     if 'rand_seed' not in p:
         seed = 1 #np.random.randint(1e6)
         print(f'Note, could not find random seed in {params}! Setting to {seed}')
@@ -78,12 +100,25 @@ def create_sim(params, pop_size=2.25e5, folder=None, popfile_stem=None, children
         'rand_seed': p.rand_seed,
     }
 
-    pars = sc.mergedicts(pars, kwargs)
+    pars = sc.objdict(sc.mergedicts(pars, kwargs)) # Merge all parameter values together again (NB: could be combined with above)
 
-    n_popfiles = 5
-    popfile = popfile_stem + str(params['rand_seed'] % n_popfiles) + '.ppl'
+
+    # Handle population -- NB, although called popfile, might be a People object
+    if load_pop: # Load from disk -- normal usage
+        pop_seed = params['rand_seed'] % max_pop_seeds
+        popfile = popfile_stem + str(pop_seed) + '.ppl'
+        print(f'Note: loading population from {popfile}')
+    elif people is not None: # People is supplied; use that
+        popfile = people
+        print('Note: using supplied people')
+    else: # Generate
+        print('Note: population not supplied; regenerating...')
+        popfile = cvsch.make_population(pop_size=pars.pop_size, rand_seed=pars.rand_seed, max_pop_seeds=max_pop_seeds, do_save=False)
+
+    # Create sim
     sim = cv.Sim(pars, popfile=popfile, load_pop=True)
 
+    # Modify sim
     if children_equally_sus:
         prog = sim.pars['prognoses']
         ages = prog['age_cutoffs']
@@ -105,11 +140,3 @@ def create_sim(params, pop_size=2.25e5, folder=None, popfile_stem=None, children
         interv.do_plot = False
 
     return sim
-
-
-def run_sim(params):
-    sim = create_sim()
-    sim.run()
-    return sim
-
-

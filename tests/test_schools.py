@@ -41,12 +41,10 @@ def test_schools():
             spec['testing'] = testing
     scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
 
-    # BYPASS option:
-    if bypass:
+    if bypass: # BYPASS option -- create small population on the fly
         pop_size = int(20e3)
-        popfile_stem = os.path.join(os.pardir, 'testing_in_schools', 'inputs', f'kc_clustered_{pop_size}_seed')
-        sim = cs.create_sim(params, pop_size=pop_size, folder=None, popfile_stem=popfile_stem)
-    else:
+        sim = cs.create_sim(params, pop_size=pop_size, load_pop=False)
+    else: # Otherwise, load full population from disk
         sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 
     sm = cvsch.schools_manager(scen)

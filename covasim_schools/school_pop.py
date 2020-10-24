@@ -8,13 +8,14 @@ import sciris as sc
 import covasim as cv
 import synthpops as sp
 
-def make_population(pop_size, rand_seed=1, do_save=True, popfile=None, cohorting=True, n_brackets=20, community_contacts=20,**kwargs):
+def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, popfile=None, cohorting=True, n_brackets=20, community_contacts=20,**kwargs):
     '''
     Generate the synthpops population.
 
     Args:
         pop_size (int): number of people in the model
         rand_seed (int): random seed to use for generating the population
+        max_pop_seeds (int): if supplied, take the random seed as modulus of this to limit number of populations generated
         do_save (bool): whether to save the population
         popfile (str): if so, where to save it to
         cohorting (bool): whether to use cohorting
