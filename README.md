@@ -44,7 +44,7 @@ Install CovasimSchools:
 
 ```
 git clone https://github.com/amath-idm/covid-schools
-cd covasim_schools
+cd covid-schools
 python setup.py develop
 ```
 
