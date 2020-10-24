@@ -10,7 +10,7 @@ The remaining folders are in active use and development, especially `testing_in_
 Requirements
 ============
 
-Python >=3.6 (64-bit). (Note: Python 2 is not supported.)
+Python >=3.6 (64-bit). (Note: Python 2 is not supported, and only Python >=3.8 has been tested.)
 
 We also recommend, but do not require, using Python virtual environments.
 
@@ -29,7 +29,7 @@ conda activate covaschool
 Install Covasim:
 
 ```
-pip install covasim
+pip install covasim --upgrade
 ```
 
 Install SynthPops in a folder of your choice:
