@@ -55,7 +55,7 @@ Quick start
 Run the main test script:
 
 ```
-cd ../tests
+cd tests
 python test_schools.py
 ```
 
