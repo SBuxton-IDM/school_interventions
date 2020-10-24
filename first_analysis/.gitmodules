@@ -1,6 +1,0 @@
-[submodule "covasim"]
-	path = first_analysis/covasim
-	url = https://github.com/amath-idm/covasim.git
-[submodule "synthpops"]
-	path = first_analysis/synthpops
-	url = https://github.com/amath-idm/synthpops.git

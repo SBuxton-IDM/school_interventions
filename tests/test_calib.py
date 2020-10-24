@@ -1,15 +1,18 @@
-# Run a calibration-like simulation to see if the resulting objective function value matches that from calibration
+'''
+Run a calibration-like simulation to see if the resulting objective function
+value matches that from calibration.
+
+NB: skipped by default since the full population files etc. won't exist on GitHub.
+'''
 
 import os
 import sciris as sc
 import covasim as cv
-import synthpops as sp
 import covasim_schools as cvsch
 from testing_in_schools import create_sim as cs
 from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
 from testing_in_schools.calibrate_model import evaluate_sim
-
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+import pytest
 
 debug = False
 folder = '../testing_in_schools/v20201016_225k'
@@ -17,6 +20,7 @@ pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 
+@pytest.mark.skip # Will not be able to find the right files automatically
 def test_calib():
 
     entry = sc.loadjson(calibfile)[0]

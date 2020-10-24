@@ -1,18 +1,9 @@
 '''
-This is the main script used for commissioning the different testing scenarios
-for the paper results. Run this script first (preferably on an HPC!), then
-run the different plotting scripts.
+This file defines the different scenarios for use with run_scenarios.
 '''
 
-# Workhorse script to commission testing scenarios
-
 import os
-import covasim as cv
-import create_sim as cs
 import sciris as sc
-import covasim_schools as cvsch
-import synthpops as sp
-cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
@@ -35,9 +26,6 @@ def generate_scenarios():
     ''' Generate scenarios (dictionaries of parameters) for the school intervention '''
 
     # Increase beta (multiplier) in schools from default of 0.6 to 1.5 (makes normal school R0>1, as to be expected based on global data (Israel), but with Hybrid + 2w PCR testing, R0<1, again as expected from global exemplars.
-    ### Create a single sim to get parameters (make_pars is close, but not quite)
-    ### sim = cs.create_sim({'rand_seed':0}, pop_size=pop_size, folder=folder)
-    ### base_beta_s = sim.pars['beta_layer']['s']
     base_beta_s = 1.5 #
 
     scns = sc.odict()
@@ -135,23 +123,23 @@ def generate_testing():
     }]
 
     # pars3_newscenarios -----------------
-    PCR_every_2w_50cov = [{ # TODO
-        'start_date': '2020-11-02',
-        'repeat': 14,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 0.50,
-        'sensitivity': 1,
-        'delay': 1,
-    }]
+    # PCR_every_2w_50cov = [{ # TODO
+    #     'start_date': '2020-11-02',
+    #     'repeat': 14,
+    #     'groups': ['students', 'teachers', 'staff'],
+    #     'coverage': 0.50,
+    #     'sensitivity': 1,
+    #     'delay': 1,
+    # }]
 
-    PCR_every_1m_15cov = [{
-        'start_date': '2020-11-02',
-        'repeat': 30,
-        'groups': ['students', 'teachers', 'staff'],
-        'coverage': 0.15,
-        'sensitivity': 1,
-        'delay': 1,
-    }]
+    # PCR_every_1m_15cov = [{
+    #     'start_date': '2020-11-02',
+    #     'repeat': 30,
+    #     'groups': ['students', 'teachers', 'staff'],
+    #     'coverage': 0.15,
+    #     'sensitivity': 1,
+    #     'delay': 1,
+    # }]
 
     Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup = [{
         'start_date': '2020-10-26',
@@ -206,72 +194,3 @@ def generate_testing():
         'Antigen every 2w, PCR f/u': Antigen_every_2w_starting_1wprior_all_PCR_followup,
         'Antigen every 2w, no f/u': Antigen_every_2w_starting_1wprior_all_no_followup,
     }
-
-if __name__ == '__main__':
-    scenarios = generate_scenarios()
-    scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
-
-    testing = generate_testing()
-    #testing = {k:v for k,v in testing.items() if 'Antigen' in k}
-
-    # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
-    pars_v1 = { # 100k pop
-        'pop_infected': 160,
-        'clip_edges': 0.65,
-        'change_beta': 0.525,
-    }
-
-    pars_v2 = { # Updated v2 pars achieve lower prevalence (0.2% as opposed to closer to 0.5% with v1) (100kpop)
-        'pop_infected': 90,
-        'clip_edges': 0.65,
-        'change_beta': 0.62,
-    }
-
-    # Now ignoring pars_v1 an pars_v2, using calibrated values instead:
-    par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
-
-    sims = []
-    msims = []
-    tot = len(scenarios) * len(testing) * len(par_list)
-    proc = 0
-    for skey, scen in scenarios.items():
-        for tidx, (tkey, test) in enumerate(testing.items()):
-            for eidx, entry in enumerate(par_list):
-                par = sc.dcp(entry['pars'])
-                par['rand_seed'] = int(entry['index'])
-
-                sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
-
-                sim.label = f'{skey} + {tkey}'
-                sim.key1 = skey
-                sim.key2 = tkey
-                sim.eidx = eidx
-                sim.scen = scen
-                sim.tscen = test
-                sim.dynamic_par = par
-
-                # Modify scen with test
-                this_scen = sc.dcp(scen)
-                for stype, spec in this_scen.items():
-                    if spec is not None:
-                        spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
-
-                sm = cvsch.schools_manager(scen)
-                sim['interventions'] += [sm]
-                sims.append(sim)
-                proc += 1
-
-                if len(sims) == batch_size or proc == tot or (tidx == len(testing)-1 and eidx == len(par_list)-1):
-                    print(f'Running sims {proc-len(sims)}-{proc-1} of {tot}')
-                    msim = cv.MultiSim(sims)
-                    msims.append(msim)
-                    msim.run(reseed=False, par_args={'ncpus': 32}, noise=0.0, keep_people=False)
-                    sims = []
-
-        print(f'*** Saving after completing {skey}')
-        sims_this_scenario = [s for msim in msims for s in msim.sims if s.key1 == skey]
-        msim = cv.MultiSim(sims_this_scenario)
-        cv.save(os.path.join(folder, 'msims', f'{stem}_{skey}.msim'), msim)
-
-    msim = cv.MultiSim.merge(msims)
-    cv.save(os.path.join(folder, 'msims', f'{stem}.msim'), msim)
