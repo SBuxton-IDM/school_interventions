@@ -352,7 +352,7 @@ class School(sc.prettyobj):
         # Quarantine contacts of newly diagnosed individuals - # TODO: Schedule in a delay
         if len(newly_dx_inds) > 0:
             # Identify school contacts to quarantine
-            uids_to_trace = cv.binomial_filter(self.trace_prob, newly_dx_inds)
+            uids_to_trace = np.array(cv.binomial_filter(self.trace_prob, newly_dx_inds), dtype='int64') # This has to be an int64 (the default type)
             uids_reached_by_tracing = self.ct_mgr.find_contacts(uids_to_trace) # Assume all contacts of traced individuals will quarantine
             uids_to_quar = cv.binomial_filter(self.quar_prob, uids_reached_by_tracing)
 
