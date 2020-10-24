@@ -48,15 +48,9 @@ cd covasim_schools
 python setup.py develop
 ```
 
+
 Quick start
 ===========
-
-Generate the synthetic populations:
-
-```
-cd testing_in_schools
-python create_sp_pop.py
-```
 
 Run the main test script:
 
@@ -67,3 +61,15 @@ python test_schools.py
 
 If it worked, it should bring up a plot.
 
+
+Slower start
+============
+
+To run the main analysis scripts, first generate the synthetic populations:
+
+```
+cd testing_in_schools
+python create_sp_pop.py
+```
+
+Then run either `run_scenarios.py` or `sensitivity.scenarios.py`. NB, these are intended to be run on HPCs.
