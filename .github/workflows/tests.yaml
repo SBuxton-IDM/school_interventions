@@ -22,9 +22,9 @@ jobs:
       - name: Install synthpops
         working-directory: $HOME
         run: |
-        git clone https://github.com/InstituteforDiseaseModeling/synthpops.git
-        cd synthpops
-        python setup.py develop
+          git clone https://github.com/InstituteforDiseaseModeling/synthpops.git
+          cd synthpops
+          python setup.py develop
       - name: Install covasim_schools
         run: python setup.py develop
       - name: Install pytest
