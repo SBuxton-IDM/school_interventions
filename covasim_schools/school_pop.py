@@ -78,7 +78,7 @@ def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, pop
     population = sp.make_population(**pars)
 
     # Convert to a popdict
-    popdict = cv.make_synthpop(population=population, community_contacts=community_contacts)
+    popdict = cv.make_synthpop(population=sc.dcp(population), community_contacts=community_contacts)
     school_ids = [None] * int(pop_size)
     teacher_flag = [False] * int(pop_size)
     staff_flag = [False] * int(pop_size)
@@ -111,6 +111,9 @@ def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, pop
     popdict['staff_flag'] = staff_flag
     popdict['school_types'] = school_types
     popdict['school_type_by_person'] = school_type_by_person
+
+    assert sum(popdict['teacher_flag']), 'No teachers were found'
+    assert sum(popdict['student_flag']), 'No students were found'
 
     # Actually create the people
     people_pars = dict(
