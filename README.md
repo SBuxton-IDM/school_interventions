@@ -72,4 +72,4 @@ cd testing_in_schools
 python create_sp_pop.py
 ```
 
-Then run either `run_scenarios.py` or `sensitivity.scenarios.py`. NB, these are intended to be run on HPCs.
+Then run either `run_scenarios.py` or `sensitivity_scenarios.py`. NB, these are intended to be run on HPCs and will likely not work (or take more than a day to complete) on a PC.
