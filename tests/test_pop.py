@@ -8,9 +8,12 @@ import sciris as sc
 import covasim as cv
 import covasim_schools as cvsch
 
-figsize = (24,20) # Customize to your screen resolution
-dpi = 90 # Ditto
+# Custom configuration
+figsize = (24,20) # Customize to your screen resolution -- overwritten if maximize is true
+dpi = 90 # Ditto, make smaller for smaller fonts etc
 do_maximize = True # Fill the screen
+to_json = True # Save results to JSON
+outfile = 'school_pop_results.json' # Filename to save to, if JSON is saved
 
 def test_school_pop(do_plot=False):
     ''' Test basic population creation '''
@@ -73,9 +76,13 @@ def plot_schools(pop):
     if do_maximize:
         cv.maximize(fig=fig)
 
+    if to_json:
+        sc.savejson(outfile, results, indent=2)
+
     return results
 
 
 if __name__ == '__main__':
     pop = test_school_pop(do_plot=False)
     results = plot_schools(pop)
+
