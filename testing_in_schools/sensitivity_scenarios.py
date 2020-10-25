@@ -1,16 +1,19 @@
-# Script to commission sensitivity analysis
+'''
+Main script to commission sensitivity analysis -- run this and then use to run
+additional figure results.
+'''
 
 import os
-import covasim as cv
-import covasim.base as cvb
-import create_sim as cs
 import numpy as np
 import pandas as pd
 import sciris as sc
-from school_intervention import new_schools
-from testing_scenarios import generate_scenarios, generate_testing, scenario
+import covasim as cv
 import synthpops as sp
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+import covasim_schools as cvsch
+import create_sim as cs
+from testing_scenarios import generate_scenarios, generate_testing
+
+cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 par_inds = (15,30)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
@@ -29,8 +32,8 @@ def baseline(sim, scen, test):
         if spec is not None:
             spec['testing'] = test # dcp probably not needed because deep copied in new_schools
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 def children_equally_sus(sim, scen, test):
     # Modify scen with test
@@ -46,8 +49,8 @@ def children_equally_sus(sim, scen, test):
 
     sim.pars['prognoses'] = prog
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 def lower_sens_spec(sim, scen, test):
     if test is not None and 'is_antigen' in test[0] and test[0]['is_antigen']:
@@ -62,8 +65,8 @@ def lower_sens_spec(sim, scen, test):
         if spec is not None:
             spec['testing'] = test # dcp probably not needed because deep copied in new_schools
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 def no_NPI_reduction(sim, scen, test):
     # Modify scen with test
@@ -73,8 +76,8 @@ def no_NPI_reduction(sim, scen, test):
             if spec['beta_s'] > 0:
                 spec['beta_s'] = 1.5 # Restore to pre-NPI level
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 def lower_random_screening(sim, scen, test):
     # Modify scen with test
@@ -83,8 +86,8 @@ def lower_random_screening(sim, scen, test):
             spec['testing'] = test # dcp probably not needed because deep copied in new_schools
             spec['screen_prob'] = 0.5
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 def no_screening(sim, scen, test):
     # Modify scen with test
@@ -93,8 +96,8 @@ def no_screening(sim, scen, test):
             spec['testing'] = test # dcp probably not needed because deep copied in new_schools
             spec['screen_prob'] = 0
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 def lower_coverage(sim, scen, test):
     if test is not None:
@@ -105,8 +108,8 @@ def lower_coverage(sim, scen, test):
         if spec is not None:
             spec['testing'] = test # dcp probably not needed because deep copied in new_schools
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 def increased_mobility(sim, scen, test):
     # Modify scen with test
@@ -114,8 +117,8 @@ def increased_mobility(sim, scen, test):
         if spec is not None:
             spec['testing'] = test # dcp probably not needed because deep copied in new_schools
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
     # Different random path if ce not placed in the right order
     try:
@@ -179,10 +182,10 @@ def broken_bubbles(sim, scen, test):
 
 
     all_school_contacts = pd.concat(school_contacts)
-    sim.people.contacts['s'] = cvb.Layer().from_df(all_school_contacts)
+    sim.people.contacts['s'] = cv.Layer().from_df(all_school_contacts)
 
-    ns = new_schools(scen)
-    sim['interventions'] += [ns]
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
 
 
 if __name__ == '__main__':

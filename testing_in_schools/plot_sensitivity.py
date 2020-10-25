@@ -21,9 +21,9 @@ mplt.rcParams['font.family'] = font_style
 
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
-folder = 'v20201016_225k_sensitivity'
-variant = '_v2'
-cachefn = os.path.join(folder, 'msims', 'batch_v2_0-1.msim')
+folder = 'v20201019' #'v20201019'
+variant = '_sensitivity_v2_0-10'
+cachefn = os.path.join(folder, 'msims', 'sensitivity_v2_0-10.sims')
 debug_plot = False
 
 imgdir = os.path.join(folder, 'img'+variant)
@@ -31,18 +31,41 @@ Path(imgdir).mkdir(parents=True, exist_ok=True)
 
 
 def load_single(fn):
+    print(f'loading {fn}')
     return cv.MultiSim.load(fn)
 
 def load_multi(fns, cachefn=None):
     # Load/combine *.msim objects into a single MultiSim for analysis
     msims = []
     for fn in fns:
+        print(f'loading {fn}')
         msims.append(cv.MultiSim.load(fn))
+    print('Merging...')
     msim = cv.MultiSim.merge(msims)
 
     if cachefn is not None:
+        msim.base_sim.people = [] # Remove people
+        print(f'Saving to {cachefn}')
         msim.save(cachefn)
     return msim
+
+def load_simlist(fn):
+    # Load/combine *.msim objects into a single MultiSim for analysis
+    print(f'loading {fn}')
+    return cv.load(fn)
+
+def load_multi_simlist(fns, cachefn=None):
+    # Load/combine *.msim objects into a single MultiSim for analysis
+    sims = []
+    for fn in fns:
+        print(f'loading {fn}')
+        msim = cv.MultiSim.load(fn)
+        sims += msim.sims
+
+    if cachefn is not None:
+        print(f'Saving to {cachefn}')
+        cv.save(cachefn, sims)
+    return sims
 
 def load_and_replace(fn1, scenarios_to_remove, fn2):
     # TODO: WIP
@@ -57,13 +80,42 @@ def load_and_replace(fn1, scenarios_to_remove, fn2):
     msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
 
 
-print(f'loading {cachefn}')
-#msim = load_single(cachefn)
-msim = load_multi([os.path.join(folder, 'msims', fn) for fn in [
-    'batch_v2_0-1_baseline.msim',
-    'batch_v2_0-1_children_equally_sus.msim',
-    #'batch_v2_0-1_lower_sens_spec.msim',
-]], None)
+if True:
+    #msim = load_single(cachefn)
+    sims = load_simlist(cachefn)
+else:
+    sims = load_multi_simlist([os.path.join(folder, 'msims', fn) for fn in [
+        #'sensitivity_k5_0-5_baseline.msim',
+        #'sensitivity_k5_0-5_children_equally_sus.msim',
+        #'sensitivity_k5_0-5_lower_coverage.msim',
+        #'sensitivity_k5_0-5_lower_random_screening.msim',
+        #'sensitivity_k5_0-5_lower_sens_spec.msim',
+        #'sensitivity_k5_0-5_no_NPI_reduction.msim',
+        #'sensitivity_k5_0-5_no_screening.msim',
+        #'sensitivity_k5_0-5_parents_return_to_work.msim',
+        #'sensitivity_notk5_0-5.msim',
+        #'batch_v2_0-3_baseline.msim',
+        #'batch_v2_0-3_broken_bubbles.msim'
+        'sensitivity_v2_0-5_baseline.msim',
+        'sensitivity_v2_0-5_broken_bubbles.msim',
+        'sensitivity_v2_0-5_children_equally_sus.msim',
+        'sensitivity_v2_0-5_increased_mobility.msim',
+        'sensitivity_v2_0-5_lower_coverage.msim',
+        'sensitivity_v2_0-5_lower_random_screening.msim',
+        'sensitivity_v2_0-5_lower_sens_spec.msim',
+        'sensitivity_v2_0-5_no_NPI_reduction.msim',
+        'sensitivity_v2_0-5_no_screening.msim',
+
+        'sensitivity_v2_5-10_baseline.msim',
+        'sensitivity_v2_5-10_broken_bubbles.msim',
+        'sensitivity_v2_5-10_children_equally_sus.msim',
+        'sensitivity_v2_5-10_increased_mobility.msim',
+        'sensitivity_v2_5-10_lower_coverage.msim',
+        'sensitivity_v2_5-10_lower_random_screening.msim',
+        'sensitivity_v2_5-10_lower_sens_spec.msim',
+        'sensitivity_v2_5-10_no_NPI_reduction.msim',
+        'sensitivity_v2_5-10_no_screening.msim',
+    ]], cachefn)
 
 results = []
 byschool = []
@@ -79,49 +131,49 @@ scen_names = sc.odict({ # key1
 scen_order = scen_names.values()
 
 test_names = sc.odict({ # key2
-    'None': 'None',
-    'PCR 1w prior': 'PCR one week prior, 1d delay',
-    'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, PCR f/u',
-    #'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
-    'PCR every 2w': 'Fortnightly PCR, 1d delay',
-    'Antigen every 2w, no f/u': 'Fortnightly antigen, no f/u',
-    'Antigen every 2w, PCR f/u': 'Fortnightly antigen, PCR f/u',
-    'PCR every 1w': 'Weekly PCR, 1d delay',
+    'None':                                  ('Countermeasures\nonly', 'gray'),
+    'PCR 1w prior':                          ('PCR\n1w prior\n1d delay', (0.8584083044982699, 0.9134486735870818, 0.9645674740484429, 1.0)),
+    'Antigen every 1w teach&staff, PCR f/u': ('Antigen\nEvery 1w\nTeachers & Staff\nPCR f/u', (0.9882352941176471, 0.732072279892349, 0.6299269511726259, 1.0)),
+    #'PCR every 2w 50%':                     ('Fortnightly PCR, 50% coverage', (0.7309496347558632, 0.8394771241830065, 0.9213225682429834, 1.0)),
+    'PCR every 2w':                          ('PCR\nFortnightly\n1d delay', (0.5356862745098039, 0.746082276047674, 0.8642522106881968, 1.0)),
+    'Antigen every 2w, no f/u':              ('Antigen\nFortnightly\nno f/u', (0.7925720876585928, 0.09328719723183392, 0.11298731257208766, 1.0)),
+    'Antigen every 2w, PCR f/u':             ('Antigen\nFortnightly\nPCR f/u', (0.9835755478662053, 0.4127950788158401, 0.28835063437139563, 1.0)),
+    'PCR every 1w':                          ('PCR\nWeekly\n1d delay', (0.32628988850442137, 0.6186236063052672, 0.802798923490965, 1.0)),
 
     #'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
     #'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, no delay, PCR f/u',
     #'Antigen every 1w, PCR f/u': 'Weekly antigen for all, no delay, PCR f/u',
     #'Antigen every 1w, no f/u': 'Weekly antigen for all, no delay, no f/u',
-    'PCR every 1d': 'Daily PCR, no delay',
+    'PCR every 1d':                          ('PCR\nDaily\nNo delay', (0.16696655132641292, 0.48069204152249134, 0.7291503267973857, 1.0)),
 })
-test_order = test_names.values()
-test_hue = {
-    'None':                                         'gray',
-    'PCR one week prior, 1d delay':                 (0.8584083044982699, 0.9134486735870818, 0.9645674740484429, 1.0),
-    'Weekly antigen for teachers & staff, PCR f/u': (0.9882352941176471, 0.732072279892349, 0.6299269511726259, 1.0),
-    'Fortnightly PCR, 50% coverage':                (0.7309496347558632, 0.8394771241830065, 0.9213225682429834, 1.0),
-    'Fortnightly PCR, 1d delay':                    (0.5356862745098039, 0.746082276047674, 0.8642522106881968, 1.0),
-    'Fortnightly antigen, PCR f/u':                 (0.7925720876585928, 0.09328719723183392, 0.11298731257208766, 1.0),
-    'Fortnightly antigen, no f/u':                  (0.9835755478662053, 0.4127950788158401, 0.28835063437139563, 1.0),
-    'Weekly PCR, 1d delay':                         (0.32628988850442137, 0.6186236063052672, 0.802798923490965, 1.0),
-    'Daily PCR, no delay':                          (0.16696655132641292, 0.48069204152249134, 0.7291503267973857, 1.0),
-}
+test_order = [v[0] for k,v in test_names.items() if k in ['None', 'PCR every 2w', 'Antigen every 2w, PCR f/u', 'Antigen every 2w, no f/u']]
+test_hue = {v[0]:v[1] for v in test_names.values()}
 
 sens_names = sc.odict({ # key3
-    'baseline': 'Basline',
+    'baseline': 'Baseline',
+    'lower_sens_spec': 'Lower sensitivity/specificiy*',
+    'broken_bubbles': 'Mixing between cohorts',
+    'lower_random_screening': 'Lower daily screening (50%)',
+    'lower_coverage': 'Test coverage of 50%',
+    'no_NPI_reduction': 'No NPI reduction',
+    'no_screening': 'No daily screening',
     'children_equally_sus': 'Children equally susceptible',
+    'increased_mobility': 'Increased mobility',
 })
 sens_order = sens_names.values()
 
 
-for sim in msim.sims:
-    sim.key2 = test_names[sim.key2] if sim.key2 in test_names else sim.key2
+for sim in sims:#msim.sims:
+    sim.key2 = test_names[sim.key2][0] if sim.key2 in test_names else sim.key2
+    sim.key3 = sens_names[sim.key3] if sim.key3 in sens_names else sim.key3
 
 
 tests = []
-for sim in msim.sims:
-    first_school_day = sim.day('2020-11-02')
-    last_school_day = sim.day('2021-01-31')
+for sim in sims:#msim.sims:
+    first_date = '2020-11-02'
+    first_school_day = sim.day(first_date)
+    last_date = '2021-01-31'
+    last_school_day = sim.day(last_date)
     ret = {
         'key1': sim.key1,
         'key2': sim.key2,
@@ -142,10 +194,6 @@ for sim in msim.sims:
     inperson_days = {k:0 for k in grp_dict.keys()}
     possible_days = {k:0 for k in grp_dict.keys()}
 
-    first_date = '2020-11-02'
-    first = sim.day(first_date)
-    last_date = '2021-01-31'
-    last = sim.day(last_date)
     #tests.append([sim.key1, sim.key2, np.sum(sim.results['new_tests'][first:last])])
     #tests.append([sim.key1, sim.key2, sim.results['new_tests']]) # [first:last]
 
@@ -241,39 +289,57 @@ plt.show()
 '''
 
 
-# Attack rate
-d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
-d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
-print(d)
-g = sns.FacetGrid(data=d, row='Group', col='key1', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-
-g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3')#, hue_order=test_order, order=sens_order, palette=test_hue)
-g.add_legend(fontsize=14)
-
-g.set_titles(row_template="{row_name}")
+# Frac in-person days lost
+d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
+d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
+d = d.loc[d['key1']=='k5'] # K-5 only
+g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
+g.map_dataframe( sns.barplot, x='key2', y='Days lost (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set1')
+###g.add_legend(fontsize=14)
+g.set_titles(row_template="{row_name}", fontsize=24)
 #xtl = g.axes[1,0].get_xticklabels()
 #xtl = [l.get_text() for l in xtl]
 #g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
-g.set_axis_labels(y_var="3-Month Attack Rate (%)")
-plt.tight_layout()
-cv.savefig(os.path.join(imgdir, f'3mAttackRate.png'), dpi=300)
-
-plt.show()
-exit()
-
-# Frac in-person days lost
-d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
-d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
-g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=test_order, order=scen_order, palette=test_hue) #'Reds'
-g.add_legend(fontsize=14)
-g.set_titles(row_template="{row_name}", fontsize=24)
-xtl = g.axes[1,0].get_xticklabels()
-xtl = [l.get_text() for l in xtl]
-g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
 g.set_axis_labels(y_var="Days lost (%)")
 plt.tight_layout()
-cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'), dpi=300)
+
+for ax in g.axes.flat:
+    box = ax.get_position()
+    ax.set_position([box.x0,box.y0,box.width*0.7,box.height])
+
+g.axes.flat[0].legend(loc='upper left',bbox_to_anchor=(1,0.3))
+
+cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost_sensitivity.png'), dpi=300)
+
+
+
+
+# Attack rate
+d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
+d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
+d = d.loc[d['key1']=='k5'] # K-5 only
+g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False) # col='key1', 
+g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set1')#, hue_order=test_order, order=sens_order, palette=test_hue)
+#g.add_legend(fontsize=14)
+g.set_titles(row_template="{row_name}")
+g.set_axis_labels(y_var="3-Month Attack Rate (%)")
+
+plt.tight_layout()
+for ax in g.axes.flat:
+    box = ax.get_position()
+    ax.set_position([box.x0,box.y0,box.width*0.7,box.height])
+
+g.axes.flat[0].legend(loc='upper left',bbox_to_anchor=(1,0.3))
+
+
+#fig, ax = plt.subplots(figsize=(12,8))
+#sns.barplot(data=d, x='key2', y='Cum Inc (%)', hue='key3', ax=ax)#, hue_order=test_order, order=sens_order, palette=test_hue)
+#ax.set_ylabel("3-Month Attack Rate (%)")
+cv.savefig(os.path.join(imgdir, f'3mAttackRate_sensitivity.png'), dpi=300)
+
+
+
+exit()
 
 # Re
 fig, ax = plt.subplots(figsize=(12,8))
@@ -287,7 +353,7 @@ ax.set_xticklabels([scen_names[k] if k in scen_names else k for k in xtl])
 ax.axhline(y=1, color='k', ls=':', lw=2)
 plt.legend().set_title('')
 plt.tight_layout()
-cv.savefig(os.path.join(imgdir, '3mAverageRe.png'), dpi=300)
+cv.savefig(os.path.join(imgdir, '3mAverageRe_sensitivity.png'), dpi=300)
 
 # Percent of schools with infections on day 1
 fig = plt.figure(figsize=(12,8))
@@ -296,7 +362,7 @@ melt = pd.melt(extract, id_vars=['key2'], value_vars=['es_perc_d1', 'ms_perc_d1'
 sns.barplot(data=melt, x='School Type', y='Schools with First-Day Infections', hue='key2')
 plt.legend()
 plt.tight_layout()
-cv.savefig(os.path.join(imgdir, 'SchoolsWithFirstDayInfections.png'), dpi=300)
+cv.savefig(os.path.join(imgdir, 'SchoolsWithFirstDayInfections_sensitivity.png'), dpi=300)
 
 # Infections on first day as function on school type and testing - regression
 d = pd.DataFrame(byschool)
@@ -313,7 +379,7 @@ for ax in g.axes.flat:
     ax.grid(True)
 g.add_legend(fontsize=14)
 plt.tight_layout()
-cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg.png'), dpi=300)
+cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg_sensitivity.png'), dpi=300)
 
 # Tests required
 fig, ax = plt.subplots(figsize=(12,8))
@@ -333,7 +399,7 @@ ax.grid(axis='x')
 ax.set_xlabel('Additional tests required (daily per 100k population)')
 fig.tight_layout()
 plt.legend()
-cv.savefig(os.path.join(imgdir, f'NumTests.png'), dpi=300)
+cv.savefig(os.path.join(imgdir, f'NumTests_sensitivity.png'), dpi=300)
 
 
 
