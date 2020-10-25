@@ -30,7 +30,7 @@ def define_pars(which='best', kind='default', ):
     return output
 
 
-def create_sim(params=None, pop_size=2.25e5, folder=None, popfile_stem=None, children_equally_sus=False, max_pop_seeds=5, load_pop=True, people=None, **kwargs):
+def create_sim(params=None, pop_size=2.25e5, folder=None, popfile_stem=None, children_equally_sus=False, max_pop_seeds=5, load_pop=True, people=None, label=None, **kwargs):
     '''
     Create the simulation for use with schools. This is the main function used to
     create the sim object.
@@ -44,6 +44,7 @@ def create_sim(params=None, pop_size=2.25e5, folder=None, popfile_stem=None, chi
         max_pop_seeds (int): maximum number of populations to generate (for use with different random seeds)
         load_pop (bool): whether to load people from disk (otherwise, use supplied or create afresh)
         people (People): if supplied, use instead of loading from file
+        label (str): a name for the simulation
 
     Returns:
         A sim instance
@@ -105,7 +106,7 @@ def create_sim(params=None, pop_size=2.25e5, folder=None, popfile_stem=None, chi
 
     # Handle population -- NB, although called popfile, might be a People object
     if load_pop: # Load from disk -- normal usage
-        pop_seed = params['rand_seed'] % max_pop_seeds
+        pop_seed = pars.rand_seed % max_pop_seeds
         popfile = popfile_stem + str(pop_seed) + '.ppl'
         print(f'Note: loading population from {popfile}')
     elif people is not None: # People is supplied; use that
@@ -116,7 +117,7 @@ def create_sim(params=None, pop_size=2.25e5, folder=None, popfile_stem=None, chi
         popfile = cvsch.make_population(pop_size=pars.pop_size, rand_seed=pars.rand_seed, max_pop_seeds=max_pop_seeds, do_save=False)
 
     # Create sim
-    sim = cv.Sim(pars, popfile=popfile, load_pop=True)
+    sim = cv.Sim(pars, popfile=popfile, load_pop=True, label=label)
 
     # Modify sim
     if children_equally_sus:

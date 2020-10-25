@@ -72,7 +72,7 @@ def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, pop
         popfile = os.path.join('inputs', f'kc_{strategy}_{int(pars.n)}_seed{pars.rand_seed}.ppl')
 
     T = sc.tic()
-    print(f'Making "{popfile}"...')
+    print(f'Making population...')
 
     # Make the population
     population = sp.make_population(**pars)
@@ -112,8 +112,8 @@ def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, pop
     popdict['school_types'] = school_types
     popdict['school_type_by_person'] = school_type_by_person
 
-    assert sum(popdict['teacher_flag']), 'No teachers were found'
-    assert sum(popdict['student_flag']), 'No students were found'
+    assert sum(popdict['teacher_flag']), 'Uh-oh, no teachers were found: as a school analysis this is treated as an error'
+    assert sum(popdict['student_flag']), 'Uh-oh, no students were found: as a school analysis this is treated as an error'
 
     # Actually create the people
     people_pars = dict(
@@ -127,6 +127,7 @@ def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, pop
                           staff_flag=popdict['staff_flag'], school_type_by_person=popdict['school_type_by_person'])
 
     if do_save:
+        print(f'Saving to "{popfile}"...')
         sc.saveobj(popfile, people)
 
     sc.toc(T)
