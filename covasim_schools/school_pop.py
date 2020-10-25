@@ -72,7 +72,7 @@ def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, pop
         popfile = os.path.join('inputs', f'kc_{strategy}_{int(pars.n)}_seed{pars.rand_seed}.ppl')
 
     T = sc.tic()
-    print(f'Making population...')
+    print('Making population...')
 
     # Make the population
     population = sp.make_population(**pars)
