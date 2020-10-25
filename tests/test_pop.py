@@ -2,7 +2,9 @@
 Very simple test of population generation
 '''
 
+import numpy as np
 import pylab as pl
+import sciris as sc
 import covasim as cv
 import covasim_schools as cvsch
 
@@ -26,12 +28,27 @@ def plot_schools(pop):
             if key in keys:
                 school_types_by_ind[val] = key
 
-    fig = pl.figure()
-    cv.maximize()
+    results = {}
+    for sc_id,sc_type in school_types_by_ind.items():
+        thisres = sc.objdict()
+        sc_inds = (pop.school_id == sc_id)
+        thisres.all = sc_inds
+        thisres.students = cv.true(np.array(pop.student_flag) * sc_inds)
+        thisres.teachers = cv.true(np.array(pop.teacher_flag) * sc_inds)
+        thisres.staff    = cv.true(np.array(pop.staff_flag) * sc_inds)
+        results[sc_id] = thisres
 
-    return fig
+    # Do plotting
+    fig = pl.figure()
+    n_schools = len(results)
+    i = 0
+    for s,sc_id in enumerate(results.keys()):
+        pl.subplot(n_schools, 4, i+1)
+    # cv.maximize(fig=fig)
+
+    return results
 
 
 if __name__ == '__main__':
     pop = test_school_pop(do_plot=True)
-    fig = plot_schools(pop)
+    results = plot_schools(pop)
