@@ -73,3 +73,24 @@ python create_sp_pop.py
 ```
 
 Then run either `run_scenarios.py` or `sensitivity_scenarios.py`. NB, these are intended to be run on HPCs and will likely not work (or take more than a day to complete) on a PC.
+
+
+Fonts
+=====
+
+The font "Roboto Condensed" is used for generating the figures. To use with Python:
+
+On Linux/Mac:
+
+1. Copy the font files you want (e.g. in the `assets` folder) to `$HOME/.fonts` or `/usr/share/fonts/truetype/`
+2. Run `sudo fc-cache -f -v`
+3. Confirm they're installed: `fc-list`
+
+On Windows:
+
+1. Open the `assets` folder in Windows Explorer and do what you need to do.
+
+Then on all systems:
+
+1. Rebuild matplotlib font cache: `from matplotlib import font_manager as fm; fm._rebuild()`  -- this needs to be done for every user and/or virtual environment
+2. Confirm they're available: `from matplotlib import font_manager as fm; fm.findSystemFonts()`
