@@ -12,13 +12,15 @@ from testing_scenarios import generate_scenarios, generate_testing, scenario
 import synthpops as sp
 cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (0,3)
+par_inds = (15,30)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
-folder = 'v20201016_225k_sensitivity'
-stem = f'batch_v2_{par_inds[0]}-{par_inds[1]}'
+folder = 'v20201019'
+stem = f'sensitivity_v2_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
+# Hacky:
+calibfile_ch_eq_sus = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_children_equally_sus.json')
 
 
 def baseline(sim, scen, test):
@@ -106,7 +108,7 @@ def lower_coverage(sim, scen, test):
     ns = new_schools(scen)
     sim['interventions'] += [ns]
 
-def parents_return_to_work(sim, scen, test):
+def increased_mobility(sim, scen, test):
     # Modify scen with test
     for stype, spec in scen.items():
         if spec is not None:
@@ -169,7 +171,7 @@ def broken_bubbles(sim, scen, test):
                     student_to_student_edges.loc[inds_to_keep, ['p1', 'p2', 'beta']], # Keep these
                     new_edges])
 
-                #print(f'During rewiring, the number of student-student edges went from {student_to_student_edges.shape[0]} to {rewired_student_to_student_edges.shape[0]}')
+                print(f'During rewiring, the number of student-student edges went from {student_to_student_edges.shape[0]} to {rewired_student_to_student_edges.shape[0]}')
 
                 other_edges = edges_this_school.loc[ (~edges_this_school['p1_student']) | (~edges_this_school['p2_student']) ]
                 rewired_edges_this_school = pd.concat([rewired_student_to_student_edges, other_edges])
@@ -190,7 +192,7 @@ if __name__ == '__main__':
 
     testing = generate_testing()
     #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 2w', 'Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
-    testing = {k:v for k,v in testing.items() if k in ['Antigen every 2w, PCR f/u']}
+    #testing = {k:v for k,v in testing.items() if k in ['Antigen every 2w, PCR f/u']}
 
     sensitivity = {
         # Baseline
@@ -220,7 +222,7 @@ if __name__ == '__main__':
         # -------- HARD --------
         # Parents/guardians of school children return to work
         # --> Remove and restore edges, HH+students --> work/community
-        'parents_return_to_work': parents_return_to_work,
+        'increased_mobility': increased_mobility,
 
         # What if cohorting doesn't work all that well due to bussing, after-school care, recess/lunch, or friends?
         # --> Add a % of the old school network back in.  It's _more_ transmission, so would need to balance?  Match R0 (analytical?)
@@ -232,31 +234,34 @@ if __name__ == '__main__':
     }
 
     # Select a subset, if desired:
-    sensitivity = {k:v for k,v in sensitivity.items() if k in ['baseline', 'broken_bubbles']}
+    #sensitivity = {k:v for k,v in sensitivity.items() if k in ['children_equally_sus']}
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
-
+    par_list_ch_eq_sus = sc.loadjson(calibfile_ch_eq_sus)[par_inds[0]:par_inds[1]]
+        
     sims = []
     msims = []
     tot = len(scenarios) * len(testing) * len(par_list) * len(sensitivity)
     proc = 0
 
     # Save time by pre-generating the base simulations
-    base_sims = []
-    for eidx, entry in enumerate(par_list):
-        par = sc.dcp(entry['pars'])
-        par['rand_seed'] = int(entry['index'])
-        base_sims.append( cs.create_sim(par, pop_size=pop_size, folder=folder) )
 
     for senskey, builder in sensitivity.items():
-        for eidx, entry in enumerate(par_list):
-            par = entry['pars']
+        if senskey == 'children_equally_sus':
+            plist = par_list_ch_eq_sus
+            ch_eq_sus = True
+        else:
+            plist = par_list
+            ch_eq_sus = False
+
+        for eidx, entry in enumerate(plist):
+            par = sc.dcp(entry['pars'])
             par['rand_seed'] = int(entry['index'])
-            sim_base = base_sims[eidx]
+            base_sim = cs.create_sim(par, pop_size=pop_size, folder=folder, children_equally_sus=ch_eq_sus)
 
             for sidx, (skey, scen) in enumerate(scenarios.items()):
                 for tidx, (tkey, test) in enumerate(testing.items()):
-                    sim = sim_base.copy()
+                    sim = base_sim.copy()
 
                     sim.label = f'{skey} + {tkey}'
                     sim.key1 = skey
@@ -287,4 +292,5 @@ if __name__ == '__main__':
         cv.save(fn, msim)
 
     msim = cv.MultiSim.merge(msims)
+    msim.base_sim = [] # Save disk space
     cv.save(os.path.join(folder, 'msims', f'{stem}.msim'), msim)
