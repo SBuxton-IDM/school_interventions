@@ -17,7 +17,7 @@ for fn in fns:
     ext = os.path.splitext(fn)[1]
     if ext == '.sims':
         sims += cv.load(fn)
-    elif ext == '.msim'
+    elif ext == '.msim':
         msim = cv.MultiSim.load(fn)
         sims += msim.sims
     else:
