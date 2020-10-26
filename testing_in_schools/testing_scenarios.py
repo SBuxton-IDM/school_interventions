@@ -9,8 +9,7 @@ par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
-folder = 'v20201016_225k'
-stem = f'batch_final_{par_inds[0]}-{par_inds[1]}'
+folder = 'v20201019'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 def scenario(es, ms, hs):
