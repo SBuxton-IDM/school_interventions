@@ -91,6 +91,7 @@ def generate_testing():
         'repeat': None,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
+        'is_antigen': False,
         'sensitivity': 1,
         'delay': 1,
     }]
@@ -100,6 +101,7 @@ def generate_testing():
         'repeat': 14,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
+        'is_antigen': False,
         'sensitivity': 1,
         'delay': 1,
     }]
@@ -109,6 +111,7 @@ def generate_testing():
         'repeat': 7,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
+        'is_antigen': False,
         'sensitivity': 1,
         'delay': 1,
     }]
@@ -118,6 +121,7 @@ def generate_testing():
         'repeat': 1,
         'groups': ['students', 'teachers', 'staff'],
         'coverage': 1,
+        'is_antigen': False,
         'sensitivity': 1,
         'delay': 0, # NOTE: no delay!
     }]
