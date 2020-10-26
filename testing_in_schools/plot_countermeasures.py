@@ -46,13 +46,13 @@ scen_names = sc.odict({ # key1
 scen_order = scen_names.values()
 
 test_names = sc.odict({ # key2
-    'None':                                  ('Countermeasures\nonly', 'gray'),
+    'None':                                  ('No diagnostic screening', 'gray'),
     'PCR 1w prior':                          ('PCR\n1w prior\n1d delay', (0.8584083044982699, 0.9134486735870818, 0.9645674740484429, 1.0)),
     'Antigen every 1w teach&staff, PCR f/u': ('Antigen\nEvery 1w\nTeachers & Staff\nPCR f/u', (0.9882352941176471, 0.732072279892349, 0.6299269511726259, 1.0)),
     #'PCR every 2w 50%':                     ('Fortnightly PCR, 50% coverage', (0.7309496347558632, 0.8394771241830065, 0.9213225682429834, 1.0)),
     'PCR every 2w':                          ('PCR\nFortnightly\n1d delay', (0.5356862745098039, 0.746082276047674, 0.8642522106881968, 1.0)),
     'Antigen every 2w, no f/u':              ('Antigen\nFortnightly\nno f/u', (0.7925720876585928, 0.09328719723183392, 0.11298731257208766, 1.0)),
-    'Antigen every 2w, PCR f/u':             ('Antigen\nFortnightly\nPCR f/u', (0.9835755478662053, 0.4127950788158401, 0.28835063437139563, 1.0)),
+    'Antigen every 2w, PCR f/u':             ('Fortnightly antigen with PCR f/u', (0.9835755478662053, 0.4127950788158401, 0.28835063437139563, 1.0)),
     'PCR every 1w':                          ('PCR\nWeekly\n1d delay', (0.32628988850442137, 0.6186236063052672, 0.802798923490965, 1.0)),
 
     #'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
@@ -65,14 +65,14 @@ test_order = [v[0] for k,v in test_names.items() if k in ['None', 'Antigen every
 test_hue = {v[0]:v[1] for v in test_names.values()}
 
 sens_names = sc.odict({ # key3
-    'baseline': 'Baseline',
-    'tracing': 'No contact tracing',
-    'NPI': 'No NPI reduction',
-    'NPI_tracing': 'No NPI or tracing',
-    'screening': 'No daily screening',
-    'screening_tracing': 'No screening or tracing',
-    'NPI_screening': 'No NPI or screening',
-    'NPI_screening_tracing': 'No NPI, screening, or tracing',
+    'NPI_screening_tracing': 'No countermeasures', #'No NPI, screening, or tracing',
+    'NPI_screening': 'With tracing', #'No NPI or screening',
+    'screening_tracing': 'With NPI', #'No screening or tracing',
+    'screening': 'With NPI and tracing', #'No daily screening',
+    'NPI_tracing': 'With screening', #'No NPI or tracing',
+    'NPI': 'With screening and tracing', #'No NPI reduction',
+    'tracing': 'With NPI and screening', #'No contact tracing',
+    'baseline': 'With NPI, screening, and tracing', #'Baseline',
 })
 sens_order = sens_names.values()
 
@@ -159,7 +159,7 @@ d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'perc_inperson_da
 d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 d = d.loc[d['key1']==school_scenario] # K-5 only
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key2', y='Days lost (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set1')
+g.map_dataframe( sns.barplot, x='key2', y='Days lost (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set2')
 g.set_titles(row_template="{row_name}", fontsize=24)
 g.set_axis_labels(y_var="Days lost (%)")
 plt.tight_layout()
@@ -167,9 +167,9 @@ plt.tight_layout()
 for axi, ax in enumerate(g.axes.flat):
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + (axi+1)*box.height * 0.1, box.width, box.height * 0.9])
-g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.29), ncol=4)
+g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.16), ncol=4, fontsize=14)
 
-cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost_sensitivity.png'), dpi=300)
+cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost_countermeasures.png'), dpi=300)
 
 
 # Attack rate
@@ -177,7 +177,7 @@ d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'attackrate_{gkey
 d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 d = d.loc[d['key1']==school_scenario] # K-5 only
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False) # col='key1', 
-g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set1')
+g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set2')
 g.set_titles(row_template="{row_name}")
 g.set_axis_labels(y_var="3-Month Attack Rate (%)")
 plt.tight_layout()
@@ -185,6 +185,6 @@ plt.tight_layout()
 for axi, ax in enumerate(g.axes.flat):
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + (axi+1)*box.height * 0.1, box.width, box.height * 0.9])
-g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.29), ncol=4)
+g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.16), ncol=4, fontsize=14)
 
-cv.savefig(os.path.join(imgdir, f'3mAttackRate_sensitivity.png'), dpi=300)
+cv.savefig(os.path.join(imgdir, f'3mAttackRate_countermeasures.png'), dpi=300)

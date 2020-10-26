@@ -14,7 +14,7 @@ import testing_scenarios as t_s # From the local folder
 
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (0,20)
+par_inds = (20,30)
 pop_size = 2.25e5
 batch_size = 16
 
