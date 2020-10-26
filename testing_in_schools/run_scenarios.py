@@ -18,28 +18,15 @@ par_inds = (0,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
-folder = 'v20201016_225k'
-stem = f'batch_final_{par_inds[0]}-{par_inds[1]}'
+folder = 'v20201019'
+stem = f'batch_final_newHybrid_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 scenarios = t_s.generate_scenarios()
-scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
+scenarios = {k:v for k,v in scenarios.items() if k in ['all_hybrid']}
 
 testing = t_s.generate_testing()
 #testing = {k:v for k,v in testing.items() if 'Antigen' in k}
-
-# Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
-pars_v1 = { # 100k pop
-    'pop_infected': 160,
-    'clip_edges': 0.65,
-    'change_beta': 0.525,
-}
-
-pars_v2 = { # Updated v2 pars achieve lower prevalence (0.2% as opposed to closer to 0.5% with v1) (100kpop)
-    'pop_infected': 90,
-    'clip_edges': 0.65,
-    'change_beta': 0.62,
-}
 
 # Now ignoring pars_v1 an pars_v2, using calibrated values instead:
 par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
