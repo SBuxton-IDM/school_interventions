@@ -740,16 +740,18 @@ class HybridContactManager(ContactManager):
         self.A_group = np.concatenate((self.A_students, self.teachers, self.staff))
         self.B_group = np.concatenate((self.B_students, self.teachers, self.staff))
 
-        A_layer = sc.dcp(self.base_layer)
-        rows = np.concatenate((
+        A_layer = sc.dcp(self.base_layer)   # start with the full layer
+        rows = np.concatenate((             # find all edges with a vertex in group B students
                 np.isin(A_layer['p1'], self.B_students).nonzero()[0],
                 np.isin(A_layer['p2'], self.B_students).nonzero()[0]))
+        A_layer.pop_inds(rows)              # remove these edges from layer A
 
-        B_layer = sc.dcp(self.base_layer)
-        rows = np.concatenate((
+        B_layer = sc.dcp(self.base_layer)   # start with the full layer
+        rows = np.concatenate((             # find all edges with a vertex in group A students
                 np.isin(B_layer['p1'], self.A_students).nonzero()[0],
                 np.isin(B_layer['p2'], self.A_students).nonzero()[0]))
-        B_layer.pop_inds(rows)
+        B_layer.pop_inds(rows)              # remove these edges from layer B
+
         return A_layer, B_layer
 
     def begin_day(self, date):
@@ -804,11 +806,3 @@ class RemoteContactManager(ContactManager):
     def find_contacts(self, uids):
         ''' No contacts because remote, return empty list '''
         return np.empty(0, dtype='int64')
-
-
-
-
-
-
-
-
