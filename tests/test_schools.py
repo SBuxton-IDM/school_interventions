@@ -21,7 +21,7 @@ def test_schools(do_plot=False):
     params = sc.dcp(entry['pars'])
     params['rand_seed'] = int(entry['index'])
 
-    scen = generate_scenarios()['with_countermeasures']
+    scen = generate_scenarios()['all_hybrid']
     testing = generate_testing()['Antigen every 2w, PCR f/u']
     #testing[0]['delay'] = 0
     for stype, spec in scen.items():
