@@ -5,6 +5,7 @@ Not a formal test, but a script for running all scenarios. Based on test_schools
 import os
 import pylab as pl
 import sciris as sc
+import seaborn as sns
 import covasim_schools as cvsch
 from testing_in_schools import create_sim as cs
 from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
@@ -102,6 +103,13 @@ if do_run:
 else:
     sc.heading('Loading from disk...')
     sims = sc.loadobj(sims_file)
+
+
+#%% Analysis
+sc.heading('Analyzing...')
+res = sc.objdict()
+
+
 
 
 #%% Plotting
