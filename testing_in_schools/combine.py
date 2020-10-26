@@ -5,18 +5,22 @@ import os
 folder = 'v20201019'
 
 fns = [
-    'sensitivity_v2_0-5.msim',
-    'sensitivity_v2_5-10.msim',
-    'sensitivity_v2_10-15.msim',
-    'sensitivity_v2_15-30.msim',
+    'batch_final_updated_antigen_0-30.sims',
+    'batch_final_1wAntigen_0-30.msim',
 ]
 
 fns = [os.path.join(folder, 'msims', fn) for fn in fns]
 
-msims = []
+sims = []
 for fn in fns:
-    msims.append( cv.MultiSim.load(fn) )
+    print(f'Loading {fn}')
+    ext = os.path.splitext(fn)[1]
+    if ext == '.sims':
+        sims += cv.load(fn)
+    elif ext == '.msim':
+        msim = cv.MultiSim.load(fn)
+        sims += msim.sims
+    else:
+        print('ERROR')
 
-msim = cv.MultiSim.merge(msims)
-sims = msim.sims
-cv.save(os.path.join(folder, 'msims', 'sensitivity_v2_0-30.sims'), sims)
+cv.save(os.path.join(folder, 'msims', 'batch_final_updatedAntigen_1wAntigen_0-30.sims'), sims)
