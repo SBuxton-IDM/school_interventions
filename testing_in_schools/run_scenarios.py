@@ -14,7 +14,7 @@ import testing_scenarios as t_s # From the local folder
 
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (0,20)
+par_inds = (0,30)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
@@ -26,7 +26,7 @@ scenarios = t_s.generate_scenarios()
 scenarios = {k:v for k,v in scenarios.items() if k in ['all_hybrid']}
 
 testing = t_s.generate_testing()
-#testing = {k:v for k,v in testing.items() if 'Antigen' in k}
+testing = {k:v for k,v in testing.items() if k in ['Antigen every 1w, PCR f/u']}
 
 # Now ignoring pars_v1 an pars_v2, using calibrated values instead:
 par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
