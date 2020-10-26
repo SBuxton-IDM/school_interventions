@@ -9,7 +9,7 @@ from testing_in_schools.calibrate_model import evaluate_sim
 
 debug = True
 # NOTE: The following may be bypassed below by hard-coded pop_size and folder
-bypass = False
+bypass = True
 folder = '../testing_in_schools/v20201019'
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
@@ -17,7 +17,19 @@ calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_preval
 
 def test_schools(do_plot=False):
 
-    entry = sc.loadjson(calibfile)[1]
+    try:
+        entry = sc.loadjson(calibfile)[1]
+    except Exception as E:
+        entry =   {
+            "index": 376.0,
+            "mismatch": 0.03221581045452142,
+            "pars": {
+              "pop_infected": 242.11186358945181,
+              "change_beta": 0.5313884845187986,
+              "symp_prob": 0.08250498122080606
+            }
+          }
+        print(f'Warning: could not load calibration file "{calibfile}" due to "{str(E)}", using hard-coded parameters')
     params = sc.dcp(entry['pars'])
     params['rand_seed'] = int(entry['index'])
 
