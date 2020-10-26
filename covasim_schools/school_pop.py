@@ -118,7 +118,8 @@ def make_population(pop_size, rand_seed=1, max_pop_seeds=None, do_save=True, pop
     # Actually create the people
     people_pars = dict(
         pop_size = pars.n,
-        beta_layer = {k:1.0 for k in 'hswcl'} # Since this is used to define hat layers exist
+        beta_layer = {k:1.0 for k in 'hswcl'}, # Since this is used to define hat layers exist
+        beta = 1.0, # TODO: this is required for plotting (people.plot()), but shouldn't be
     )
     people = cv.People(people_pars, strict=False, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'],
                           contacts=popdict['contacts'], school_id=popdict['school_id'],
