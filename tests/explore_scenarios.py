@@ -8,6 +8,9 @@ import covasim_schools as cvsch
 from testing_in_schools import create_sim as cs
 from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
 
+#%% Configuration
+sc.heading('Configuring...')
+T = sc.tic()
 
 debug = True # Verobisty and other settings
 bypass = True # Whether to use a small population size
@@ -16,6 +19,8 @@ keep_people = False # Whether to keep people when running
 parallelize = True # If running, whether to parallelize
 do_save = True  # If rerunning, whehter to save sims
 do_plot = True # Whether to plot results
+
+rand_seed = None # Overwrite the default random seed
 folder = '../testing_in_schools/v20201019'
 bypass_popfile = 'explore_scenarios_small.ppl'
 sims_file = 'explore_scenarios.sims'
@@ -36,7 +41,10 @@ except Exception as E:
       }
     print(f'Warning: could not load calibration file "{calibfile}" due to "{str(E)}", using hard-coded parameters')
 params = sc.dcp(entry['pars'])
-params['rand_seed'] = int(entry['index'])
+if rand_seed is None:
+    params['rand_seed'] = int(entry['index'])
+else:
+    params['rand_seed'] = rand_seed
 
 # Ensure the population file exists
 if bypass and not os.path.exists(bypass_popfile):
@@ -67,6 +75,8 @@ if bypass: # BYPASS option -- create small population on the fly
 else: # Otherwise, load full population from disk
     base_sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 
+
+#%% Run the sims
 def run_sim(scen):
     ''' Run a single sim '''
     sim = sc.dcp(base_sim)
@@ -92,12 +102,9 @@ else:
     sc.heading('Loading from disk...')
     sims = sc.loadobj(sims_file)
 
-# if do_plot:
-#     if debug:
-#         sim.plot(to_plot='overview')
-#         #t = sim.make_transtree()
-#     else:
-#         sim.plot()
 
-#     #sim.save('test.sim')
-#     #cv.savefig('sim.png')
+#%% Plotting
+sc.heading('Plotting...')
+
+print('Done.')
+sc.toc(T)
