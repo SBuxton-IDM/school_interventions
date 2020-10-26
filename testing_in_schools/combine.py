@@ -2,15 +2,13 @@
 import covasim as cv
 import os
 
-folder = 'v20201016_225k'
+folder = 'v20201019'
 
 fns = [
-    'batch_final_20-30.msim',
-    'batch_final_0-20_all_remote.msim',
-    'batch_final_0-20_k5.msim',
-    'batch_final_0-20_all_hybrid.msim',
-    'batch_final_0-20_as_normal.msim',
-    'batch_final_0-20_with_countermeasures.msim',
+    'sensitivity_v2_0-5.msim',
+    'sensitivity_v2_5-10.msim',
+    'sensitivity_v2_10-15.msim',
+    'sensitivity_v2_15-30.msim',
 ]
 
 fns = [os.path.join(folder, 'msims', fn) for fn in fns]
@@ -20,4 +18,5 @@ for fn in fns:
     msims.append( cv.MultiSim.load(fn) )
 
 msim = cv.MultiSim.merge(msims)
-msim.save('batch_final_0-30.msim')
+sims = msim.sims
+cv.save(os.path.join(folder, 'msims', 'sensitivity_v2_0-30.sims'), sims)

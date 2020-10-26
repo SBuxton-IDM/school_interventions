@@ -14,19 +14,19 @@ import testing_scenarios as t_s # From the local folder
 
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (0,20)
+par_inds = (0,30)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
-folder = 'v20201016_225k'
-stem = f'batch_final_{par_inds[0]}-{par_inds[1]}'
+folder = 'v20201019'
+stem = f'batch_final_1wAntigen_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 scenarios = t_s.generate_scenarios()
-scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
+#scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
 
 testing = t_s.generate_testing()
-#testing = {k:v for k,v in testing.items() if 'Antigen' in k}
+testing = {k:v for k,v in testing.items() if k in ['Antigen every 1w, PCR f/u']}
 
 # Hand tuned and replicates instead of optuna pars - testing will perturb the rand seed before schools open anyway
 pars_v1 = { # 100k pop
