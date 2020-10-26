@@ -3,9 +3,11 @@ Not a formal test, but a script for running all scenarios. Based on test_schools
 '''
 
 import os
+import numpy as np
 import pylab as pl
 import sciris as sc
 import seaborn as sns
+import covasim as cv
 import covasim_schools as cvsch
 from testing_in_schools import create_sim as cs
 from testing_in_schools.testing_scenarios import generate_scenarios, generate_testing
@@ -14,13 +16,13 @@ from testing_in_schools.testing_scenarios import generate_scenarios, generate_te
 sc.heading('Configuring...')
 T = sc.tic()
 
-debug = True # Verobisty and other settings
-bypass = True # Whether to use a small population size
-do_run = True # Whether to rerun instead of load saved run
+debug       = True # Verobisty and other settings
+bypass      = True # Whether to use a small population size
+do_run      = False # Whether to rerun instead of load saved run
 keep_people = False # Whether to keep people when running
 parallelize = True # If running, whether to parallelize
-do_save = True  # If rerunning, whehter to save sims
-do_plot = True # Whether to plot results
+do_save     = True # If rerunning, whether to save sims
+do_plot     = True # Whether to plot results
 
 rand_seed = None # Overwrite the default random seed
 folder = '../testing_in_schools/v20201019'
@@ -54,8 +56,19 @@ if bypass and not os.path.exists(bypass_popfile):
     cvsch.make_population(pop_size=pop_size, rand_seed=params['rand_seed'], max_pop_seeds=5, popfile=bypass_popfile, do_save=True)
 
 # Create the scenarios
+divider = ' -- '
+def joinkeys(skey, tkey):
+    ''' Turn scenario and testing keys into a single key '''
+    return divider.join([skey, tkey])
+
+def splitkey(key):
+    ''' Oppostite of joinkeys() '''
+    return key.split(divider)
+
 scens = generate_scenarios()
 testings = generate_testing()
+s_keys = list(scens.keys())
+t_keys = list(testings.keys())
 n_scens = len(scens)
 n_testings = len(testings)
 all_scens = sc.odict()
@@ -67,7 +80,7 @@ for skey,origscen in scens.items():
             if spec is not None:
                 spec['testing'] = testing
         scen['es']['verbose'] = scen['ms']['verbose'] = scen['hs']['verbose'] = debug
-        all_scens[f'{skey} -- {tkey}'] = scen
+        all_scens[joinkeys(skey, tkey)] = scen
         all_keys.append([skey, tkey])
 
 # Create the sim
@@ -109,13 +122,49 @@ else:
 sc.heading('Analyzing...')
 res = sc.objdict()
 
+def ints():
+    return np.zeros((n_scens, n_testings), dtype=int)
 
+res.cum_infections = ints()
+res.cum_tests = ints()
+for s,skey in enumerate(s_keys):
+    for t,tkey in enumerate(t_keys):
+        sim = sims[joinkeys(skey, tkey)]
+        res.cum_infections[s,t] = sim.results['cum_infections'][-1]
+        res.cum_tests[s,t] = sim.results['cum_tests'][-1]
 
 
 #%% Plotting
 sc.heading('Plotting...')
 
-fig = pl.figure()
+fig,axs = pl.subplots(2,3)
+flataxs = axs.flatten()
+pl.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.98, hspace=0.2, wspace=0.2)
+
+print('Scenario definitions:')
+for s,skey in enumerate(s_keys):
+    print(f'  S{s} -- {skey}')
+
+print('Testing definitions:')
+for t,tkey in enumerate(t_keys):
+    print(f'  T{t} -- {tkey}')
+
+for a,ax in enumerate(flataxs):
+    pl.sca(ax)
+    sns.heatmap(res.cum_infections, annot=True, annot_kws={'fontsize':8})
+    ax.set_title('temp')
+    ax.set_xticks(np.arange(n_testings)+0.5)
+    ax.set_xticklabels(np.arange(n_testings))
+    ax.set_yticks(np.arange(n_scens)+0.5)
+    ax.set_yticklabels(np.arange(n_scens))
+    ax.set_xlabel('Testing scenario')
+    ax.set_ylabel('Classroom scenario')
+
+
+
+# cv.maximize(fig)
+
+
 
 print('Done.')
 sc.toc(T)

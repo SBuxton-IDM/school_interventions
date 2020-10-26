@@ -86,13 +86,14 @@ class schools_manager(cv.Intervention):
             for school_id in scids:
                 uids = sim.people.schools[school_id] # Dict with keys of school_id and values of uids in that school
 
-                stats = {
-                    'type':         school_type,
-                    'scenario':     self.scenario[school_type],
-                }
-                sim.school_stats[int2key(school_id)] = stats
-
                 if self.scenario[school_type] is not None:
+
+                    stats = {
+                        'type':         school_type,
+                        'scenario':     self.scenario[school_type],
+                    }
+                    sim.school_stats[int2key(school_id)] = stats
+
                     # Extract 's'-layer associated with this school
                     rows = (sdf['p1'].isin(uids)) | (sdf['p2'].isin(uids))
                     s_subset = sdf.loc[ rows ]
@@ -122,6 +123,13 @@ class schools_manager(cv.Intervention):
             for school in self.schools:
                 sim.school_stats[school.sid].update( school.get_stats() )
             self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
+
+
+    def gather_stats(self):
+        ''' Gather statistics from individual schools into one object '''
+        res = sc.objdict()
+        res.n_schools = len(self.schools)
+
 
 
 
