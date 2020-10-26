@@ -3,6 +3,7 @@ Not a formal test, but a script for running all scenarios. Based on test_schools
 '''
 
 import os
+import pylab as pl
 import sciris as sc
 import covasim_schools as cvsch
 from testing_in_schools import create_sim as cs
@@ -105,6 +106,8 @@ else:
 
 #%% Plotting
 sc.heading('Plotting...')
+
+fig = pl.figure()
 
 print('Done.')
 sc.toc(T)
