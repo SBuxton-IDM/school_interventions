@@ -172,6 +172,19 @@ def generate_testing():
         'PCR_followup_delay': 3.0,
     }]
 
+    Antigen_every_1w_starting_1wprior_all_PCR_followup = [{
+        'start_date': '2020-10-26',
+        'repeat': 7,
+        'groups': ['students', 'teachers', 'staff'], # No students
+        'coverage': 1,
+        'is_antigen': True,
+        'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
+        'other_sensitivity': 0.90, # Modeling assumption
+        'specificity': 0.985, # https://www.fda.gov/media/141570/download
+        'PCR_followup_perc': 1.0,
+        'PCR_followup_delay': 3.0,
+    }]
+
     Antigen_every_2w_starting_1wprior_all_no_followup = [{
         'start_date': '2020-10-26',
         'repeat': 14,
@@ -196,5 +209,6 @@ def generate_testing():
         #'PCR every 1m 15%': PCR_every_1m_15cov,
         'Antigen every 1w teach&staff, PCR f/u': Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup,
         'Antigen every 2w, PCR f/u': Antigen_every_2w_starting_1wprior_all_PCR_followup,
+        'Antigen every 1w, PCR f/u': Antigen_every_1w_starting_1wprior_all_PCR_followup,
         'Antigen every 2w, no f/u': Antigen_every_2w_starting_1wprior_all_no_followup,
     }
