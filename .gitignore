@@ -1,10 +1,11 @@
-# Custom -- Covasim output files
+# Custom -- Covasim output files and others
 *.pop
 *.ppl
 *.sim
 *.msim
 *.scens
 *.json
+.idea
 
 # Custom -- Optuna files
 *.db
