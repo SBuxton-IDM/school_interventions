@@ -1,4 +1,6 @@
-# Script for quick and dirty single run of a school-based intervention
+'''
+Script for quick and dirty single run of a school-based intervention
+'''
 
 import os
 import sciris as sc
