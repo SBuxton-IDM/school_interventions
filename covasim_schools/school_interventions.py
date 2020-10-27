@@ -647,19 +647,18 @@ class SchoolStats(sc.prettyobj):
         # 2. Use ids of students who passed screening: self.school.uids_passed_screening
         # First "infectious_arrive_at_school" assumes there is a transmission risk even pre-screening (e.g. bus)
 
-        students_at_school_uids = cv.itruei(ppl.student_flag, self.school.uids_arriving_at_school)
-        teachers_at_school_uids = cv.itruei(ppl.teacher_flag, self.school.uids_arriving_at_school)
-        staff_at_school_uids = cv.itruei(ppl.staff_flag, self.school.uids_arriving_at_school)
-
-        for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
-            self.infectious_arrive_at_school[group][t] = len(infectious_ids[group]) * rescale
+        n_students_at_school = len(cv.itruei(ppl.student_flag, self.school.uids_arriving_at_school))
+        n_teachers_at_school = len(cv.itruei(ppl.teacher_flag, self.school.uids_arriving_at_school))
+        n_staff_at_school    = len(cv.itruei(ppl.staff_flag, self.school.uids_arriving_at_school))
+        for group, count in zip(['students', 'teachers', 'staff'], [n_students_at_school, n_teachers_at_school, n_staff_at_school]):
+            self.infectious_arrive_at_school[group][t] = count * rescale
 
         # Second "infectious_stay_at_school" effectively assumes "screen-positive" kids would be kept home from school in the first place
-        students_at_school_uids = cv.itruei(ppl.student_flag, self.school.uids_passed_screening)
-        teachers_at_school_uids = cv.itruei(ppl.teacher_flag, self.school.uids_passed_screening)
-        staff_at_school_uids = cv.itruei(ppl.staff_flag, self.school.uids_passed_screening)
-        for group, ids in zip(['students', 'teachers', 'staff'], [students_at_school_uids, teachers_at_school_uids, staff_at_school_uids]):
-            self.infectious_stay_at_school[group][t] = len(infectious_ids[group]) * rescale
+        n_students_passedscreening = len(cv.itruei(ppl.student_flag, self.school.uids_passed_screening))
+        n_teachers_passedscreening = len(cv.itruei(ppl.teacher_flag, self.school.uids_passed_screening))
+        n_staff_passedscreening    = len(cv.itruei(ppl.staff_flag, self.school.uids_passed_screening))
+        for group, count in zip(['students', 'teachers', 'staff'], [n_students_passedscreening, n_teachers_passedscreening, n_staff_passedscreening]):
+            self.infectious_stay_at_school[group][t] = count * rescale
 
     # def finalize(self):
     #     ''' Called once on the final time step '''
