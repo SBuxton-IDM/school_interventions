@@ -72,6 +72,7 @@ class schools_manager(cv.Intervention):
         # Store arguments
         self.scenario = SchoolScenario(scenario)
         self.schools = []
+        return
 
     def initialize(self, sim):
         # Create schools, stealing 's' edges into the School class instances upon *initialize*
