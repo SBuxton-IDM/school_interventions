@@ -122,34 +122,56 @@ else:
 sc.heading('Analyzing...')
 res = sc.objdict()
 
-def ints():
-    return np.zeros((n_scens, n_testings), dtype=int)
+def arr():
+    return np.zeros((n_scens, n_testings))
 
-res.cum_infections = ints()
-res.cum_tests = ints()
+res.cum_infections = arr()
+res.cum_tests = arr()
+
+shared_keys = sims[0].school_results.shared_keys
+subkeys = ['students', 'teachers+staff']
+for key in shared_keys:
+    for k2 in subkeys:
+        res[f'{key}_{k2}'] = arr()
+res.PCR_tests = arr()
+res.Antigen_tests = arr()
+
 for s,skey in enumerate(s_keys):
     for t,tkey in enumerate(t_keys):
         sim = sims[joinkeys(skey, tkey)]
         res.cum_infections[s,t] = sim.results['cum_infections'][-1]
         res.cum_tests[s,t] = sim.results['cum_tests'][-1]
 
+        for key in shared_keys:
+            for k2 in subkeys:
+                res[f'{key}_{k2}'][s,t] = sim.school_results[key][k2]
+
+        res.PCR_tests[s,t] = sim.school_results.n_tested.PCR
+        res.Antigen_tests[s,t] = sim.school_results.n_tested.Antigen
+
+n_res = len(res)
+
 
 #%% Plotting
 sc.heading('Plotting...')
 
-fig,axs = pl.subplots(2,3)
+fig,axs = pl.subplots(4,5)
 flataxs = axs.flatten()
 pl.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.98, hspace=0.2, wspace=0.2)
 
-print('Scenario definitions:')
+
+strings = []
+
+strings.append('Scenario definitions:')
 for s,skey in enumerate(s_keys):
-    print(f'  S{s} -- {skey}')
+    strings.append(f'  S{s} -- {skey}')
 
-print('Testing definitions:')
+strings.append('Testing definitions:')
 for t,tkey in enumerate(t_keys):
-    print(f'  T{t} -- {tkey}')
+    strings.append(f'  T{t} -- {tkey}')
 
-for a,ax in enumerate(flataxs):
+for r,key,thisres in res.enumitems():
+    ax = flataxs[r]
     pl.sca(ax)
     sns.heatmap(res.cum_infections, annot=True, annot_kws={'fontsize':8})
     ax.set_title('temp')
@@ -159,6 +181,12 @@ for a,ax in enumerate(flataxs):
     ax.set_yticklabels(np.arange(n_scens))
     ax.set_xlabel('Testing scenario')
     ax.set_ylabel('Classroom scenario')
+
+labelax = flataxs[-1]
+for s,string in enumerate(strings):
+    x = 0.1
+    y = 1-(s/len(strings))
+    labelax.text(x, y, string)
 
 
 
