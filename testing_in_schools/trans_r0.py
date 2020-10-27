@@ -15,7 +15,7 @@ from testing_scenarios import generate_scenarios
 class seed_schools(cv.Intervention):
     ''' Seed one infection in each school '''
 
-    def __init__(self, n_infections=1, s_types=None, delay=0, verbose=1, **kwargs):
+    def __init__(self, n_infections=2, s_types=None, delay=0, verbose=1, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so that intervention can be recreated
         self.n_infections = n_infections
@@ -53,7 +53,8 @@ class seed_schools(cv.Intervention):
     def apply(self, sim):
         if sim.t == self.delay: # Only infect on the first day (or after a delay)
             for st,inds in self.seed_inds.items():
-                sim.people.infect(inds=np.array(inds), layer=self._lseed(st))
+                if len(inds):
+                    sim.people.infect(inds=np.array(inds), layer=self._lseed(st))
                 if self.verbose:
                     print(f'Infected {len(inds)} people in school type {st} on day {sim.t}')
 
@@ -65,9 +66,10 @@ class seed_schools(cv.Intervention):
                 numerator = 0
                 for ind in self.seed_inds[st]:
                     numerator +=  len(self.tt.targets[ind])
-                self.r0s[st] = numerator/denominator
                 self.numerators[st] = numerator
                 self.denominators[st] = denominator
+                if denominator:
+                    self.r0s[st] = numerator/denominator
             sim.school_r0s = self.r0s
 
         return
@@ -80,7 +82,7 @@ sc.heading('Configuring...')
 T = sc.tic()
 
 do_plot     = True # Whether to plot results
-n_seeds = 10 # Number of seeds to run each simulation with
+n_seeds = 6 # Number of seeds to run each simulation with
 rand_seed = 1 # Overwrite the default random seed
 bypass_popfile = 'trans_r0_medium.ppl'
 pop_size = int(100e3)
