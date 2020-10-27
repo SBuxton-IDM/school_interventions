@@ -237,7 +237,7 @@ ax.set_ylabel('')
 ax.set_xlabel('')
 ax.set_xticklabels([])
 
-stu = d.loc[(d['Group']=='Teachers & Staff')]
+stu = d.loc[(d['Group']=='Students')]
 
 # Students
 ax = fig.add_subplot(gs[8, :])
@@ -252,7 +252,7 @@ ax.xaxis.set_tick_params(length=0)
 sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
 ax.get_legend().remove()
 ax.set_xlim([-0.5,0.5])
-ax.set_ylim([0,50])
+ax.set_ylim([0,35])
 ax.set_xlabel('')
 ax.set_ylabel('3-Month Attack Rate (%)')
 
@@ -265,7 +265,7 @@ sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_orde
 hnd, lbl = ax.get_legend_handles_labels()
 ax.get_legend().remove()
 ax.set_xlim([0.5,4.5])
-ax.set_ylim([0,5])
+ax.set_ylim([0,3.5])
 ax.set_ylabel('')
 ax.set_xlabel('')
 
