@@ -11,24 +11,26 @@ import create_sim as cs
 from testing_scenarios import generate_scenarios
 
 by_pass = False
-force_run = True
+force_run = False
 folder = 'v20201019'
-par_inds = (0,15)
+par_inds = (0,1)
 
 #%% Define the school seeding 'intervention'
 class seed_schools(cv.Intervention):
     ''' Seed one infection in each school '''
 
-    def __init__(self, n_infections=2, s_types=None, delay=0, verbose=1, **kwargs):
+    def __init__(self, n_infections=2, s_types=None, delay=0, choose_students=False, verbose=1, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self._store_args() # Store the input arguments so that intervention can be recreated
         self.n_infections = n_infections
         self.s_types = s_types if s_types else ['es', 'ms', 'hs']
         self.delay = delay
+        self.choose_students = choose_students
         self.verbose = verbose
         self.school_ids = self._res([])
         self.seed_inds = self._res([])
         self.r0s = self._res(0.0)
+        self.degree = self._res(0.0)
         self.numerators = self._res(0)
         self.denominators = self._res(0)
         return
@@ -44,9 +46,14 @@ class seed_schools(cv.Intervention):
         for st in self.s_types:
             self.school_ids[st] = sim.people.school_types[st]
             for sid in self.school_ids[st]:
-                s_uids = np.array(sim.people.schools[sid])
+                sch_uids = np.array(sim.people.schools[sid])
+                if self.choose_students:
+                    s_uids = cv.itruei(sim.people.student_flag, sch_uids)
+                else:
+                    s_uids = sch_uids
                 choices = cv.choose(len(s_uids), self.n_infections)
                 self.seed_inds[st] += s_uids[choices].tolist()
+
         return
 
 
@@ -55,6 +62,11 @@ class seed_schools(cv.Intervention):
             for st,inds in self.seed_inds.items():
                 if len(inds):
                     sim.people.infect(inds=np.array(inds), layer=f'seed_infection_{st}')
+                    for ind in inds:
+                        sid = sim.people.school_id[ind]
+                        sdf = sim.people.contacts[cvsch.int2key(sid)].to_df()
+                        contacts = sdf.loc[ (sdf['p1']==ind) | (sdf['p2']==ind) ]
+                        self.degree[st] += contacts.shape[0]
                 if self.verbose:
                     print(f'Infected {len(inds)} people in school type {st} on day {sim.t}')
 
@@ -71,7 +83,11 @@ class seed_schools(cv.Intervention):
                 if denominator:
                     self.r0s[st] = numerator/denominator
                 self.r0s['overall'] = np.sum(self.numerators.values()) / np.sum(self.denominators.values())
+            self.degree['overall'] = np.sum(self.degree.values()) / np.sum(self.denominators.values())
+            for st in self.s_types:
+                self.degree[st] /= self.denominators[st]
             sim.school_r0s = self.r0s
+            sim.mean_degree = self.degree
 
         return
 
@@ -146,7 +162,7 @@ def longway():
         sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
 
         delay = sim.day('2020-09-16') # Pick a Monday
-        sim['interventions'] += [cvsch.schools_manager(scen), seed_schools(delay=delay, n_infections=1)]
+        sim['interventions'] += [cvsch.schools_manager(scen), seed_schools(delay=delay, n_infections=1, choose_students=False)]
         sims.append(sim)
 
     msim = cv.MultiSim(sims)
@@ -174,14 +190,21 @@ else:
 
 # Results
 res = {k:np.zeros(len(msim.sims)) for k in ['es', 'ms', 'hs', 'overall']}
+deg = {k:np.zeros(len(msim.sims)) for k in ['es', 'ms', 'hs', 'overall']}
 for s,sim in enumerate(msim.sims):
     for k in res.keys():
         res[k][s] = sim.school_r0s[k]
+        deg[k][s] = sim.mean_degree[k]
 
 for k in res.keys():
     mean = res[k].mean()
     std  = res[k].std()
     print(f'R0 for "{k}": {mean:0.2f} ± {std:0.2f}')
+
+for k in res.keys():
+    mean = deg[k].mean()
+    std  = deg[k].std()
+    print(f'Degree for "{k}": {mean:0.2f} ± {std:0.2f}')
 
 print('Done.')
 sc.toc(T)
