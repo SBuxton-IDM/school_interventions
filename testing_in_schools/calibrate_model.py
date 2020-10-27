@@ -13,7 +13,8 @@ cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinf
 
 pop_size = 2.25e5
 folder = 'v20201019'
-children_equally_sus = True
+children_equally_sus = False
+alternate_symptomaticity = True
 
 # This is the data we're trying to fit
 to_fit = {
@@ -39,6 +40,9 @@ label     = '_'.join([f'{k}={v}' for k,v in to_fit.items()])
 name      = os.path.join(folder, f'pars_{label}_pop_size={int(pop_size)}')
 if children_equally_sus:
     name += '_children_equally_sus'
+if alternate_symptomaticity:
+    name += '_alternate_symptomaticity'
+
 storage   = f'sqlite:///{name}.db'
 n_workers = 24
 n_trials  = 10 # Each worker does n_trials
@@ -87,7 +91,7 @@ def objective(trial, kind='default'):
         pars[key] = trial.suggest_uniform(key, *bound)
     pars['rand_seed'] = trial.number
 
-    sim = cs.create_sim(pars, pop_size=pop_size, folder=folder, children_equally_sus=children_equally_sus)
+    sim = cs.create_sim(pars, pop_size=pop_size, folder=folder, children_equally_sus=children_equally_sus, alternate_symptomaticity=alternate_symptomaticity)
 
     remote = {
         'start_day': '2020-11-02',

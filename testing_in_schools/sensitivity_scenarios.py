@@ -15,15 +15,16 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (15,30)
+par_inds = (0,30)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
 folder = 'v20201019'
-stem = f'sensitivity_v2_{par_inds[0]}-{par_inds[1]}'
+stem = f'sensitivity_v2_alt_symp_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 # Hacky:
 calibfile_ch_eq_sus = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_children_equally_sus.json')
+calibfile_alt_symp = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_alternate_symptomaticity.json')
 
 
 def baseline(sim, scen, test):
@@ -35,19 +36,44 @@ def baseline(sim, scen, test):
     sm = cvsch.schools_manager(scen)
     sim['interventions'] += [sm]
 
+def alt_symp(sim, scen, test):
+    # Modify scen with test
+    for stype, spec in scen.items():
+        if spec is not None:
+            spec['testing'] = test # dcp probably not needed because deep copied in new_schools
+
+    # Should not need to adjust here:
+    '''
+    prog = sim.pars['prognoses']
+    ages = prog['age_cutoffs']
+    symp_probs = prog['symp_probs']
+    # Source: table 1 from https://arxiv.org/pdf/2006.08471.pdf
+    symp_probs[:] = 0.6456
+    symp_probs[ages<80] = 0.3546
+    symp_probs[ages<60] = 0.3054
+    symp_probs[ages<40] = 0.2241
+    symp_probs[ages<20] = 0.1809
+    prog['symp_probs'] = symp_probs
+    '''
+
+    sm = cvsch.schools_manager(scen)
+    sim['interventions'] += [sm]
+
 def children_equally_sus(sim, scen, test):
     # Modify scen with test
     for stype, spec in scen.items():
         if spec is not None:
             spec['testing'] = test # dcp probably not needed because deep copied in new_schools
 
+    # Should not need to adjust here:
+    '''
     prog = sim.pars['prognoses']
     ages = prog['age_cutoffs']
     sus_ORs = prog['sus_ORs']
     sus_ORs[ages<=20] = 1
     prog['sus_ORs'] = sus_ORs
-
     sim.pars['prognoses'] = prog
+    '''
 
     sm = cvsch.schools_manager(scen)
     sim['interventions'] += [sm]
@@ -202,10 +228,6 @@ if __name__ == '__main__':
         'baseline': baseline,
 
         # -------- EASY --------
-        # What if younger children aren't less susceptible?
-        # --> Change the sensitivity parameters [Need a way to inform parameters from a scenario!]
-        'children_equally_sus': children_equally_sus,
-
         # What if in-field antigen tests have less favorable properties?
         # --> Just change the test sensitivity & specificity
         'lower_sens_spec': lower_sens_spec,
@@ -223,6 +245,14 @@ if __name__ == '__main__':
         'lower_coverage': lower_coverage,
 
         # -------- HARD --------
+        # What if symptoms are less than expected?
+        # --> Change the symp_prob parameters to Table 1 from https://arxiv.org/pdf/2006.08471.pdf
+        'alt_symp': alt_symp,
+
+        # What if younger children aren't less susceptible?
+        # --> Change the sensitivity parameters [Need a way to inform parameters from a scenario!]
+        'children_equally_sus': children_equally_sus,
+
         # Parents/guardians of school children return to work
         # --> Remove and restore edges, HH+students --> work/community
         'increased_mobility': increased_mobility,
@@ -237,11 +267,12 @@ if __name__ == '__main__':
     }
 
     # Select a subset, if desired:
-    #sensitivity = {k:v for k,v in sensitivity.items() if k in ['children_equally_sus']}
+    sensitivity = {k:v for k,v in sensitivity.items() if k in ['alt_symp']}
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
     par_list_ch_eq_sus = sc.loadjson(calibfile_ch_eq_sus)[par_inds[0]:par_inds[1]]
-        
+    par_list_alt_symp = sc.loadjson(calibfile_alt_symp)[par_inds[0]:par_inds[1]]
+
     sims = []
     msims = []
     tot = len(scenarios) * len(testing) * len(par_list) * len(sensitivity)
@@ -250,17 +281,21 @@ if __name__ == '__main__':
     # Save time by pre-generating the base simulations
 
     for senskey, builder in sensitivity.items():
+        ch_eq_sus = False
+        alt_symp = False
         if senskey == 'children_equally_sus':
             plist = par_list_ch_eq_sus
             ch_eq_sus = True
+        elif senskey == 'alt_symp':
+            plist = par_list_alt_symp
+            alt_symp = True
         else:
             plist = par_list
-            ch_eq_sus = False
 
         for eidx, entry in enumerate(plist):
             par = sc.dcp(entry['pars'])
             par['rand_seed'] = int(entry['index'])
-            base_sim = cs.create_sim(par, pop_size=pop_size, folder=folder, children_equally_sus=ch_eq_sus)
+            base_sim = cs.create_sim(par, pop_size=pop_size, folder=folder, children_equally_sus=ch_eq_sus, alternate_symptomaticity=alt_symp)
 
             for sidx, (skey, scen) in enumerate(scenarios.items()):
                 for tidx, (tkey, test) in enumerate(testing.items()):

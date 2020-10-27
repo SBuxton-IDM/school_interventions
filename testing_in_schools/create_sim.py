@@ -31,7 +31,7 @@ def define_pars(which='best', kind='default', ):
 
 
 def create_sim(params=None, pop_size=2.25e5, rand_seed=1, folder=None, popfile_stem=None,
-               children_equally_sus=False, max_pop_seeds=5, load_pop=True, save_pop=False, people=None,
+               children_equally_sus=False, alternate_symptomaticity=False, max_pop_seeds=5, load_pop=True, save_pop=False, people=None,
                label=None, verbose=0, **kwargs):
     '''
     Create the simulation for use with schools. This is the main function used to
@@ -44,6 +44,7 @@ def create_sim(params=None, pop_size=2.25e5, rand_seed=1, folder=None, popfile_s
         folder (str): where to look for the population file
         popfile_stem (str): filename of population file, minus random seed (which gets added)
         children_equally_sus (bool): whether children should be equally susceptible as adults (for sensitivity)
+        alternate_symptomaticity (bool): whether to use symptoms by age from Table 1 in https://arxiv.org/pdf/2006.08471.pdf
         max_pop_seeds (int): maximum number of populations to generate (for use with different random seeds)
         load_pop (bool): whether to load people from disk (otherwise, use supplied or create afresh)
         save_pop (bool): if a population is being generated, whether to save
@@ -138,5 +139,17 @@ def create_sim(params=None, pop_size=2.25e5, rand_seed=1, folder=None, popfile_s
         sus_ORs = prog['sus_ORs']
         sus_ORs[ages<=20] = 1
         prog['sus_ORs'] = sus_ORs
+
+    if alternate_symptomaticity:
+        prog = sim.pars['prognoses']
+        ages = prog['age_cutoffs']
+        symp_probs = prog['symp_probs']
+        # Source: table 1 from https://arxiv.org/pdf/2006.08471.pdf
+        symp_probs[:] = 0.6456
+        symp_probs[ages<80] = 0.3546
+        symp_probs[ages<60] = 0.3054
+        symp_probs[ages<40] = 0.2241
+        symp_probs[ages<20] = 0.1809
+        prog['symp_probs'] = symp_probs
 
     return sim
