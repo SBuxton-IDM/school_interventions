@@ -37,13 +37,21 @@ sims = []
 msims = []
 tot = len(scenarios) * len(testing) * len(par_list)
 proc = 0
+
+base_sims = []
+for eidx, entry in enumerate(par_list):
+    par = sc.dcp(entry['pars'])
+    par['rand_seed'] = int(entry['index'])
+    sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
+    base_sims.append(sim)
+
 for skey, base_scen in scenarios.items():
     for tidx, (tkey, test) in enumerate(testing.items()):
         for eidx, entry in enumerate(par_list):
             par = sc.dcp(entry['pars'])
             par['rand_seed'] = int(entry['index'])
-
-            sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
+            #sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
+            sim = base_sims[eidx].copy()
 
             # Modify base_scen with testing intervention
             this_scen = sc.dcp(base_scen)
