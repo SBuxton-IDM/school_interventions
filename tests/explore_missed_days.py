@@ -54,9 +54,9 @@ testings = {'No testing':
                 'groups': ['students', 'teachers', 'staff'], # No students
                 'coverage': 1,
                 'is_antigen': True,
-                'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
-                'other_sensitivity': 0.90, # Modeling assumption
-                'specificity': 0.985, # https://www.fda.gov/media/141570/download
+                'symp7d_sensitivity': 1.0, # https://www.fda.gov/media/141570/download
+                'other_sensitivity': 1.0, # Modeling assumption
+                'specificity': 1.0, # https://www.fda.gov/media/141570/download
                 'PCR_followup_perc': 1.0,
                 'PCR_followup_delay': 3.0,
             }}
