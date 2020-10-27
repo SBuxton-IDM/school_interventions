@@ -22,7 +22,7 @@ mplt.rcParams['font.family'] = font_style
 pop_size = 2.25e5
 
 folder = 'v20201019'
-variant = 'sensitivity_v2_0-30'
+variant = 'sensitivity_v2_altsymp_0-30'
 cachefn = os.path.join(folder, 'msims', f'{variant}.sims')
 debug_plot = False
 
@@ -30,6 +30,7 @@ imgdir = os.path.join(folder, 'img_'+variant)
 Path(imgdir).mkdir(parents=True, exist_ok=True)
 
 print(f'loading {cachefn}')
+#sims = cv.MultiSim.load(cachefn).sims
 sims = cv.load(cachefn)
 
 results = []
@@ -72,19 +73,20 @@ sens_names = sc.odict({ # key3
     'lower_coverage': 'Test coverage of 50%',
     'no_NPI_reduction': 'No NPI reduction',
     'no_screening': 'No daily screening',
+    'alt_symp': 'More asymptomatic infections',
     'children_equally_sus': 'Children equally susceptible',
     'increased_mobility': 'Increased mobility',
 })
 sens_order = sens_names.values()
 
 
-for sim in sims:#msim.sims:
+for sim in sims:
     sim.key2 = test_names[sim.key2][0] if sim.key2 in test_names else sim.key2
     sim.key3 = sens_names[sim.key3] if sim.key3 in sens_names else sim.key3
 
 
 tests = []
-for sim in sims:#msim.sims:
+for sim in sims:
     first_date = '2020-11-02'
     first_school_day = sim.day(first_date)
     last_date = '2021-01-31'
@@ -242,9 +244,13 @@ g.set_axis_labels(y_var="3-Month Attack Rate (%)")
 plt.tight_layout()
 for ax in g.axes.flat:
     box = ax.get_position()
-    ax.set_position([box.x0,box.y0,box.width*0.7,box.height])
-
+    ax.set_position([box.x0,box.y0,box.width*0.68,box.height])
 g.axes.flat[0].legend(loc='upper left',bbox_to_anchor=(1,0.3))
+
+#for axi, ax in enumerate(g.axes.flat):
+#    box = ax.get_position()
+#    ax.set_position([box.x0, box.y0 + (axi+1)*box.height * 0.1, box.width, box.height * 0.9])
+#g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.16), ncol=4, fontsize=14)
 
 
 #fig, ax = plt.subplots(figsize=(12,8))
