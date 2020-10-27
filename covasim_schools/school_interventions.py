@@ -426,6 +426,11 @@ class School(sc.prettyobj):
         uids_at_home_array = np.fromiter(self.uids_at_home.keys(), dtype=int)
         self.uids_passed_screening = np.setdiff1d(self.scheduled_uids, uids_at_home_array)
 
+        if sim.t == 30:
+            print('hiiiiiii i am', self.sid)
+            if len(self.uids_arriving_at_school) == len(self.uids_passed_screening):
+                raise Exception
+
         # Remove individuals at home from the network
         self.ct_mgr.remove_individuals(uids_at_home_array)
 
