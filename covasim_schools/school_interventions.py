@@ -121,15 +121,46 @@ class schools_manager(cv.Intervention):
         if sim.t == sim.npts-1:
             # Only needed on final time step:
             for school in self.schools:
-                sim.school_stats[school.sid].update( school.get_stats() )
+                sim.school_stats[school.sid].update(school.get_stats())
+            self.gather_stats(sim)
             self.schools = [] # Huge space savings if user saves this simulation due to python junk collection
 
 
-    def gather_stats(self):
+    def gather_stats(self, sim):
         ''' Gather statistics from individual schools into one object '''
-        res = sc.objdict()
-        res.n_schools = len(self.schools)
 
+        def standard_res():
+            ''' Define a standard results object '''
+            return sc.objdict({'students':0, 'teachers':0, 'staff':0, 'teachers+staff':0, 'all':0})
+
+        # Keys to copy over/sum over from each school
+        shared_keys = ['num', 'infectious', 'infectious_arrive_at_school', 'infectious_stay_at_school', 'newly_exposed', 'scheduled', 'in_person']
+
+        res = sc.objdict()
+        res.shared_keys = shared_keys # Store this here for ease of later use
+        res.n_schools = len(self.schools)
+        res.n_school_days = sim.school_stats[self.schools[0].sid]['num_school_days'] # Should be the same for all schools
+        res.n_tested = sc.objdict({'PCR': 0, 'Antigen': 0})
+        for key in shared_keys:
+            res[key] = standard_res()
+
+        # Count the stats
+        for school in self.schools:
+            stats = sim.school_stats[school.sid]
+            for group in ['students', 'teachers', 'staff']:
+                for key in shared_keys:
+                    res[key][group] += np.sum(stats[key][group]) # Main results
+            for key in res.n_tested.keys(): # Count tests
+                res.n_tested[key] += stats['n_tested'][key]
+
+        # Compute combined keys
+        for key in shared_keys:
+            res[key]['teachers+staff'] = res[key]['teachers'] + res[key]['staff']
+            res[key]['all'] = res[key]['teachers+staff'] + res[key]['students']
+
+        # Save to the sim and return
+        sim.school_results = res
+        return res
 
 
 
