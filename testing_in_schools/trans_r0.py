@@ -10,6 +10,10 @@ import covasim_schools as cvsch
 import create_sim as cs
 from testing_scenarios import generate_scenarios
 
+by_pass = False
+force_run = True
+folder = 'v20201019'
+par_inds = (0,15)
 
 #%% Define the school seeding 'intervention'
 class seed_schools(cv.Intervention):
@@ -66,64 +70,110 @@ class seed_schools(cv.Intervention):
                 self.denominators[st] = denominator
                 if denominator:
                     self.r0s[st] = numerator/denominator
+                self.r0s['overall'] = np.sum(self.numerators.values()) / np.sum(self.denominators.values())
             sim.school_r0s = self.r0s
 
         return
 
 
+def bypass():
+    do_plot     = True # Whether to plot results
+    n_seeds = 6 # Number of seeds to run each simulation with
+    rand_seed = 1 # Overwrite the default random seed
+    bypass_popfile = 'trans_r0_medium.ppl'
+    pop_size = int(100e3)
+
+    entry =   {
+        "index": 376.0,
+        "mismatch": 0.03221581045452142,
+        "pars": {
+          "pop_infected": 0,
+          "change_beta": 0.5313884845187986,
+          "symp_prob": 0.08250498122080606
+        }
+    }
+
+    params = sc.dcp(entry['pars'])
+    if rand_seed is None:
+        params['rand_seed'] = int(entry['index'])
+    else:
+        params['rand_seed'] = rand_seed
+
+    # Ensure the population file exists
+    if not os.path.exists(bypass_popfile):
+        print(f'Population file {bypass_popfile} not found, recreating...')
+        cvsch.make_population(pop_size=pop_size, rand_seed=params['rand_seed'], max_pop_seeds=5, popfile=bypass_popfile, do_save=True)
+
+    scen = generate_scenarios()['as_normal']
+
+    # Create the sim
+    people = sc.loadobj(bypass_popfile)
+    base_sim = cs.create_sim(params, pop_size=pop_size, load_pop=False, people=people, verbose=0.1)
 
 
-#%% Configuration
+    # Run the sims
+    sims = []
+    for seed in range(n_seeds):
+        sim = sc.dcp(base_sim)
+        sim.set_seed(seed=sim['rand_seed'] + seed)
+        sim.label = f'Sim {seed}'
+        sim['interventions'] += [cvsch.schools_manager(scen), seed_schools()]
+        sim['beta_layer'] = dict(h=0.0, s=0.0, w=0.0, c=0.0, l=0.0) # Turn off transmission in other layers, looking for in-school R0
+        sims.append(sim)
+    msim = cv.MultiSim(sims)
+    msim.run(keep_people=True)
+
+    return msim
+
+
+def longway():
+    pop_size = 2.25e5
+    calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
+    par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
+    scen = generate_scenarios()['as_normal']
+
+    for stype, cfg in scen.items():
+        if cfg:
+            cfg['start_day'] = '2020-09-07' # Move school start earlier
+
+    # Configure and run the sims
+    sims = []
+    for eidx, entry in enumerate(par_list):
+        par = sc.dcp(entry['pars'])
+        par['rand_seed'] = int(entry['index'])
+        par['pop_infected'] = 0 # Do NOT seed infections
+        par['beta_layer'] = dict(h=0.0, s=0.0, w=0.0, c=0.0, l=0.0) # Turn off transmission in other layers, looking for in-school R0
+        sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
+
+        delay = sim.day('2020-09-16') # Pick a Monday
+        sim['interventions'] += [cvsch.schools_manager(scen), seed_schools(delay=delay, n_infections=1)]
+        sims.append(sim)
+
+    msim = cv.MultiSim(sims)
+    msim.run(keep_people=True)
+
+    return msim
+
+
+# Configuration
 sc.heading('Configuring...')
 T = sc.tic()
 
-do_plot     = True # Whether to plot results
-n_seeds = 6 # Number of seeds to run each simulation with
-rand_seed = 1 # Overwrite the default random seed
-bypass_popfile = 'trans_r0_medium.ppl'
-pop_size = int(100e3)
-
-entry =   {
-    "index": 376.0,
-    "mismatch": 0.03221581045452142,
-    "pars": {
-      "pop_infected": 0,
-      "change_beta": 0.5313884845187986,
-      "symp_prob": 0.08250498122080606
-    }
-  }
-params = sc.dcp(entry['pars'])
-if rand_seed is None:
-    params['rand_seed'] = int(entry['index'])
+if by_pass:
+    msim = bypass()
 else:
-    params['rand_seed'] = rand_seed
+    cachefn = os.path.join('v20201019', 'msims', f'R0_{par_inds[0]}-{par_inds[1]}.msim')
+    if force_run or cachefn is not None and not os.path.exists(cachefn):
+        msim = longway()
+        if cachefn is not None:
+            print(f'Saving to {cachefn}')
+            msim.save(cachefn, keep_people=False) # Don't think we need the people anymore
+    else:
+        print(f'Loading from {cachefn}')
+        msim = cv.MultiSim.load(cachefn)
 
-# Ensure the population file exists
-if not os.path.exists(bypass_popfile):
-    print(f'Population file {bypass_popfile} not found, recreating...')
-    cvsch.make_population(pop_size=pop_size, rand_seed=params['rand_seed'], max_pop_seeds=5, popfile=bypass_popfile, do_save=True)
-
-scen = generate_scenarios()['as_normal']
-
-# Create the sim
-people = sc.loadobj(bypass_popfile)
-base_sim = cs.create_sim(params, pop_size=pop_size, load_pop=False, people=people, verbose=0.1)
-
-
-#%% Run the sims
-sims = []
-for seed in range(n_seeds):
-    sim = sc.dcp(base_sim)
-    sim.set_seed(seed=sim['rand_seed'] + seed)
-    sim.label = f'Sim {seed}'
-    sim['interventions'] += [cvsch.schools_manager(scen), seed_schools()]
-    sims.append(sim)
-msim = cv.MultiSim(sims)
-msim.run(keep_people=True)
-
-
-#%% Results
-res = {k:np.zeros(n_seeds) for k in ['es', 'ms', 'hs']}
+# Results
+res = {k:np.zeros(len(msim.sims)) for k in ['es', 'ms', 'hs', 'overall']}
 for s,sim in enumerate(msim.sims):
     for k in res.keys():
         res[k][s] = sim.school_r0s[k]
