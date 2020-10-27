@@ -37,6 +37,7 @@ if __name__ == '__main__':
     scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
 
     test = t_s.generate_testing()['PCR 1w prior']
+    test[0]['delay'] = 0 # Otherwise "same day" will not work.
 
     testing = {}
     for start_date in ['None', '2020-10-26', '2020-10-27', '2020-10-28', '2020-10-29', '2020-10-30', '2020-10-31', '2020-11-01', '2020-11-02']:

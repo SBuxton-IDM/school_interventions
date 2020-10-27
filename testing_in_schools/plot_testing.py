@@ -22,7 +22,7 @@ mplt.rcParams['font.family'] = font_style
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201019'
-variant = 'batch_final_updatedAntigen_1wAntigen_newHybrid_0-30'
+variant = 'final_20201026_v2_0-30'
 cachefn = os.path.join(folder, 'msims', f'{variant}.sims')
 debug_plot = False
 
@@ -49,7 +49,7 @@ scen_order = scen_names.keys()
 blues = plt.cm.get_cmap('Blues')
 reds = plt.cm.get_cmap('Reds')
 test_names = sc.odict({ # key2
-    'None':                                     ('Testing as part of countermeasures (if any)',     'gray'),
+    'None':                                     ('No diagnostic screening',     'gray'),
     'PCR 1w prior':                             ('PCR one week prior, 1d delay',                    blues(1/5)),
     'Antigen every 1w teach&staff, PCR f/u':    ('Weekly antigen for teachers & staff, PCR f/u',    reds(1/5)),
     'PCR every 2w':                             ('Fortnightly PCR, 1d delay',                       blues(2/5)),
