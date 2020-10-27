@@ -19,103 +19,19 @@ font_style = 'Roboto Condensed'
 mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
-pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
+pop_size = 2.25e5
 
-folder = 'v20201019' #'v20201019'
-variant = '_sensitivity_v2_0-10'
-cachefn = os.path.join(folder, 'msims', 'sensitivity_v2_0-10.sims')
+folder = 'v20201019'
+variant = 'sensitivity_v2_altsymp_0-30'
+cachefn = os.path.join(folder, 'msims', f'{variant}.sims')
 debug_plot = False
 
-imgdir = os.path.join(folder, 'img'+variant)
+imgdir = os.path.join(folder, 'img_'+variant)
 Path(imgdir).mkdir(parents=True, exist_ok=True)
 
-
-def load_single(fn):
-    print(f'loading {fn}')
-    return cv.MultiSim.load(fn)
-
-def load_multi(fns, cachefn=None):
-    # Load/combine *.msim objects into a single MultiSim for analysis
-    msims = []
-    for fn in fns:
-        print(f'loading {fn}')
-        msims.append(cv.MultiSim.load(fn))
-    print('Merging...')
-    msim = cv.MultiSim.merge(msims)
-
-    if cachefn is not None:
-        msim.base_sim.people = [] # Remove people
-        print(f'Saving to {cachefn}')
-        msim.save(cachefn)
-    return msim
-
-def load_simlist(fn):
-    # Load/combine *.msim objects into a single MultiSim for analysis
-    print(f'loading {fn}')
-    return cv.load(fn)
-
-def load_multi_simlist(fns, cachefn=None):
-    # Load/combine *.msim objects into a single MultiSim for analysis
-    sims = []
-    for fn in fns:
-        print(f'loading {fn}')
-        msim = cv.MultiSim.load(fn)
-        sims += msim.sims
-
-    if cachefn is not None:
-        print(f'Saving to {cachefn}')
-        cv.save(cachefn, sims)
-    return sims
-
-def load_and_replace(fn1, scenarios_to_remove, fn2):
-    # TODO: WIP
-    exit()
-    msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_not_remote_{int(pop_size)}.msim'))
-    print(len(msim.sims))
-    # Replace "all_remote" sims with update
-    remote = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_remote_{int(pop_size)}.msim'))
-    sims = [s for s in msim.sims if s.key1 != 'all_remote'] + remote.sims
-    msim = cv.MultiSim(sims)
-    print(len(msim.sims))
-    msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
-
-
-if True:
-    #msim = load_single(cachefn)
-    sims = load_simlist(cachefn)
-else:
-    sims = load_multi_simlist([os.path.join(folder, 'msims', fn) for fn in [
-        #'sensitivity_k5_0-5_baseline.msim',
-        #'sensitivity_k5_0-5_children_equally_sus.msim',
-        #'sensitivity_k5_0-5_lower_coverage.msim',
-        #'sensitivity_k5_0-5_lower_random_screening.msim',
-        #'sensitivity_k5_0-5_lower_sens_spec.msim',
-        #'sensitivity_k5_0-5_no_NPI_reduction.msim',
-        #'sensitivity_k5_0-5_no_screening.msim',
-        #'sensitivity_k5_0-5_parents_return_to_work.msim',
-        #'sensitivity_notk5_0-5.msim',
-        #'batch_v2_0-3_baseline.msim',
-        #'batch_v2_0-3_broken_bubbles.msim'
-        'sensitivity_v2_0-5_baseline.msim',
-        'sensitivity_v2_0-5_broken_bubbles.msim',
-        'sensitivity_v2_0-5_children_equally_sus.msim',
-        'sensitivity_v2_0-5_increased_mobility.msim',
-        'sensitivity_v2_0-5_lower_coverage.msim',
-        'sensitivity_v2_0-5_lower_random_screening.msim',
-        'sensitivity_v2_0-5_lower_sens_spec.msim',
-        'sensitivity_v2_0-5_no_NPI_reduction.msim',
-        'sensitivity_v2_0-5_no_screening.msim',
-
-        'sensitivity_v2_5-10_baseline.msim',
-        'sensitivity_v2_5-10_broken_bubbles.msim',
-        'sensitivity_v2_5-10_children_equally_sus.msim',
-        'sensitivity_v2_5-10_increased_mobility.msim',
-        'sensitivity_v2_5-10_lower_coverage.msim',
-        'sensitivity_v2_5-10_lower_random_screening.msim',
-        'sensitivity_v2_5-10_lower_sens_spec.msim',
-        'sensitivity_v2_5-10_no_NPI_reduction.msim',
-        'sensitivity_v2_5-10_no_screening.msim',
-    ]], cachefn)
+print(f'loading {cachefn}')
+#sims = cv.MultiSim.load(cachefn).sims
+sims = cv.load(cachefn)
 
 results = []
 byschool = []
@@ -157,19 +73,20 @@ sens_names = sc.odict({ # key3
     'lower_coverage': 'Test coverage of 50%',
     'no_NPI_reduction': 'No NPI reduction',
     'no_screening': 'No daily screening',
+    'alt_symp': 'More asymptomatic infections',
     'children_equally_sus': 'Children equally susceptible',
     'increased_mobility': 'Increased mobility',
 })
 sens_order = sens_names.values()
 
 
-for sim in sims:#msim.sims:
+for sim in sims:
     sim.key2 = test_names[sim.key2][0] if sim.key2 in test_names else sim.key2
     sim.key3 = sens_names[sim.key3] if sim.key3 in sens_names else sim.key3
 
 
 tests = []
-for sim in sims:#msim.sims:
+for sim in sims:
     first_date = '2020-11-02'
     first_school_day = sim.day(first_date)
     last_date = '2021-01-31'
@@ -327,9 +244,13 @@ g.set_axis_labels(y_var="3-Month Attack Rate (%)")
 plt.tight_layout()
 for ax in g.axes.flat:
     box = ax.get_position()
-    ax.set_position([box.x0,box.y0,box.width*0.7,box.height])
-
+    ax.set_position([box.x0,box.y0,box.width*0.68,box.height])
 g.axes.flat[0].legend(loc='upper left',bbox_to_anchor=(1,0.3))
+
+#for axi, ax in enumerate(g.axes.flat):
+#    box = ax.get_position()
+#    ax.set_position([box.x0, box.y0 + (axi+1)*box.height * 0.1, box.width, box.height * 0.9])
+#g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.16), ncol=4, fontsize=14)
 
 
 #fig, ax = plt.subplots(figsize=(12,8))
