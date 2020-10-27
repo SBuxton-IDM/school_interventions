@@ -31,7 +31,7 @@ def define_pars(which='best', kind='default', ):
 
 
 def create_sim(params=None, pop_size=2.25e5, rand_seed=1, folder=None, popfile_stem=None,
-               children_equally_sus=False, max_pop_seeds=5, load_pop=True, people=None,
+               children_equally_sus=False, max_pop_seeds=5, load_pop=True, save_pop=False, people=None,
                label=None, verbose=0, **kwargs):
     '''
     Create the simulation for use with schools. This is the main function used to
@@ -46,6 +46,7 @@ def create_sim(params=None, pop_size=2.25e5, rand_seed=1, folder=None, popfile_s
         children_equally_sus (bool): whether children should be equally susceptible as adults (for sensitivity)
         max_pop_seeds (int): maximum number of populations to generate (for use with different random seeds)
         load_pop (bool): whether to load people from disk (otherwise, use supplied or create afresh)
+        save_pop (bool): if a population is being generated, whether to save
         people (People): if supplied, use instead of loading from file
         label (str): a name for the simulation
         verbose (float): level of verbosity to use (merged into parameters)
