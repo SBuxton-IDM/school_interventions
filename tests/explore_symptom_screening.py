@@ -20,7 +20,7 @@ parallelize = True # If running, whether to parallelize
 do_save     = True # If rerunning, whether to save sims
 do_plot     = True # Whether to plot results
 
-n_seeds = 1 # Number of seeds to run each simulation with
+n_seeds = 3 # Number of seeds to run each simulation with
 rand_seed = 2346 # Overwrite the default random seed
 bypass_popfile = 'explore_symptoms_medium.ppl'
 pop_size = int(100e3)
