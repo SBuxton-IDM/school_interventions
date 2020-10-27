@@ -4,26 +4,34 @@ import covasim as cv
 import create_sim as cs
 import sciris as sc
 import matplotlib.pyplot as plt
-from school_intervention import new_schools
-from testing_scenarios import generate_scenarios, generate_testing
+import covasim_schools as cvsch
+import testing_scenarios as t_s
 import synthpops as sp
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+from pathlib import Path
+cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-do_run = False
+do_run = True
 
-par_inds = (0,25) # First and last parameters to run
+par_inds = (0,30) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 25
+batch_size = 30
 
-folder = 'v20201015_225k'
-stem = f'calib_remote_notest_{par_inds[0]}-{par_inds[1]}'
+folder = 'v20201019'
+stem = f'calib_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
+#stem = f'calib_altsymp_{par_inds[0]}-{par_inds[1]}'
+#calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_alternate_symptomaticity.json')
+#stem = f'calib_cheqsu_{par_inds[0]}-{par_inds[1]}'
+#calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_children_equally_sus.json')
+
+imgdir = os.path.join(folder, 'img_'+stem)
+Path(imgdir).mkdir(parents=True, exist_ok=True)
 
 if __name__ == '__main__':
-    scenarios = generate_scenarios()
+    scenarios = t_s.generate_scenarios()
     scenarios = {k:v for k,v in scenarios.items() if k in ['all_remote']}
 
-    testing = generate_testing()
+    testing = t_s.generate_testing()
     testing = {k:v for k,v in testing.items() if k in ['None']}
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
@@ -40,22 +48,23 @@ if __name__ == '__main__':
                     par['rand_seed'] = int(entry['index'])
                     sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
 
-                    sim.label = f'{skey} + {tkey}'
-                    sim.key1 = skey
-                    sim.key2 = tkey
-                    sim.scen = scen
-                    sim.tscen = test
-                    sim.dynamic_par = par
-
                     # Modify scen with test
                     this_scen = sc.dcp(scen)
                     for stype, spec in this_scen.items():
                         if spec is not None:
-                            spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
-                            spec['beta_s'] = 1.5 # Shouldn't matter considering schools are closed in the 'all_remote' scenario
+                            spec['testing'] = sc.dcp(test)
+                            spec['beta_s'] = 1.5
 
-                    ns = new_schools(this_scen)
-                    sim['interventions'] += [ns]
+                    sm = cvsch.schools_manager(this_scen)
+                    sim['interventions'] += [sm]
+
+                    sim.label = f'{skey} + {tkey}'
+                    sim.key1 = skey
+                    sim.key2 = tkey
+                    sim.scen = this_scen
+                    sim.tscen = test
+                    sim.dynamic_par = par
+
                     sims.append(sim)
                     proc += 1
 
@@ -147,5 +156,4 @@ if __name__ == '__main__':
         ri+=1
 
     f.tight_layout()
-    cv.savefig(os.path.join(folder, 'img', f'calibration_djk_{int(pop_size)}.png'), dpi=300)
-
+    cv.savefig(os.path.join(imgdir, f'calib.png'), dpi=300)
