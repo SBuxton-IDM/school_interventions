@@ -14,14 +14,16 @@ import testing_scenarios as t_s # From the local folder
 
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (10,20)
+par_inds = (0,10)
 pop_size = 2.25e5
 batch_size = 24
 save_after_each_scenario = True
 
+skip_screening = True
+
 folder = 'v20201019'
 #stem = f'batch_final_newHybrid_{par_inds[0]}-{par_inds[1]}'
-stem = f'final_20201026_v2_{par_inds[0]}-{par_inds[1]}'
+stem = f'final_20201026_v2_noscreening_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 scenarios = t_s.generate_scenarios()
@@ -50,6 +52,9 @@ for skey, base_scen in scenarios.items():
             for stype, spec in this_scen.items():
                 if spec is not None:
                     spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
+                    if skip_screening:
+                        print('WARNING: Seeting screen_prob to 0')
+                        spec['screen_prob'] = 0
 
             sim.label = f'{skey} + {tkey}'
             sim.key1 = skey
