@@ -20,7 +20,7 @@ parallelize = True # If running, whether to parallelize
 do_save     = True # If rerunning, whether to save sims
 do_plot     = True # Whether to plot results
 
-n_seeds = 4 # Number of seeds to run each simulation with
+n_seeds = 3 # Number of seeds to run each simulation with
 rand_seed = 2346 # Overwrite the default random seed
 bypass_popfile = 'explore_symptoms_medium.ppl'
 pop_size = int(100e3)
@@ -56,7 +56,7 @@ testings = {'No testing':
                 'is_antigen': True,
                 'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
                 'other_sensitivity': 0.90, # Modeling assumption
-                'specificity': 0.985, # https://www.fda.gov/media/141570/download
+                'specificity': 0*0.985, # https://www.fda.gov/media/141570/download
                 'PCR_followup_perc': 1.0,
                 'PCR_followup_delay': 3.0,
             }}
@@ -77,28 +77,30 @@ people = sc.loadobj(bypass_popfile)
 base_sim = cs.create_sim(params, pop_size=pop_size, load_pop=False, people=people, verbose=0.1)
 
 #%% Run the sims
-msims = []
+sims = []
 for key,scen in all_scens.items():
-    sims = []
     for seed in range(n_seeds):
         sim = sc.dcp(base_sim)
         sim.set_seed(seed=sim['rand_seed'] + seed)
         sim.label = key
         sim['interventions'] += [cvsch.schools_manager(scen)]
         sims.append(sim)
-    msim = cv.MultiSim(sims)
-    msim.run()
+msim_raw = cv.MultiSim(sims)
+msim_raw.run()
+m1, m2 = msim_raw.split(chunks=[n_seeds, n_seeds])
+msims = [m1, m2]
+for msim in msims:
     msim.reduce()
-    msims.append(msim)
-
-msim_base = cv.MultiSim.merge(msims, base=True)
-msim_all = cv.MultiSim.merge(msims, base=False)
 
 
 #%% Plotting
 if do_plot:
+    msim_base = cv.MultiSim.merge(msims, base=True)
     msim_base.plot(to_plot='overview')
-    msim_all.plot(to_plot='overview', color_by_sim=True, max_sims=2*n_seeds)
+    plot_individual = False
+    if plot_individual:
+        msim_all = cv.MultiSim.merge(msims, base=False)
+        msim_all.plot(to_plot='overview', color_by_sim=True, max_sims=2*n_seeds)
 
 
 print('Done.')
