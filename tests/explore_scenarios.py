@@ -157,15 +157,14 @@ sc.heading('Plotting...')
 
 fig,axs = pl.subplots(4,5)
 flataxs = axs.flatten()
-pl.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.98, hspace=0.2, wspace=0.2)
+δ = 0.03
+pl.subplots_adjust(left=δ, right=1-δ, bottom=δ, top=1-δ, hspace=0.25, wspace=0.25)
 
 
 strings = []
-
 strings.append('Scenario definitions:')
 for s,skey in enumerate(s_keys):
     strings.append(f'  S{s} -- {skey}')
-
 strings.append('Testing definitions:')
 for t,tkey in enumerate(t_keys):
     strings.append(f'  T{t} -- {tkey}')
@@ -173,8 +172,8 @@ for t,tkey in enumerate(t_keys):
 for r,key,thisres in res.enumitems():
     ax = flataxs[r]
     pl.sca(ax)
-    sns.heatmap(res.cum_infections, annot=True, annot_kws={'fontsize':8})
-    ax.set_title('temp')
+    sns.heatmap(res[key], annot=True, fmt='0.0f', annot_kws={'fontsize':8})
+    ax.set_title(key)
     ax.set_xticks(np.arange(n_testings)+0.5)
     ax.set_xticklabels(np.arange(n_testings))
     ax.set_yticks(np.arange(n_scens)+0.5)
@@ -185,14 +184,10 @@ for r,key,thisres in res.enumitems():
 labelax = flataxs[-1]
 for s,string in enumerate(strings):
     x = 0.1
-    y = 1-(s/len(strings))
+    y = 0.9*(1-(s/len(strings)))
     labelax.text(x, y, string)
 
-
-
-# cv.maximize(fig)
-
-
+cv.maximize(fig)
 
 print('Done.')
 sc.toc(T)
