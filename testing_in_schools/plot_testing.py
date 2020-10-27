@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib as mplt
 import matplotlib.pyplot as plt
+#import matplotlib.gridspec as gridspec
 import seaborn as sns
 import datetime as dt
 from calibrate_model import evaluate_sim
@@ -79,7 +80,6 @@ for sim in sims:
         'key1': sim.key1,
         'key2': sim.key2,
     }
-    print(ret)
 
     perf = evaluate_sim(sim)
     ret.update(perf)
@@ -191,6 +191,90 @@ for i,t in tests.iterrows():
     ax.plot(t['Tests'], color=col[t['Testing']], marker='.', lw=0)
 plt.show()
 '''
+
+
+
+# Attack rate - two axes in one plot
+d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
+d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
+d.replace( {'key1': scen_names}, inplace=True)
+so = [scen_names[x] for x in scen_order]
+
+fig = plt.figure(constrained_layout=True, figsize=(12,8))
+gs = fig.add_gridspec(20, 50)
+
+ts = d.loc[(d['Group']=='Teachers & Staff')]
+
+# Teachers and Staff
+ax = fig.add_subplot(gs[0, :])
+ax.axis('off')
+ax.text(0.5, 0, 'Teachers & Staff', horizontalalignment='center')
+
+# Top left
+ax = fig.add_subplot(gs[1:8, 0:10])
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.xaxis.set_tick_params(length=0)
+sns.barplot(data=ts, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+ax.get_legend().remove()
+ax.set_xlim([-0.5,0.5])
+ax.set_ylim([0,50])
+ax.set_xlabel('')
+ax.set_xticklabels([])
+ax.set_ylabel('3-Month Attack Rate (%)')
+p = ax.get_position()
+
+# Top right
+ax = fig.add_subplot(gs[1:8, 10:])
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.xaxis.set_tick_params(length=0)
+sns.barplot(data=ts, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+ax.get_legend().remove()
+ax.set_xlim([0.5,4.5])
+ax.set_ylim([0,5])
+ax.set_ylabel('')
+ax.set_xlabel('')
+ax.set_xticklabels([])
+
+stu = d.loc[(d['Group']=='Students')]
+
+# Students
+ax = fig.add_subplot(gs[8, :])
+ax.axis('off')
+ax.text(0.5, 0, 'Students', horizontalalignment='center')
+
+# Bottom left
+ax = fig.add_subplot(gs[9:16, 0:10])
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.xaxis.set_tick_params(length=0)
+sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+ax.get_legend().remove()
+ax.set_xlim([-0.5,0.5])
+ax.set_ylim([0,35])
+ax.set_xlabel('')
+ax.set_ylabel('3-Month Attack Rate (%)')
+
+# Bottom right
+ax = fig.add_subplot(gs[9:16, 10:])
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.xaxis.set_tick_params(length=0)
+sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+hnd, lbl = ax.get_legend_handles_labels()
+ax.get_legend().remove()
+ax.set_xlim([0.5,4.5])
+ax.set_ylim([0,3.5])
+ax.set_ylabel('')
+ax.set_xlabel('')
+
+ax = fig.add_subplot(gs[16:, :])
+ax.axis('off')
+ax.legend(hnd, lbl, ncol=3, loc='center', fontsize=16)
+
+cv.savefig(os.path.join(imgdir, f'3mAttackRate_combined.png'), dpi=300)
+
 
 
 # Attack rate
