@@ -22,151 +22,64 @@ mplt.rcParams['font.family'] = font_style
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201019'
-variant = '_final_updated_antigen_0-30'
-cachefn = os.path.join(folder, 'msims', 'batch_final_updated_antigen_0-30.sims')
+variant = 'batch_final_updatedAntigen_1wAntigen_newHybrid_0-30'
+cachefn = os.path.join(folder, 'msims', f'{variant}.sims')
 debug_plot = False
 
-imgdir = os.path.join(folder, 'img'+variant)
+imgdir = os.path.join(folder, 'img_'+variant)
 Path(imgdir).mkdir(parents=True, exist_ok=True)
 
-def load_simlist(fn):
-    # Load/combine *.msim objects into a single MultiSim for analysis
-    print(f'loading {fn}')
-    return cv.load(fn)
-
-def load_multi_simlist(fns, cachefn=None):
-    # Load/combine *.msim objects into a single MultiSim for analysis
-    sims = []
-    for fn in fns:
-        print(f'loading {fn}')
-        msim = cv.MultiSim.load(fn)
-        sims += msim.sims
-
-    if cachefn is not None:
-        print(f'Saving to {cachefn}')
-        cv.save(cachefn, sims)
-    return sims
-
-
-
-def load_single(fn):
-    return cv.MultiSim.load(fn)
-
-def load_multi(fns, cachefn=None):
-    # Load/combine *.msim objects into a single MultiSim for analysis
-    msims = []
-    for fn in fns:
-        msims.append(cv.MultiSim.load(fn))
-    msim = cv.MultiSim.merge(msims)
-
-    if cachefn is not None:
-        msim.save(cachefn)
-    return msim
-
-def load_and_replace(fn1, scenarios_to_remove, fn2):
-    # TODO: WIP
-    exit()
-    msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_not_remote_{int(pop_size)}.msim'))
-    print(len(msim.sims))
-    # Replace "all_remote" sims with update
-    remote = cv.MultiSim.load(os.path.join(folder, 'msims', f'testing_remote_{int(pop_size)}.msim'))
-    sims = [s for s in msim.sims if s.key1 != 'all_remote'] + remote.sims
-    msim = cv.MultiSim(sims)
-    print(len(msim.sims))
-    msim.save(os.path.join(folder, 'msims', f'testing_v20201012_{int(pop_size)}.msim'))
-
-
-#msim = load_single(cachefn)
-sims = load_simlist(cachefn)
-"""
-print('extracting sims')
-sims = [s.shrink(in_place=False) for s in msim.sims if 'Antigen' not in s.key2]
-msim = 0
-
-fns = [os.path.join(folder, 'msims', fn) for fn in [
-    'new_antigen_tests_0-15.msim',
-    'new_antigen_tests_15-30.msim',
-]]
-print('load_multi')
-msim_new_antigen = load_multi(fns, None)
-
-print('shrink')
-sims += [s.shrink(in_place=False) for s in msim_new_antigen.sims]
-print('creating MultiSim')
-msim = cv.MultiSim(sims)
-print('saving')
-msim.save(os.path.join(folder, 'msims', 'combined_new_antigen_0-30.msim'))
-print('done!')
-
-'''
-msim = load_single(os.path.join(folder, 'msims','batch_sm_0-5.msim'))
-sims = [s for s in msim.sims if s.key2=='None']
-msim = cv.MultiSim(sims)
-msim.save('remote_k5_None.msims')
-#msim = load_single('remote_k5_None.msims')
-'''
-"""
+print(f'Loading {cachefn}')
+sims = cv.load(cachefn)
+#sims = cv.MultiSim.load(cachefn).sims
 
 results = []
 byschool = []
 groups = ['students', 'teachers', 'staff']
 
-scen_names = { # key1
+scen_names = sc.odict({ # key1
     'as_normal': 'Full Schedule\nNo Countermeasures',
     'with_countermeasures': 'Full Schedule',
     'all_hybrid': 'Hybrid',
     'k5': 'K-5 In-Person\nOthers Remote',
     'all_remote': 'All Remote',
-}
-scen_order = [
-    'as_normal',
-    'with_countermeasures',
-    'all_hybrid',
-    'k5',
-    'all_remote',
-]
-
-test_names = sc.odict({ # key2
-    'None': 'Testing as part of countermeasures (if any)',
-    'PCR 1w prior': 'PCR one week prior, 1d delay',
-    'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, PCR f/u',
-    #'PCR every 2w 50%': 'Fortnightly PCR, 50% coverage',
-    'PCR every 2w': 'Fortnightly PCR, 1d delay',
-    'Antigen every 2w, no f/u': 'Fortnightly antigen, no f/u',
-    'Antigen every 2w, PCR f/u': 'Fortnightly antigen, PCR f/u',
-    'PCR every 1w': 'Weekly PCR, 1d delay',
-
-    #'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
-    #'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, no delay, PCR f/u',
-    #'Antigen every 1w, PCR f/u': 'Weekly antigen for all, no delay, PCR f/u',
-    #'Antigen every 1w, no f/u': 'Weekly antigen for all, no delay, no f/u',
-    'PCR every 1d': 'Daily PCR, no delay',
 })
-test_order = test_names.values()
-test_hue = {
-    'Testing as part of countermeasures (if any)':  'gray',
-    'PCR one week prior, 1d delay':                 (0.8584083044982699, 0.9134486735870818, 0.9645674740484429, 1.0),
-    'Weekly antigen for teachers & staff, PCR f/u': (0.9882352941176471, 0.732072279892349, 0.6299269511726259, 1.0),
-    'Fortnightly PCR, 50% coverage':                (0.7309496347558632, 0.8394771241830065, 0.9213225682429834, 1.0),
-    'Fortnightly PCR, 1d delay':                    (0.5356862745098039, 0.746082276047674, 0.8642522106881968, 1.0),
-    'Fortnightly antigen, PCR f/u':                 (0.7925720876585928, 0.09328719723183392, 0.11298731257208766, 1.0),
-    'Fortnightly antigen, no f/u':                  (0.9835755478662053, 0.4127950788158401, 0.28835063437139563, 1.0),
-    'Weekly PCR, 1d delay':                         (0.32628988850442137, 0.6186236063052672, 0.802798923490965, 1.0),
-    'Daily PCR, no delay':                          (0.16696655132641292, 0.48069204152249134, 0.7291503267973857, 1.0),
-}
+scen_order = scen_names.keys()
 
-for sim in sims:#msim.sims:
-    sim.key2 = test_names[sim.key2] if sim.key2 in test_names else sim.key2
+blues = plt.cm.get_cmap('Blues')
+reds = plt.cm.get_cmap('Reds')
+test_names = sc.odict({ # key2
+    'None':                                     ('Testing as part of countermeasures (if any)',     'gray'),
+    'PCR 1w prior':                             ('PCR one week prior, 1d delay',                    blues(1/5)),
+    'Antigen every 1w teach&staff, PCR f/u':    ('Weekly antigen for teachers & staff, PCR f/u',    reds(1/5)),
+    'PCR every 2w':                             ('Fortnightly PCR, 1d delay',                       blues(2/5)),
+    'Antigen every 2w, no f/u':                 ('Fortnightly antigen, no f/u',                     reds(2/5)),
+    'Antigen every 2w, PCR f/u':                ('Fortnightly antigen, PCR f/u',                    reds(3/5)),
+    'PCR every 1w':                             ('Weekly PCR, 1d delay',                            blues(3/5)),
+    'Antigen every 1w, PCR f/u':                ('Weekly antigen, PCR f/u',                         reds(4/5)),
+    'PCR every 1d':                             ('Daily PCR, no delay',                             blues(4/5)),
 
+    #'PCR every 2w 50%':                        ('Fortnightly PCR, 50% coverage',                   'cyan'),
+    #'PCR every 1m 15%':                        ('Monthly PCR, 15% coverage',                       'pink'),
+    #'Antigen every 1w teach&staff, PCR f/u':   ('Weekly antigen for teachers & staff, no delay, PCR f/u', 'yellow'),
+    #'Antigen every 1w, PCR f/u':               ('Weekly antigen for all, no delay, PCR f/u',       'green'),
+    #'Antigen every 1w, no f/u':                ('Weekly antigen for all, no delay, no f/u',        'orange'),
+})
+test_order = [v[0] for k,v in test_names.items()] # if k in ['None', 'PCR every 2w', 'Antigen every 2w, PCR f/u', 'Antigen every 2w, no f/u']]
+test_hue = {v[0]:v[1] for v in test_names.values()}
+
+for sim in sims:
+    sim.key2 = test_names[sim.key2][0] if sim.key2 in test_names else sim.key2
 
 tests = []
-for sim in sims:#msim.sims:
+for sim in sims:
     first_school_day = sim.day('2020-11-02')
     last_school_day = sim.day('2021-01-31')
     ret = {
         'key1': sim.key1,
         'key2': sim.key2,
     }
+    print(ret)
 
     perf = evaluate_sim(sim)
     ret.update(perf)
@@ -360,7 +273,7 @@ plt.tight_layout()
 cv.savefig(os.path.join(imgdir, 'FirstDayInfectionsReg.png'), dpi=300)
 '''
 
-# Tests required
+# Number of diagnostic tests required
 fig, ax = plt.subplots(figsize=(12,8))
 d = pd.DataFrame(byschool)
 # Additional tests per 100,000 population
