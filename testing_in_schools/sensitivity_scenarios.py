@@ -220,7 +220,7 @@ if __name__ == '__main__':
     scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
 
     testing = generate_testing()
-    #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 2w', 'Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
+    testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 2w', 'Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
     #testing = {k:v for k,v in testing.items() if k in ['Antigen every 2w, PCR f/u']}
 
     sensitivity = {

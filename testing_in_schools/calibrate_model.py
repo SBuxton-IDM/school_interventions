@@ -45,7 +45,7 @@ if alternate_symptomaticity:
 
 storage   = f'sqlite:///{name}.db'
 n_workers = 24
-n_trials  = 10 # Each worker does n_trials
+n_trials  = 100 # Each worker does n_trials
 save_json = True
 
 def scenario(es, ms, hs):
@@ -143,7 +143,7 @@ def make_study(restart=True):
 
 if __name__ == '__main__':
     t0 = sc.tic()
-    make_study(restart=False)
+    make_study(restart=True)
     run_workers()
     study = op.load_study(storage=storage, study_name=name)
     best_pars = study.best_params
