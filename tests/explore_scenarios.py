@@ -18,17 +18,17 @@ T = sc.tic()
 
 debug       = True # Verobisty and other settings
 bypass      = True # Whether to use a small population size
-do_run      = False # Whether to rerun instead of load saved run
+do_run      = True # Whether to rerun instead of load saved run
 keep_people = False # Whether to keep people when running
 parallelize = True # If running, whether to parallelize
 do_save     = True # If rerunning, whether to save sims
 do_plot     = True # Whether to plot results
 
-rand_seed = None # Overwrite the default random seed
+rand_seed = 9857 # Overwrite the default random seed
 folder = '../testing_in_schools/v20201019'
-bypass_popfile = 'explore_scenarios_small.ppl'
+bypass_popfile = 'explore_scenarios_medium.ppl'
 sims_file = 'explore_scenarios.sims'
-pop_size = int(20e3) if bypass else int(2.25e5)
+pop_size = int(100e3) if bypass else int(2.25e5)
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 try:
@@ -86,7 +86,7 @@ for skey,origscen in scens.items():
 # Create the sim
 if bypass: # BYPASS option -- create small population on the fly
     people = sc.loadobj(bypass_popfile)
-    base_sim = cs.create_sim(params, pop_size=pop_size, load_pop=False, people=people)
+    base_sim = cs.create_sim(params, pop_size=pop_size, load_pop=False, people=people, verbose=0.1)
 else: # Otherwise, load full population from disk
     base_sim = cs.create_sim(params, pop_size=pop_size, folder=folder, verbose=0.1)
 
@@ -159,7 +159,6 @@ fig,axs = pl.subplots(4,5)
 flataxs = axs.flatten()
 δ = 0.03
 pl.subplots_adjust(left=δ, right=1-δ, bottom=δ, top=1-δ, hspace=0.25, wspace=0.25)
-
 
 strings = []
 strings.append('Scenario definitions:')
