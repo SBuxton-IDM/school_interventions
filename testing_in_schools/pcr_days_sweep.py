@@ -6,10 +6,12 @@ import create_sim as cs
 import sciris as sc
 import matplotlib.pyplot as plt
 import matplotlib as mplt
-from school_intervention import new_schools
-from testing_scenarios import generate_scenarios, generate_testing
+import covasim_schools as cvsch
+import testing_scenarios as t_s # From the local folder
+from pathlib import Path
 import synthpops as sp
-cv.check_save_version('1.7.2', comments={'SynthPops':sc.gitinfo(sp.__file__)})
+
+cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 # Global plotting styles
 font_size = 16
@@ -17,22 +19,24 @@ font_style = 'Roboto Condensed'
 mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
-do_run = False
+do_run = True
 
-par_inds = (0,20) # First and last parameters to run
+par_inds = (0,30) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
-folder = 'v20201015_225k'
-imgdir = os.path.join(folder, 'img')
+folder = 'v20201019'
 stem = f'pcr_days_sweep_{par_inds[0]}-{par_inds[1]}'
+imgdir = os.path.join(folder, 'img_'+stem)
+Path(imgdir).mkdir(parents=True, exist_ok=True)
+
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 if __name__ == '__main__':
-    scenarios = generate_scenarios()
+    scenarios = t_s.generate_scenarios()
     scenarios = {k:v for k,v in scenarios.items() if k in ['with_countermeasures']}
 
-    test = generate_testing()['PCR 1w prior']
+    test = t_s.generate_testing()['PCR 1w prior']
 
     testing = {}
     for start_date in ['None', '2020-10-26', '2020-10-27', '2020-10-28', '2020-10-29', '2020-10-30', '2020-10-31', '2020-11-01', '2020-11-02']:
@@ -58,13 +62,6 @@ if __name__ == '__main__':
                     par['rand_seed'] = int(entry['index'])
                     sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
 
-                    sim.label = f'{skey} + {tkey}'
-                    sim.key1 = skey
-                    sim.key2 = tkey
-                    sim.scen = scen
-                    sim.tscen = test
-                    sim.dynamic_par = par
-
                     # Modify scen with test
                     this_scen = sc.dcp(scen)
                     for stype, spec in this_scen.items():
@@ -72,9 +69,17 @@ if __name__ == '__main__':
                             spec['testing'] = sc.dcp(test) # dcp probably not needed because deep copied in new_schools
                             #spec['beta_s'] = 1.5 # Shouldn't matter considering schools are closed in the 'all_remote' scenario
 
-                    ns = new_schools(this_scen)
+                    ns = cvsch.schools_manager(this_scen)
                     sim['interventions'] += [ns]
+
+                    sim.label = f'{skey} + {tkey}'
+                    sim.key1 = skey
+                    sim.key2 = tkey
+                    sim.scen = scen
+                    sim.tscen = test
+                    sim.dynamic_par = par
                     sims.append(sim)
+
                     proc += 1
 
                     if len(sims) == batch_size or proc == tot:# or (tidx == len(testing)-1 and eidx == len(par_list)-1):
@@ -89,19 +94,12 @@ if __name__ == '__main__':
             msim = cv.MultiSim(sims_this_scenario)
 
         msim = cv.MultiSim.merge(msims)
-        msim.save(os.path.join(folder, 'msims', f'{stem}.msim'), keep_people=False)
+        fn = os.path.join(folder, 'msims', f'{stem}.msim')
+        print(f'Saving to {fn}')
+        msim.save(fn, keep_people=False)
     else:
-        '''
-        msim = cv.MultiSim.load(os.path.join(folder, 'msims', f'{stem}.msim'))
-        msim_None1 = cv.MultiSim.load(os.path.join(folder, 'msims', 'batch_0-15_with_countermeasures.msim'))
-        msim_None2 = cv.MultiSim.load(os.path.join(folder, 'msims', 'batch_15-30_with_countermeasures.msim'))
-        sims = msim.sims
-        sims += [s for s in msim_None1.sims if s.key2 == 'None']
-        sims += [s for s in msim_None2.sims if s.key2 == 'None']
-        msim = cv.MultiSim(sims)
-        print('saving')
-        msim.save('pcr.msim')
-        '''
+        fn = os.path.join(folder, 'msims', f'{stem}.msim')
+        print(f'Loading from {fn}')
         msim = cv.MultiSim.load('pcr.msim')
 
     byschool = []
