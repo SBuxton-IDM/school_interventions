@@ -1,3 +1,7 @@
+'''
+See also trans_r0.py, which does something similar in a different way
+'''
+
 import os
 import numpy as np
 import pandas as pd

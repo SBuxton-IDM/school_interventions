@@ -1,5 +1,5 @@
 '''
-Not a formal test -- test that symptom screening is doing what it is supposed to.
+Compute the R0 value in different school types without interventions.
 '''
 
 import os
@@ -46,15 +46,11 @@ class seed_schools(cv.Intervention):
         return
 
 
-    def _lseed(self, st):
-        return f'seed_infection_{st}'
-
-
     def apply(self, sim):
         if sim.t == self.delay: # Only infect on the first day (or after a delay)
             for st,inds in self.seed_inds.items():
                 if len(inds):
-                    sim.people.infect(inds=np.array(inds), layer=self._lseed(st))
+                    sim.people.infect(inds=np.array(inds), layer=f'seed_infection_{st}')
                 if self.verbose:
                     print(f'Infected {len(inds)} people in school type {st} on day {sim.t}')
 
