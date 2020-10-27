@@ -1,14 +1,13 @@
-# TODO: move to utils
 import covasim as cv
 import os
 
 folder = 'v20201019'
 
 fns = [
-    'batch_final_updated_antigen_0-30.sims',
-    'batch_final_1wAntigen_0-30.msim',
+    'final_20201026_v2_0-10.msim', 
+    'final_20201026_v2_10-20.msim', 
+    'final_20201026_v2_20-30.msim',
 ]
-
 fns = [os.path.join(folder, 'msims', fn) for fn in fns]
 
 sims = []
@@ -23,4 +22,6 @@ for fn in fns:
     else:
         print('ERROR')
 
-cv.save(os.path.join(folder, 'msims', 'batch_final_updatedAntigen_1wAntigen_0-30.sims'), sims)
+fn = os.path.join(folder, 'msims', 'final_20201026_v2_0-30.sims')
+print(f'Saving to {fn}')
+cv.save(fn, sims)

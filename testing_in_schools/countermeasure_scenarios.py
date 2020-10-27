@@ -21,8 +21,6 @@ batch_size = 16
 folder = 'v20201019'
 stem = f'countermeasures_v2_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
-# Hacky:
-calibfile_ch_eq_sus = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_children_equally_sus.json')
 
 
 def baseline(sim, scen, test):
