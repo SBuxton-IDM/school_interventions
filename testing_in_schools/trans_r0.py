@@ -13,7 +13,7 @@ from testing_scenarios import generate_scenarios
 by_pass = False
 force_run = False
 folder = 'v20201019'
-par_inds = (0,1)
+par_inds = (0,6)
 
 #%% Define the school seeding 'intervention'
 class seed_schools(cv.Intervention):
