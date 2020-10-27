@@ -80,8 +80,8 @@ sc.heading('Configuring...')
 T = sc.tic()
 
 do_plot     = True # Whether to plot results
-n_seeds = 5 # Number of seeds to run each simulation with
-rand_seed = 2346 # Overwrite the default random seed
+n_seeds = 10 # Number of seeds to run each simulation with
+rand_seed = 1 # Overwrite the default random seed
 bypass_popfile = 'trans_r0_medium.ppl'
 pop_size = int(100e3)
 
@@ -133,7 +133,7 @@ for s,sim in enumerate(msim.sims):
 for k in res.keys():
     mean = res[k].mean()
     std  = res[k].std()
-    print(f'R0 for "{k}": {mean} ± {std}')
+    print(f'R0 for "{k}": {mean:0.2f} ± {std:0.2f}')
 
 print('Done.')
 sc.toc(T)
