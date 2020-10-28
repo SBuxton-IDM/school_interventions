@@ -15,7 +15,7 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (0,10)
+par_inds = (10,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
@@ -192,7 +192,7 @@ def broken_bubbles(sim, scen, test):
                 p1 = stublist[p1_inds]
                 p2 = stublist[p2_inds]
                 new_edges = pd.DataFrame({'p1':p1, 'p2':p2})
-                new_edges['beta'] = 1.0
+                new_edges['beta'] = cv.defaults.default_float(1.0) #1.0
                 # Remove self loops
                 new_edges = new_edges.loc[new_edges['p1'] != new_edges['p2']]
 
@@ -274,7 +274,7 @@ if __name__ == '__main__':
     }
 
     # Select a subset, if desired:
-    #sensitivity = {k:v for k,v in sensitivity.items() if k in ['alt_symp']}
+    sensitivity = {k:v for k,v in sensitivity.items() if k in ['broken_bubbles']}
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
     par_list_ch_eq_sus = sc.loadjson(calibfile_ch_eq_sus)[par_inds[0]:par_inds[1]]
