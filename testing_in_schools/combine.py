@@ -30,6 +30,6 @@ for fn in fns:
     else:
         print('ERROR')
 
-fn = os.path.join(folder, 'msims', '{base}.msim')
+fn = os.path.join(folder, 'msims', f'{base}.msim')
 print(f'Saving to {fn}')
 cv.save(fn, sims)
