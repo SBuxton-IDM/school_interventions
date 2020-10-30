@@ -2,11 +2,19 @@ import covasim as cv
 import os
 
 folder = 'v20201019'
+base = 'sensitivity_v3_0-10'
 
 fns = [
-    'final_20201026_v2_0-10.msim', 
-    'final_20201026_v2_10-20.msim', 
-    'final_20201026_v2_20-30.msim',
+    f'{base}_baseline.msim',
+    f'{base}_lower_sens_spec.msim',
+    f'{base}_no_NPI_reduction.msim',
+    f'{base}_lower_random_screening.msim',
+    f'{base}_no_screening.msim',
+    f'{base}_lower_coverage.msim',
+    f'{base}_alt_symp.msim',
+    f'{base}_children_equally_sus.msim',
+    f'{base}_increased_mobility.msim',
+    f'{base}_broken_bubbles.msim',
 ]
 fns = [os.path.join(folder, 'msims', fn) for fn in fns]
 
@@ -22,6 +30,6 @@ for fn in fns:
     else:
         print('ERROR')
 
-fn = os.path.join(folder, 'msims', 'final_20201026_v2_0-30.sims')
+fn = os.path.join(folder, 'msims', f'{base}.msim')
 print(f'Saving to {fn}')
 cv.save(fn, sims)

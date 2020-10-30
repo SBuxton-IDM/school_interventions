@@ -14,16 +14,16 @@ import synthpops as sp
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 # Global plotting styles
-font_size = 16
+font_size = 18
 font_style = 'Roboto Condensed'
 mplt.rcParams['font.size'] = font_size
 mplt.rcParams['font.family'] = font_style
 
-do_run = True
+do_run = False
 
 par_inds = (0,30) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
-batch_size = 24
+batch_size = 16
 
 folder = 'v20201019'
 stem = f'pcr_days_sweep_{par_inds[0]}-{par_inds[1]}'
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     else:
         fn = os.path.join(folder, 'msims', f'{stem}.msim')
         print(f'Loading from {fn}')
-        msim = cv.MultiSim.load('pcr.msim')
+        msim = cv.MultiSim.load(fn)
 
     byschool = []
     groups = ['students', 'teachers', 'staff']
@@ -126,9 +126,11 @@ if __name__ == '__main__':
 
 
     d = pd.DataFrame(byschool)
+    colors = plt.cm.get_cmap('cool')
     fig, ax = plt.subplots(figsize=(12,8))
-    for key, dat in d.groupby('key2'):
-        c = 'k' if key == 'None' else None
+    N = len(d.groupby('key2'))
+    for i, (key, dat) in enumerate(d.groupby('key2')):
+        c = 'k' if key == 'None' else colors(i/N)
         sns.regplot(data=dat, x='n_students', y='d1 bool', logistic=True, y_jitter=0.03, scatter_kws={'s':5}, label=key, ax=ax, ci=None, scatter=False, color=c)
     ax.set_xlabel('School size (students)')
     ax.set_ylabel('Infection on First Day (%)')

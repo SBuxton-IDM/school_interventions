@@ -22,16 +22,16 @@ mplt.rcParams['font.family'] = font_style
 pop_size = 2.25e5
 
 folder = 'v20201019'
-variant = 'countermeasures_v2_0-20'
+variant = 'countermeasures_v2_0-30'
 school_scenario = 'with_countermeasures'
-cachefn = os.path.join(folder, 'msims', f'{variant}.msim')
+cachefn = os.path.join(folder, 'msims', f'{variant}.sims')
 
 imgdir = os.path.join(folder, 'img_'+variant)
 Path(imgdir).mkdir(parents=True, exist_ok=True)
 
 print(f'loading {cachefn}')
-msim = cv.MultiSim.load(cachefn)
-sims = msim.sims
+#sims = cv.MultiSim.load(cachefn).sims
+sims = cv.load(cachefn)
 
 results = []
 groups = ['students', 'teachers', 'staff']
@@ -77,11 +77,10 @@ sens_names = sc.odict({ # key3
 sens_order = sens_names.values()
 
 
-for sim in sims:#msim.sims:
+for sim in sims:
     sim.key2 = test_names[sim.key2][0] if sim.key2 in test_names else sim.key2
     sim.key3 = sens_names[sim.key3] if sim.key3 in sens_names else sim.key3
 
-for sim in sims:
     first_date = '2020-11-02'
     first_school_day = sim.day(first_date)
     last_date = '2021-01-31'
@@ -173,18 +172,19 @@ cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost_countermeasures.png'), dpi=3
 
 
 # Attack rate
-d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
-d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
-d = d.loc[d['key1']==school_scenario] # K-5 only
-g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False) # col='key1', 
-g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set2')
-g.set_titles(row_template="{row_name}")
-g.set_axis_labels(y_var="3-Month Attack Rate (%)")
-plt.tight_layout()
+for aspect, fontsize in zip([2.5, 3], [12,14]):
+    d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'attackrate_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Cum Inc (%)')
+    d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
+    d = d.loc[d['key1']==school_scenario] # K-5 only
+    g = sns.FacetGrid(data=d, row='Group', height=4, aspect=aspect, row_order=['Teachers & Staff', 'Students'], legend_out=False) # col='key1', 
+    g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set2')
+    g.set_titles(row_template="{row_name}")
+    g.set_axis_labels(y_var="3-Month Attack Rate (%)")
+    plt.tight_layout()
 
-for axi, ax in enumerate(g.axes.flat):
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0 + (axi+1)*box.height * 0.1, box.width, box.height * 0.9])
-g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.16), ncol=4, fontsize=14)
+    for axi, ax in enumerate(g.axes.flat):
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + (axi+1)*box.height * 0.1, box.width, box.height * 0.9])
+    g.axes.flat[1].legend(loc='upper center',bbox_to_anchor=(0.48,-0.16), ncol=4, fontsize=fontsize)
 
-cv.savefig(os.path.join(imgdir, f'3mAttackRate_countermeasures.png'), dpi=300)
+    cv.savefig(os.path.join(imgdir, f'3mAttackRate_countermeasures_{aspect}.png'), dpi=300)
