@@ -22,7 +22,7 @@ mplt.rcParams['font.family'] = font_style
 pop_size = 2.25e5
 
 folder = 'v20201019'
-variant = 'sensitivity_v2_altsymp_0-30'
+variant = 'sensitivity_v3'
 cachefn = os.path.join(folder, 'msims', f'{variant}.sims')
 debug_plot = False
 
@@ -32,6 +32,10 @@ Path(imgdir).mkdir(parents=True, exist_ok=True)
 print(f'loading {cachefn}')
 #sims = cv.MultiSim.load(cachefn).sims
 sims = cv.load(cachefn)
+
+#sims = cv.MultiSim.load(os.path.join(folder, 'msims','sensitivity_v2_alt_symp_0-30.msim')).sims
+#sims += cv.load(os.path.join(folder, 'msims','sensitivity_v2_0-30.sims'))
+
 
 results = []
 byschool = []
@@ -46,6 +50,8 @@ scen_names = sc.odict({ # key1
 })
 scen_order = scen_names.values()
 
+blues = plt.cm.get_cmap('Blues')
+reds = plt.cm.get_cmap('Reds')
 test_names = sc.odict({ # key2
     'None':                                  ('Countermeasures\nonly', 'gray'),
     'PCR 1w prior':                          ('PCR\n1w prior\n1d delay', (0.8584083044982699, 0.9134486735870818, 0.9645674740484429, 1.0)),
@@ -55,6 +61,7 @@ test_names = sc.odict({ # key2
     'Antigen every 2w, no f/u':              ('Antigen\nFortnightly\nno f/u', (0.7925720876585928, 0.09328719723183392, 0.11298731257208766, 1.0)),
     'Antigen every 2w, PCR f/u':             ('Antigen\nFortnightly\nPCR f/u', (0.9835755478662053, 0.4127950788158401, 0.28835063437139563, 1.0)),
     'PCR every 1w':                          ('PCR\nWeekly\n1d delay', (0.32628988850442137, 0.6186236063052672, 0.802798923490965, 1.0)),
+    'Antigen every 1w, PCR f/u':             ('Antigen\nWeekly\nPCR f/u', (0.7925720876585928, 0.09328719723183392, 0.11298731257208766, 1.0)),
 
     #'PCR every 1m 15%': 'Monthly PCR, 15% coverage',
     #'Antigen every 1w teach&staff, PCR f/u': 'Weekly antigen for teachers & staff, no delay, PCR f/u',
@@ -62,20 +69,38 @@ test_names = sc.odict({ # key2
     #'Antigen every 1w, no f/u': 'Weekly antigen for all, no delay, no f/u',
     'PCR every 1d':                          ('PCR\nDaily\nNo delay', (0.16696655132641292, 0.48069204152249134, 0.7291503267973857, 1.0)),
 })
-test_order = [v[0] for k,v in test_names.items() if k in ['None', 'PCR every 2w', 'Antigen every 2w, PCR f/u', 'Antigen every 2w, no f/u']]
+
+test_names = sc.odict({ # key2
+    'None':                                     ('No diagnostic\nscreening',                        'gray'),
+    'PCR 1w prior':                             ('PCR\n1w prior\n1d delay',                         blues(1/5)),
+    'Antigen every 1w teach&staff, PCR f/u':    ('Antigen\nEvery 1w\nTeachers & Staff\nPCR f/u',    reds(1/5)),
+    'PCR every 2w':                             ('PCR\nFortnightly\n1d delay',                      blues(2/5)),
+    'Antigen every 2w, no f/u':                 ('Antigen\nFortnightly\nno f/u',                    reds(2/5)),
+    'Antigen every 2w, PCR f/u':                ('Antigen\nFortnightly\nPCR f/u',                   reds(3/5)),
+    'PCR every 1w':                             ('PCR\nWeekly\n1d delay',                           blues(3/5)),
+    'Antigen every 1w, PCR f/u':                ('Antigen\nWeekly\nPCR f/u',                        reds(4/5)),
+    'PCR every 1d':                             ('PCR\nDaily\nNo delay',                            blues(4/5)),
+
+    #'PCR every 2w 50%':                        ('Fortnightly PCR, 50% coverage',                   'cyan'),
+    #'PCR every 1m 15%':                        ('Monthly PCR, 15% coverage',                       'pink'),
+    #'Antigen every 1w teach&staff, PCR f/u':   ('Weekly antigen for teachers & staff, no delay, PCR f/u', 'yellow'),
+    #'Antigen every 1w, PCR f/u':               ('Weekly antigen for all, no delay, PCR f/u',       'green'),
+    #'Antigen every 1w, no f/u':                ('Weekly antigen for all, no delay, no f/u',        'orange'),
+})
+test_order = [v[0] for k,v in test_names.items() if k in ['None', 'PCR every 2w', 'Antigen every 2w, no f/u', 'Antigen every 1w, PCR f/u']]
 test_hue = {v[0]:v[1] for v in test_names.values()}
 
 sens_names = sc.odict({ # key3
     'baseline': 'Baseline',
-    'lower_sens_spec': 'Lower sensitivity/specificiy*',
-    'broken_bubbles': 'Mixing between cohorts',
-    'lower_random_screening': 'Lower daily screening (50%)',
-    'lower_coverage': 'Test coverage of 50%',
-    'no_NPI_reduction': 'No NPI reduction',
-    'no_screening': 'No daily screening',
-    'alt_symp': 'More asymptomatic infections',
-    'children_equally_sus': 'Children equally susceptible',
-    'increased_mobility': 'Increased mobility',
+    'lower_sens_spec':          'Lower sensitivity/specificity',
+    'broken_bubbles':           'Mixing between cohorts',
+    'lower_random_screening':   'Less symptom screening (50%)',
+    'lower_coverage':           'Diagnostic coverage of 50%',
+    'no_NPI_reduction':         'No NPI reduction',
+    'no_screening':             'No symptom screening',
+    'alt_symp':                 'More asymptomatic infections',
+    'children_equally_sus':     'Children equally susceptible',
+    'increased_mobility':       'Increasing mobility',
 })
 sens_order = sens_names.values()
 
@@ -211,7 +236,7 @@ d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'perc_inperson_da
 d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 d = d.loc[d['key1']=='k5'] # K-5 only
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key2', y='Days lost (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set1')
+g.map_dataframe( sns.barplot, x='key2', y='Days lost (%)', hue='key3', order=test_order, hue_order=sens_order, palette='tab10')
 ###g.add_legend(fontsize=14)
 g.set_titles(row_template="{row_name}", fontsize=24)
 #xtl = g.axes[1,0].get_xticklabels()
@@ -236,7 +261,7 @@ d = pd.melt(df, id_vars=['key1', 'key2', 'key3'], value_vars=[f'attackrate_{gkey
 d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
 d = d.loc[d['key1']=='k5'] # K-5 only
 g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False) # col='key1', 
-g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3', order=test_order, hue_order=sens_order, palette='Set1')#, hue_order=test_order, order=sens_order, palette=test_hue)
+g.map_dataframe( sns.barplot, x='key2', y='Cum Inc (%)', hue='key3', order=test_order, hue_order=sens_order, palette='tab10')#, hue_order=test_order, order=sens_order, palette=test_hue)
 #g.add_legend(fontsize=14)
 g.set_titles(row_template="{row_name}")
 g.set_axis_labels(y_var="3-Month Attack Rate (%)")
