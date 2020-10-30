@@ -24,11 +24,11 @@ parallelize = True # If running, whether to parallelize
 do_save     = True # If rerunning, whether to save sims
 do_plot     = True # Whether to plot results
 
-rand_seed = 9857 # Overwrite the default random seed
+rand_seed = 2346 # Overwrite the default random seed
 folder = '../testing_in_schools/v20201019'
-bypass_popfile = 'explore_scenarios_medium.ppl'
+bypass_popfile = 'explore_scenarios_small.ppl'
 sims_file = 'explore_scenarios.sims'
-pop_size = int(100e3) if bypass else int(2.25e5)
+pop_size = int(20e3) if bypass else int(2.25e5)
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 try:

@@ -70,9 +70,10 @@ def generate_scenarios():
         'beta_s': 0, # NOTE: No transmission in school layers
         'testing': None,
     }
-    scns['all_remote'] = scenario(es=remote, ms=remote, hs=remote)
 
     scns['k5'] = scenario(es=full_with_countermeasures, ms=remote, hs=remote)
+
+    scns['all_remote'] = scenario(es=remote, ms=remote, hs=remote)
 
     return scns
 
@@ -194,13 +195,13 @@ def generate_testing():
     return {
         'None': None,
         'PCR 1w prior': PCR_1w_prior,
+        'Antigen every 1w teach&staff, PCR f/u': Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup,
         'PCR every 2w': PCR_every_2w_starting_1wprior,
+        'Antigen every 2w, no f/u': Antigen_every_2w_starting_1wprior_all_no_followup,
+        'Antigen every 2w, PCR f/u': Antigen_every_2w_starting_1wprior_all_PCR_followup,
+        'Antigen every 1w, PCR f/u': Antigen_every_1w_starting_1wprior_all_PCR_followup,
         'PCR every 1w': PCR_every_1w_starting_1wprior,
         'PCR every 1d': PCR_every_1d_starting_1wprior,
         #'PCR every 2w 50%': PCR_every_2w_50cov,
         #'PCR every 1m 15%': PCR_every_1m_15cov,
-        'Antigen every 1w teach&staff, PCR f/u': Antigen_every_1w_starting_1wprior_teachersstaff_PCR_followup,
-        'Antigen every 2w, PCR f/u': Antigen_every_2w_starting_1wprior_all_PCR_followup,
-        'Antigen every 1w, PCR f/u': Antigen_every_1w_starting_1wprior_all_PCR_followup,
-        'Antigen every 2w, no f/u': Antigen_every_2w_starting_1wprior_all_no_followup,
     }
