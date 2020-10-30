@@ -24,6 +24,7 @@ pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 
 folder = 'v20201019'
 variant = 'final_20201026_v2_0-30'
+#variant = 'final_20201026_v2_noscreening_0-30' #'final_20201026_v2_0-30'
 cachefn = os.path.join(folder, 'msims', f'{variant}.sims')
 debug_plot = False
 
@@ -200,80 +201,83 @@ d.replace( {'Group': {f'attackrate_{gkey}':gkey for gkey in grp_dict.keys()}}, i
 d.replace( {'key1': scen_names}, inplace=True)
 so = [scen_names[x] for x in scen_order]
 
-fig = plt.figure(constrained_layout=True, figsize=(12,8))
-gs = fig.add_gridspec(20, 50)
+for figsize in [(12,8), (12,9.5)]:
+    fig = plt.figure(constrained_layout=True, figsize=figsize)
+    gs = fig.add_gridspec(20, 50)
 
-ts = d.loc[(d['Group']=='Teachers & Staff')]
+    ts = d.loc[(d['Group']=='Teachers & Staff')]
 
-# Teachers and Staff
-ax = fig.add_subplot(gs[0, :])
-ax.axis('off')
-ax.text(0.5, 0, 'Teachers & Staff', horizontalalignment='center')
+    # Teachers and Staff
+    ax = fig.add_subplot(gs[0, :])
+    ax.axis('off')
+    ax.text(0.5, 0, 'Teachers & Staff', horizontalalignment='center')
 
-# Top left
-ax = fig.add_subplot(gs[1:8, 0:10])
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.xaxis.set_tick_params(length=0)
-sns.barplot(data=ts, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
-ax.get_legend().remove()
-ax.set_xlim([-0.5,0.5])
-ax.set_ylim([0,50])
-ax.set_xlabel('')
-ax.set_xticklabels([])
-ax.set_ylabel('3-Month Attack Rate (%)')
-p = ax.get_position()
+    # Top left
+    ax = fig.add_subplot(gs[1:8, 0:10])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.xaxis.set_tick_params(length=0)
+    sns.barplot(data=ts, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+    ax.get_legend().remove()
+    ax.set_xlim([-0.5,0.5])
+    ax.set_ylim([0,50])
+    ax.set_xlabel('')
+    ax.set_xticklabels([])
+    ax.set_ylabel('3-Month Attack Rate (%)')
+    p = ax.get_position()
 
-# Top right
-ax = fig.add_subplot(gs[1:8, 10:])
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.xaxis.set_tick_params(length=0)
-sns.barplot(data=ts, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
-ax.get_legend().remove()
-ax.set_xlim([0.5,4.5])
-ax.set_ylim([0,5])
-ax.set_ylabel('')
-ax.set_xlabel('')
-ax.set_xticklabels([])
+    # Top right
+    ax = fig.add_subplot(gs[1:8, 10:])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.xaxis.set_tick_params(length=0)
+    sns.barplot(data=ts, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+    ax.get_legend().remove()
+    ax.set_xlim([0.5,4.5])
+    ym = ts.loc[(ts['key1']==scen_names['with_countermeasures']) & (ts['key2']==test_names['None'][0]), 'Cum Inc (%)'].mean()
+    ax.set_ylim([0,1.25*ym])
+    ax.set_ylabel('')
+    ax.set_xlabel('')
+    ax.set_xticklabels([])
 
-stu = d.loc[(d['Group']=='Students')]
+    stu = d.loc[(d['Group']=='Students')]
 
-# Students
-ax = fig.add_subplot(gs[8, :])
-ax.axis('off')
-ax.text(0.5, 0, 'Students', horizontalalignment='center')
+    # Students
+    ax = fig.add_subplot(gs[8, :])
+    ax.axis('off')
+    ax.text(0.5, 0, 'Students', horizontalalignment='center')
 
-# Bottom left
-ax = fig.add_subplot(gs[9:16, 0:10])
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.xaxis.set_tick_params(length=0)
-sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
-ax.get_legend().remove()
-ax.set_xlim([-0.5,0.5])
-ax.set_ylim([0,35])
-ax.set_xlabel('')
-ax.set_ylabel('3-Month Attack Rate (%)')
+    # Bottom left
+    ax = fig.add_subplot(gs[9:16, 0:10])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.xaxis.set_tick_params(length=0)
+    sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+    ax.get_legend().remove()
+    ax.set_xlim([-0.5,0.5])
+    ax.set_ylim([0,35])
+    ax.set_xlabel('')
+    ax.set_ylabel('3-Month Attack Rate (%)')
 
-# Bottom right
-ax = fig.add_subplot(gs[9:16, 10:])
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.xaxis.set_tick_params(length=0)
-sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
-hnd, lbl = ax.get_legend_handles_labels()
-ax.get_legend().remove()
-ax.set_xlim([0.5,4.5])
-ax.set_ylim([0,3.5])
-ax.set_ylabel('')
-ax.set_xlabel('')
+    # Bottom right
+    ax = fig.add_subplot(gs[9:16, 10:])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.xaxis.set_tick_params(length=0)
+    sns.barplot(data=stu, x='key1', y='Cum Inc (%)', hue='key2', hue_order=test_order, order=so, palette=test_hue)
+    hnd, lbl = ax.get_legend_handles_labels()
+    ax.get_legend().remove()
+    ax.set_xlim([0.5,4.5])
+    ym = stu.loc[(stu['key1']==scen_names['with_countermeasures']) & (stu['key2']==test_names['None'][0]), 'Cum Inc (%)'].mean()
+    ax.set_ylim([0, 1.25*ym])
+    ax.set_ylabel('')
+    ax.set_xlabel('')
 
-ax = fig.add_subplot(gs[16:, :])
-ax.axis('off')
-ax.legend(hnd, lbl, ncol=3, loc='center', fontsize=16)
+    ax = fig.add_subplot(gs[16:, :])
+    ax.axis('off')
+    ax.legend(hnd, lbl, ncol=3, loc='center', fontsize=16)
 
-cv.savefig(os.path.join(imgdir, f'3mAttackRate_combined.png'), dpi=300)
+    cv.savefig(os.path.join(imgdir, f'3mAttackRate_combined_{figsize}.png'), dpi=300)
 
 
 
@@ -302,32 +306,34 @@ for name in ['all', 'no_normal']:
     cv.savefig(os.path.join(imgdir, f'3mAttackRate_{name}.png'), dpi=300)
 
 # Frac in-person days lost
-d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
-d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
-g = sns.FacetGrid(data=d, row='Group', height=4, aspect=3, row_order=['Teachers & Staff', 'Students'], legend_out=False)
-g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=test_order, order=scen_order, palette=test_hue) #'Reds'
-g.add_legend(fontsize=14)
-g.set_titles(row_template="{row_name}", fontsize=24)
-xtl = g.axes[1,0].get_xticklabels()
-xtl = [l.get_text() for l in xtl]
-g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
-g.set_axis_labels(y_var="Days lost (%)")
-plt.tight_layout()
-cv.savefig(os.path.join(imgdir, '3mInPersonDaysLost.png'), dpi=300)
+for aspect in [2.5, 3]:
+    d = pd.melt(df, id_vars=['key1', 'key2'], value_vars=[f'perc_inperson_days_lost_{gkey}' for gkey in grp_dict.keys()], var_name='Group', value_name='Days lost (%)')
+    d.replace( {'Group': {f'perc_inperson_days_lost_{gkey}':gkey for gkey in grp_dict.keys()}}, inplace=True)
+    g = sns.FacetGrid(data=d, row='Group', height=4, aspect=aspect, row_order=['Teachers & Staff', 'Students'], legend_out=False)
+    g.map_dataframe( sns.barplot, x='key1', y='Days lost (%)', hue='key2', hue_order=test_order, order=scen_order, palette=test_hue) #'Reds'
+    g.add_legend(fontsize=14)
+    g.set_titles(row_template="{row_name}", fontsize=24)
+    xtl = g.axes[1,0].get_xticklabels()
+    xtl = [l.get_text() for l in xtl]
+    g.set(xticklabels=[scen_names[k] if k in scen_names else k for k in xtl])
+    g.set_axis_labels(y_var="Remote learning days (%)")
+    plt.tight_layout()
+    cv.savefig(os.path.join(imgdir, f'InPersonDaysLost_{aspect}.png'), dpi=300)
 
 # Re
-fig, ax = plt.subplots(figsize=(12,8))
-sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=test_order, order=scen_order, palette=test_hue)
-ax.set_ylim([0.8, 1.45])
-ax.set_ylabel(r'Average $R_e$')
-ax.set_xlabel('')
-xtl = ax.get_xticklabels()
-xtl = [l.get_text() for l in xtl]
-ax.set_xticklabels([scen_names[k] if k in scen_names else k for k in xtl])
-ax.axhline(y=1, color='k', ls=':', lw=2)
-plt.legend().set_title('')
-plt.tight_layout()
-cv.savefig(os.path.join(imgdir, '3mAverageRe.png'), dpi=300)
+for figsize in [(12,8), (12,9.5)]:
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.barplot(data=df, x='key1', y='re', hue='key2', hue_order=test_order, order=scen_order, palette=test_hue)
+    ax.set_ylim([0.8, 1.45])
+    ax.set_ylabel(r'Population-wide reproduction number ($R_e$)')
+    ax.set_xlabel('')
+    xtl = ax.get_xticklabels()
+    xtl = [l.get_text() for l in xtl]
+    ax.set_xticklabels([scen_names[k] if k in scen_names else k for k in xtl])
+    ax.axhline(y=1, color='k', ls=':', lw=2)
+    plt.legend().set_title('')
+    plt.tight_layout()
+    cv.savefig(os.path.join(imgdir, f'Re_3mAverage_{figsize}.png'), dpi=300)
 
 # Percent of schools with infections on day 1
 '''

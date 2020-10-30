@@ -7,22 +7,31 @@ import matplotlib.pyplot as plt
 import covasim_schools as cvsch
 import testing_scenarios as t_s
 import synthpops as sp
+from calibrate_model import evaluate_sim
 from pathlib import Path
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
 do_run = True
+
+children_equally_sus = False
+alternate_symptomaticity = True
+assert( not children_equally_sus or not alternate_symptomaticity )
 
 par_inds = (0,30) # First and last parameters to run
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 30
 
 folder = 'v20201019'
-stem = f'calib_{par_inds[0]}-{par_inds[1]}'
-calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
-#stem = f'calib_altsymp_{par_inds[0]}-{par_inds[1]}'
-#calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_alternate_symptomaticity.json')
-#stem = f'calib_cheqsu_{par_inds[0]}-{par_inds[1]}'
-#calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_children_equally_sus.json')
+
+if children_equally_sus:
+    stem = f'calib_cheqsu_{par_inds[0]}-{par_inds[1]}'
+    calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_children_equally_sus.json')
+elif alternate_symptomaticity:
+    stem = f'calib_altsymp_{par_inds[0]}-{par_inds[1]}'
+    calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_alternate_symptomaticity.json')
+else:
+    stem = f'calib_{par_inds[0]}-{par_inds[1]}'
+    calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 
 imgdir = os.path.join(folder, 'img_'+stem)
 Path(imgdir).mkdir(parents=True, exist_ok=True)
@@ -46,7 +55,7 @@ if __name__ == '__main__':
                 for eidx, entry in enumerate(par_list):
                     par = sc.dcp(entry['pars'])
                     par['rand_seed'] = int(entry['index'])
-                    sim = cs.create_sim(par, pop_size=pop_size, folder=folder)
+                    sim = cs.create_sim(par, pop_size=pop_size, folder=folder, children_equally_sus=children_equally_sus, alternate_symptomaticity=alternate_symptomaticity)
 
                     # Modify scen with test
                     this_scen = sc.dcp(scen)
@@ -88,6 +97,10 @@ if __name__ == '__main__':
 
     sims = [s for s in msim.sims if s.key1=='all_remote' and s.key2=='None']
     ms = cv.MultiSim(sims)
+
+    for sim in sims:
+        stats = evaluate_sim(sim)
+        print(stats)
 
     ms.reduce()
     #ms.plot(to_plot='overview')

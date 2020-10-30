@@ -16,8 +16,8 @@ def define_pars(which='best', kind='default', ):
     if kind in ['default', 'both']:
         pardata.update(dict(
             pop_infected = [200, 100, 300],
-            change_beta=[0.5, 0.35, 0.65],
-            symp_prob=[0.1, 0.05, 0.2],
+            change_beta=[0.6, 0.45, 0.75],
+            symp_prob=[0.3, 0.1, 0.5],
         ))
 
     output = {}

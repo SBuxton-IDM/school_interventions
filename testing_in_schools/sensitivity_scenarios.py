@@ -15,12 +15,12 @@ from testing_scenarios import generate_scenarios, generate_testing
 
 cv.check_save_version('1.7.6', folder='gitinfo', comments={'SynthPops':sc.gitinfo(sp.__file__)})
 
-par_inds = (0,30)
+par_inds = (10,20)
 pop_size = 2.25e5 # 1e5 2.25e4 2.25e5
 batch_size = 24
 
 folder = 'v20201019'
-stem = f'sensitivity_v2_alt_symp_{par_inds[0]}-{par_inds[1]}'
+stem = f'sensitivity_v3_{par_inds[0]}-{par_inds[1]}'
 calibfile = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000.json')
 # Hacky:
 calibfile_ch_eq_sus = os.path.join(folder, 'pars_cases_begin=75_cases_end=75_re=1.0_prevalence=0.002_yield=0.024_tests=225_pop_size=225000_children_equally_sus.json')
@@ -192,7 +192,7 @@ def broken_bubbles(sim, scen, test):
                 p1 = stublist[p1_inds]
                 p2 = stublist[p2_inds]
                 new_edges = pd.DataFrame({'p1':p1, 'p2':p2})
-                new_edges['beta'] = 1.0
+                new_edges['beta'] = cv.defaults.default_float(1.0) #1.0
                 # Remove self loops
                 new_edges = new_edges.loc[new_edges['p1'] != new_edges['p2']]
 
@@ -220,7 +220,14 @@ if __name__ == '__main__':
     scenarios = {k:v for k,v in scenarios.items() if k in ['k5']}
 
     testing = generate_testing()
-    #testing = {k:v for k,v in testing.items() if k in ['None', 'PCR every 2w', 'Antigen every 1w teach&staff, PCR f/u', 'Antigen every 2w, PCR f/u']}
+    testing = {k:v for k,v in testing.items() if k in [
+        'None',
+        'PCR every 2w',
+        #'Antigen every 2w, PCR f/u',
+        'Antigen every 2w, no f/u',
+        'Antigen every 1w, PCR f/u',
+        #'Antigen every 1w teach&staff, PCR f/u',
+    ]}
     #testing = {k:v for k,v in testing.items() if k in ['Antigen every 2w, PCR f/u']}
 
     sensitivity = {
@@ -267,7 +274,7 @@ if __name__ == '__main__':
     }
 
     # Select a subset, if desired:
-    sensitivity = {k:v for k,v in sensitivity.items() if k in ['alt_symp']}
+    sensitivity = {k:v for k,v in sensitivity.items() if k in ['broken_bubbles']}
 
     par_list = sc.loadjson(calibfile)[par_inds[0]:par_inds[1]]
     par_list_ch_eq_sus = sc.loadjson(calibfile_ch_eq_sus)[par_inds[0]:par_inds[1]]

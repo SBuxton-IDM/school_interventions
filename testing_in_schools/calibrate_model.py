@@ -45,7 +45,7 @@ if alternate_symptomaticity:
 
 storage   = f'sqlite:///{name}.db'
 n_workers = 24
-n_trials  = 10 # Each worker does n_trials
+n_trials  = 20 # Each worker does n_trials
 save_json = True
 
 def scenario(es, ms, hs):
