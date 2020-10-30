@@ -13,7 +13,7 @@ from testing_scenarios import generate_scenarios
 by_pass = False
 force_run = False
 folder = 'v20201019'
-par_inds = (0,1)
+par_inds = (0,6)
 
 #%% Define the school seeding 'intervention'
 class seed_schools(cv.Intervention):
@@ -157,6 +157,14 @@ def longway():
     for eidx, entry in enumerate(par_list):
         par = sc.dcp(entry['pars'])
         par['rand_seed'] = int(entry['index'])
+
+        # Clunky, but check that the population exists
+        pop_seed = par['rand_seed'] % 5
+        popfile = os.path.join(folder, 'inputs', f'kc_synthpops_clustered_{int(pop_size)}_withstaff_seed') + str(pop_seed) + '.ppl'
+        if not os.path.exists(popfile):
+            print(f'Population file {popfile} not found, recreating...')
+            cvsch.make_population(pop_size=pop_size, rand_seed=par['rand_seed'], max_pop_seeds=5, popfile=popfile, do_save=True)
+
         par['pop_infected'] = 0 # Do NOT seed infections
         par['beta_layer'] = dict(h=0.0, s=0.0, w=0.0, c=0.0, l=0.0) # Turn off transmission in other layers, looking for in-school R0
         sim = cs.create_sim(par, pop_size=pop_size, folder=folder)

@@ -1,5 +1,5 @@
 '''
-Not a formal test -- check how many people are missing days.
+Not a formal test -- test that symptom screening is doing what it is supposed to.
 '''
 
 import os
@@ -20,18 +20,18 @@ parallelize = True # If running, whether to parallelize
 do_save     = True # If rerunning, whether to save sims
 do_plot     = True # Whether to plot results
 
-n_seeds = 1 # Number of seeds to run each simulation with
+n_seeds = 3 # Number of seeds to run each simulation with
 rand_seed = 2346 # Overwrite the default random seed
-bypass_popfile = 'explore_missed_days_small.ppl'
-pop_size = int(20e3)
+bypass_popfile = 'explore_symptoms_medium.ppl'
+pop_size = int(100e3)
 
 entry =   {
     "index": 376.0,
     "mismatch": 0.03221581045452142,
     "pars": {
-      "pop_infected": 0,
-      "change_beta": 0,
-      "symp_prob": 0.0,
+      "pop_infected": 242.11186358945181,
+      "change_beta": 0.5313884845187986,
+      "symp_prob": 0.08250498122080606
     }
   }
 params = sc.dcp(entry['pars'])
@@ -54,10 +54,10 @@ testings = {'No testing':
                 'groups': ['students', 'teachers', 'staff'], # No students
                 'coverage': 1,
                 'is_antigen': True,
-                'symp7d_sensitivity': 1.0, # https://www.fda.gov/media/141570/download
-                'other_sensitivity': 1.0, # Modeling assumption
-                'specificity': 1.0, # https://www.fda.gov/media/141570/download
-                'PCR_followup_perc': 1.0,
+                'symp7d_sensitivity': 0.971, # https://www.fda.gov/media/141570/download
+                'other_sensitivity': 0.90, # Modeling assumption
+                'specificity': 0.985, # https://www.fda.gov/media/141570/download
+                'PCR_followup_perc': 0.0,
                 'PCR_followup_delay': 3.0,
             }}
 
@@ -75,6 +75,7 @@ for tkey,testing in testings.items():
 # Create the sim
 people = sc.loadobj(bypass_popfile)
 base_sim = cs.create_sim(params, pop_size=pop_size, load_pop=False, people=people, verbose=0.1)
+base_sim['interventions'] = [] # Remove all interventions
 
 
 #%% Run the sims
@@ -103,6 +104,9 @@ for msim in msims:
 sc.heading('Plotting...')
 if do_plot:
     msim_base = cv.MultiSim.merge(msims, base=True)
+    for sim in msim_base.sims:
+        print(f'Cumulative tests for sim {sim.label}:')
+        print(sim.results['cum_tests'].values)
     msim_base.plot(to_plot='overview')
     plot_individual = False
     if plot_individual:
